@@ -1,0 +1,119 @@
+/* Animações da Etapa 1 (Suspense → Baú → Revelação → Encerramento)
+   Ver ROADMAP.md, seção "Sistema de Animação".
+   Depende de variables.css, base.css e tv.css. */
+
+.tv-evento {
+  position: relative;
+}
+
+.etapa-evento {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--espaco-lg);
+}
+
+/* Etapa Baú: tremer + brilhar */
+.bau-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.bau-icone {
+  width: 160px;
+  height: 160px;
+}
+
+.tv-evento--animando .bau-icone {
+  animation: bau-tremer 0.5s ease-in-out infinite, bau-brilhar 1s ease-in-out infinite;
+}
+
+@keyframes bau-tremer {
+  0%, 100% { transform: rotate(0deg); }
+  20% { transform: rotate(-6deg); }
+  40% { transform: rotate(5deg); }
+  60% { transform: rotate(-4deg); }
+  80% { transform: rotate(3deg); }
+}
+
+@keyframes bau-brilhar {
+  0%, 100% { filter: drop-shadow(0 0 8px var(--cor-dourado)); }
+  50% { filter: drop-shadow(0 0 32px var(--cor-dourado)); }
+}
+
+/* Etapa Baú: partículas (estrelas voando para fora) */
+.particulas {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.particula {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 28px;
+  height: 28px;
+  margin: -14px;
+  opacity: 0;
+  transform: rotate(var(--angulo)) translateY(0) scale(0.4);
+}
+
+.tv-evento--animando .particula {
+  animation: particula-voar 1.2s ease-out infinite;
+}
+
+.particula:nth-child(1) { --angulo: 0deg; }
+.particula:nth-child(2) { --angulo: 45deg; animation-delay: 0.1s; }
+.particula:nth-child(3) { --angulo: 90deg; animation-delay: 0.2s; }
+.particula:nth-child(4) { --angulo: 135deg; animation-delay: 0.3s; }
+.particula:nth-child(5) { --angulo: 180deg; animation-delay: 0.1s; }
+.particula:nth-child(6) { --angulo: 225deg; animation-delay: 0.2s; }
+.particula:nth-child(7) { --angulo: 270deg; animation-delay: 0.3s; }
+.particula:nth-child(8) { --angulo: 315deg; }
+
+@keyframes particula-voar {
+  0% { opacity: 1; transform: rotate(var(--angulo)) translateY(0) scale(0.4); }
+  100% { opacity: 0; transform: rotate(var(--angulo)) translateY(-140px) scale(1); }
+}
+
+/* Etapa Revelação */
+.revelacao-imagem {
+  width: 160px;
+  height: 160px;
+  object-fit: contain;
+  border-radius: var(--raio-lg);
+  background: var(--cor-superficie);
+  box-shadow: var(--sombra-suave);
+  padding: var(--espaco-md);
+  animation: revelacao-entrar 0.5s ease-out;
+}
+
+@keyframes revelacao-entrar {
+  from { transform: scale(0.6); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+/* Tesouro da Fazenda: efeitos exclusivos (mais brilho/partículas) */
+.tv-evento--tesouro.tv-evento--animando .bau-icone {
+  animation: bau-tremer 0.4s ease-in-out infinite, bau-brilhar-tesouro 0.8s ease-in-out infinite;
+}
+
+@keyframes bau-brilhar-tesouro {
+  0%, 100% {
+    filter: drop-shadow(0 0 12px var(--cor-dourado)) drop-shadow(0 0 24px var(--cor-vermelho));
+  }
+  50% {
+    filter: drop-shadow(0 0 56px var(--cor-dourado)) drop-shadow(0 0 80px var(--cor-vermelho));
+  }
+}
+
+.tv-evento--tesouro.tv-evento--animando .particula {
+  animation-duration: 0.8s;
+}
+
+.tv-evento--tesouro .revelacao-imagem {
+  box-shadow: var(--sombra-forte), 0 0 60px var(--cor-dourado);
+}

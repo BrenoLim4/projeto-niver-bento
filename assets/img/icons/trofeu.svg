@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Troféu">
+  <path d="M20 8 H44 V20 C44 30 38 36 32 36 C26 36 20 30 20 20 Z" fill="#F2A64A" stroke="#8B5A2B" stroke-width="2"/>
+  <path d="M20 12 C12 12 12 26 22 26" fill="none" stroke="#8B5A2B" stroke-width="3"/>
+  <path d="M44 12 C52 12 52 26 42 26" fill="none" stroke="#8B5A2B" stroke-width="3"/>
+  <rect x="29" y="36" width="6" height="10" fill="#8B5A2B"/>
+  <rect x="20" y="46" width="24" height="6" rx="2" fill="#8B5A2B"/>
+  <rect x="16" y="52" width="32" height="6" rx="2" fill="#B63E3E"/>
+</svg>

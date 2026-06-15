@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Gerenciar Prêmios - Fazendinha do Bento</title>
+  <link rel="stylesheet" href="../assets/css/variables.css" />
+  <link rel="stylesheet" href="../assets/css/base.css" />
+  <link rel="stylesheet" href="../assets/css/components.css" />
+  <style>
+    .lista-premios { display: flex; flex-direction: column; gap: var(--espaco-md); margin: var(--espaco-md) 0; }
+    .premio-elegivel { font-size: 0.85rem; margin: 0 0 var(--espaco-sm); }
+    .elegivel-opcoes { display: flex; flex-wrap: wrap; gap: var(--espaco-sm); }
+    .elegivel-opcoes label { display: inline-flex; align-items: center; gap: 4px; font-weight: 400; }
+    .campo-checkbox { display: flex; align-items: center; gap: var(--espaco-sm); }
+    .campo-checkbox label { margin: 0; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="texto-centro">
+      <h1>🧰 Gerenciar Prêmios</h1>
+      <p><a href="index.html">← Voltar ao Dashboard</a></p>
+    </div>
+
+    <button class="botao botao-primario botao-bloco" id="btn-novo">+ Novo Prêmio</button>
+
+    <div id="lista-premios" class="lista-premios">Carregando...</div>
+  </div>
+
+  <div class="modal-fundo" id="modal-premio" style="display: none;">
+    <div class="modal">
+      <h3 class="modal-titulo" id="modal-titulo">Novo Prêmio</h3>
+      <form id="form-premio">
+        <div class="campo">
+          <label for="f-codigo">Código</label>
+          <input type="text" id="f-codigo" required />
+        </div>
+        <div class="campo">
+          <label for="f-nome">Nome</label>
+          <input type="text" id="f-nome" required />
+        </div>
+        <div class="campo">
+          <label for="f-descricao">Descrição</label>
+          <textarea id="f-descricao" rows="2"></textarea>
+        </div>
+        <div class="campo">
+          <label for="f-imagem">URL da imagem</label>
+          <input type="text" id="f-imagem" placeholder="https://..." />
+        </div>
+        <div class="campo">
+          <label for="f-categoria">Categoria</label>
+          <select id="f-categoria">
+            <option value="comum">Comum</option>
+            <option value="raro">Raro</option>
+            <option value="lendario">Lendário</option>
+          </select>
+        </div>
+        <div class="campo">
+          <label for="f-status">Status</label>
+          <select id="f-status">
+            <option value="disponivel">Disponível</option>
+            <option value="reservado">Reservado</option>
+            <option value="entregue">Entregue</option>
+          </select>
+        </div>
+        <div class="campo">
+          <label>Elegível para (vazio = universal)</label>
+          <div class="elegivel-opcoes">
+            <label><input type="checkbox" value="pescaria" /> Pescaria</label>
+            <label><input type="checkbox" value="memoria" /> Memória</label>
+            <label><input type="checkbox" value="roleta" /> Roleta</label>
+            <label><input type="checkbox" value="corrida" /> Corrida</label>
+            <label><input type="checkbox" value="livre" /> Livre</label>
+          </div>
+        </div>
+        <div class="campo campo-checkbox">
+          <input type="checkbox" id="f-bloqueado" />
+          <label for="f-bloqueado">Bloqueado (fora do sorteio)</label>
+        </div>
+        <div class="campo campo-checkbox">
+          <input type="checkbox" id="f-tesouro" />
+          <label for="f-tesouro">🏆 É o Tesouro da Fazenda (único)</label>
+        </div>
+        <div class="flex gap-sm">
+          <button type="button" class="botao botao-secundario botao-bloco" id="btn-cancelar">Cancelar</button>
+          <button type="submit" class="botao botao-primario botao-bloco">Salvar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script type="module" src="../js/premios.js"></script>
+</body>
+</html>

@@ -1,0 +1,92 @@
+/* Base - Fazendinha do Bento
+   Reset, tipografia e fundações de layout (mobile-first para o Dashboard,
+   16:9 fullscreen para a TV). Depende de variables.css (paleta oficial). */
+
+@import url('https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Nunito:wght@400;600;700&display=swap');
+
+:root {
+  /* Tipografia */
+  --fonte-titulo: 'Baloo 2', system-ui, sans-serif;
+  --fonte-texto: 'Nunito', system-ui, sans-serif;
+
+  /* Espaçamento */
+  --espaco-xs: 4px;
+  --espaco-sm: 8px;
+  --espaco-md: 16px;
+  --espaco-lg: 24px;
+  --espaco-xl: 40px;
+
+  /* Bordas e sombras */
+  --raio-sm: 8px;
+  --raio-md: 16px;
+  --raio-lg: 24px;
+  --sombra-suave: 0 4px 12px rgba(139, 90, 43, 0.15);
+  --sombra-forte: 0 8px 24px rgba(139, 90, 43, 0.25);
+
+  /* Transições */
+  --transicao-rapida: 150ms ease;
+  --transicao-normal: 300ms ease;
+}
+
+/* Reset básico */
+*, *::before, *::after { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+img, svg { display: block; max-width: 100%; }
+
+body {
+  font-family: var(--fonte-texto);
+  background: var(--cor-fundo);
+  color: var(--cor-texto);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, h4 {
+  font-family: var(--fonte-titulo);
+  color: var(--cor-marrom);
+  margin: 0 0 var(--espaco-sm);
+  line-height: 1.2;
+}
+
+p { margin: 0 0 var(--espaco-md); }
+
+a { color: var(--cor-vermelho); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+/* Layout: Dashboard (mobile-first) */
+.container {
+  max-width: 480px;
+  margin: 0 auto;
+  padding: var(--espaco-md);
+}
+
+/* Layout: TV (fullscreen 16:9) */
+.tela-tv {
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  position: relative;
+  background: var(--cor-fundo);
+  display: flex;
+  flex-direction: column;
+}
+
+/* Utilitários */
+.oculto-visual {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+.flex { display: flex; }
+.flex-col { flex-direction: column; }
+.itens-centro { align-items: center; }
+.justificar-centro { justify-content: center; }
+.justificar-entre { justify-content: space-between; }
+.gap-sm { gap: var(--espaco-sm); }
+.gap-md { gap: var(--espaco-md); }
+.gap-lg { gap: var(--espaco-lg); }
+.texto-centro { text-align: center; }

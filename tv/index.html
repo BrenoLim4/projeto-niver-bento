@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TV - Fazendinha do Bento</title>
+  <link rel="stylesheet" href="../assets/css/variables.css" />
+  <link rel="stylesheet" href="../assets/css/base.css" />
+  <link rel="stylesheet" href="../assets/css/components.css" />
+  <link rel="stylesheet" href="../assets/css/tv.css" />
+  <link rel="stylesheet" href="../assets/css/animacoes.css" />
+</head>
+<body>
+  <div class="tela-tv">
+    <!-- Boot: exige 1 toque para desbloquear áudio (autoplay) -->
+    <div id="tv-boot" class="tv-boot">
+      <div class="tv-mascote"></div>
+      <h1>🐖 Fazendinha do Bento</h1>
+      <p>Toque para iniciar a TV.</p>
+      <button id="btn-iniciar-tv" class="botao botao-primario">▶️ Iniciar TV</button>
+    </div>
+
+    <!-- Estado Normal: modos rotativos -->
+    <div id="tv-normal" class="tv-normal" style="display: none;">
+      <div class="tv-modo tv-hall" data-modo="hall_da_fama">
+        <header class="hall-cabecalho">
+          <div class="hall-titulo">
+            <img src="../assets/img/icons/trofeu.svg" alt="" />
+            <h1>Hall da Fama</h1>
+          </div>
+
+          <div id="hall-tesouro" class="hall-tesouro">
+            <img src="../assets/img/icons/bau.svg" alt="" />
+            <div>
+              <strong>Tesouro da Fazenda</strong>
+              <span id="hall-tesouro-status">Ainda não encontrado</span>
+            </div>
+          </div>
+
+          <div class="hall-contadores">
+            <div class="hall-contador">
+              <strong id="hall-total">0</strong>
+              <span>Entregues</span>
+            </div>
+            <div class="hall-contador">
+              <strong id="hall-raros">0</strong>
+              <span>Raros</span>
+            </div>
+            <div class="hall-contador">
+              <strong id="hall-lendarios">0</strong>
+              <span>Lendários</span>
+            </div>
+          </div>
+        </header>
+
+        <div id="hall-grade" class="hall-grade">
+          <div id="hall-trilha" class="hall-trilha"></div>
+        </div>
+      </div>
+      <div class="tv-modo" data-modo="corrida_animais" style="display: none;">
+        <img src="../assets/img/icons/cavalo.svg" alt="" />
+        <h1>🐎 Corrida dos Animais</h1>
+        <p>Em construção — implementação prevista para a FASE 13.</p>
+      </div>
+      <div class="tv-modo" data-modo="roleta_fazenda" style="display: none;">
+        <img src="../assets/img/icons/roleta.svg" alt="" />
+        <h1>🎡 Roleta da Fazenda</h1>
+        <p>Em construção — implementação prevista para a FASE 12.</p>
+      </div>
+      <div class="tv-modo" data-modo="estatisticas" style="display: none;">
+        <img src="../assets/img/icons/grafico.svg" alt="" />
+        <h1>📊 Estatísticas</h1>
+        <p>Em construção — implementação prevista para a FASE 14.</p>
+      </div>
+    </div>
+
+    <!-- Estado Evento: Suspense → Baú → Revelação → Encerramento -->
+    <div id="tv-evento" class="tv-evento" style="display: none;">
+      <div id="etapa-suspense" class="etapa-evento">
+        <div class="tv-mascote"></div>
+        <h1>🎁 Bento encontrou um presente para <span class="evento-vencedor"></span>!</h1>
+      </div>
+
+      <div id="etapa-bau" class="etapa-evento" style="display: none;">
+        <div class="bau-container">
+          <img src="../assets/img/icons/bau.svg" alt="" class="bau-icone" />
+          <div class="particulas">
+            <img class="particula" src="../assets/img/icons/estrela.svg" alt="" />
+            <img class="particula" src="../assets/img/icons/estrela.svg" alt="" />
+            <img class="particula" src="../assets/img/icons/estrela.svg" alt="" />
+            <img class="particula" src="../assets/img/icons/estrela.svg" alt="" />
+            <img class="particula" src="../assets/img/icons/estrela.svg" alt="" />
+            <img class="particula" src="../assets/img/icons/estrela.svg" alt="" />
+            <img class="particula" src="../assets/img/icons/estrela.svg" alt="" />
+            <img class="particula" src="../assets/img/icons/estrela.svg" alt="" />
+          </div>
+        </div>
+        <h1>Abrindo o baú...</h1>
+      </div>
+
+      <div id="etapa-revelacao" class="etapa-evento" style="display: none;">
+        <img id="revelacao-imagem" class="revelacao-imagem" src="" alt="" />
+        <h1 id="revelacao-nome"></h1>
+        <p>
+          Código: <strong id="revelacao-codigo"></strong>
+          <span id="revelacao-categoria" class="badge"></span>
+        </p>
+        <p>Ganhador: <strong class="evento-vencedor"></strong></p>
+      </div>
+
+      <div id="etapa-encerramento" class="etapa-evento" style="display: none;">
+        <div class="tv-mascote"></div>
+        <h1>🎉 Parabéns, <span class="evento-vencedor"></span>!</h1>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { subscribeNovosEventos, subscribeConfig, buscarConfigAtual } from '../js/realtime.js';
+    import { configurarFila, carregarFilaInicial, adicionarEvento } from '../js/fila-eventos.js';
+    import { executarRevelacao } from '../js/animacoes.js';
+    import { desbloquear } from '../js/sons.js';
+    import { inicializarHallDaFama, atualizarTesouroStatus } from '../js/halldafama.js';
+
+    const MODOS = ['hall_da_fama', 'corrida_animais', 'roleta_fazenda', 'estatisticas'];
+
+    const tvBoot = document.getElementById('tv-boot');
+    const tvNormal = document.getElementById('tv-normal');
+    const tvEvento = document.getElementById('tv-evento');
+    const btnIniciar = document.getElementById('btn-iniciar-tv');
+
+    const elementosEvento = {
+      container: tvEvento,
+      etapas: {
+        suspense: document.getElementById('etapa-suspense'),
+        bau: document.getElementById('etapa-bau'),
+        revelacao: document.getElementById('etapa-revelacao'),
+        encerramento: document.getElementById('etapa-encerramento'),
+      },
+      vencedor: document.querySelectorAll('.evento-vencedor'),
+      revelacaoImagem: document.getElementById('revelacao-imagem'),
+      revelacaoNome: document.getElementById('revelacao-nome'),
+      revelacaoCodigo: document.getElementById('revelacao-codigo'),
+      revelacaoCategoria: document.getElementById('revelacao-categoria'),
+    };
+
+    const elementosHall = {
+      grade: document.getElementById('hall-grade'),
+      trilha: document.getElementById('hall-trilha'),
+      totalDistribuidos: document.getElementById('hall-total'),
+      totalRaros: document.getElementById('hall-raros'),
+      totalLendarios: document.getElementById('hall-lendarios'),
+      tesouroContainer: document.getElementById('hall-tesouro'),
+      tesouroStatus: document.getElementById('hall-tesouro-status'),
+    };
+
+    let modoAtual = 'hall_da_fama';
+
+    function mostrarModo(modo) {
+      modoAtual = MODOS.includes(modo) ? modo : MODOS[0];
+      document.querySelectorAll('.tv-modo').forEach((el) => {
+        el.style.display = el.dataset.modo === modoAtual ? '' : 'none';
+      });
+    }
+
+    async function mostrarEvento(evento) {
+      tvNormal.style.display = 'none';
+      tvEvento.style.display = '';
+
+      await executarRevelacao(evento, elementosEvento);
+
+      tvNormal.style.display = '';
+    }
+
+    // O modo de apresentação só muda por evento de premiação (acima) ou por
+    // `config.modo_apresentacao` via controle remoto do dashboard (FASE 15).
+    function aplicarConfig(config) {
+      mostrarModo(config.modo_apresentacao);
+      atualizarTesouroStatus(config.tesouro_status);
+    }
+
+    async function iniciarTV() {
+      tvBoot.style.display = 'none';
+      tvNormal.style.display = '';
+
+      const config = await buscarConfigAtual();
+      inicializarHallDaFama(elementosHall, config);
+      aplicarConfig(config);
+
+      configurarFila({ onProcessarEvento: mostrarEvento });
+      subscribeNovosEventos(adicionarEvento);
+      subscribeConfig(aplicarConfig);
+
+      await carregarFilaInicial();
+    }
+
+    btnIniciar.addEventListener('click', () => {
+      desbloquear();
+      iniciarTV();
+    });
+  </script>
+</body>
+</html>

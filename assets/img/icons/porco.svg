@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Porco">
+  <circle cx="32" cy="34" r="22" fill="#F5E6C8" stroke="#8B5A2B" stroke-width="2"/>
+  <ellipse cx="16" cy="20" rx="7" ry="8" fill="#F5E6C8" stroke="#8B5A2B" stroke-width="2" transform="rotate(-20 16 20)"/>
+  <ellipse cx="48" cy="20" rx="7" ry="8" fill="#F5E6C8" stroke="#8B5A2B" stroke-width="2" transform="rotate(20 48 20)"/>
+  <circle cx="24" cy="28" r="3.5" fill="#8B5A2B"/>
+  <circle cx="40" cy="28" r="3.5" fill="#8B5A2B"/>
+  <ellipse cx="32" cy="42" rx="13" ry="9" fill="#F2A64A" stroke="#8B5A2B" stroke-width="2"/>
+  <ellipse cx="27" cy="42" rx="2.5" ry="3.5" fill="#8B5A2B"/>
+  <ellipse cx="37" cy="42" rx="2.5" ry="3.5" fill="#8B5A2B"/>
+</svg>

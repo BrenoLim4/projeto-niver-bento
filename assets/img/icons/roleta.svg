@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Roleta da fazenda">
+  <circle cx="32" cy="34" r="26" fill="#F5E6C8" stroke="#8B5A2B" stroke-width="3"/>
+  <path d="M32 34 L32 8 A26 26 0 0 1 54.5 21 Z" fill="#B63E3E"/>
+  <path d="M32 34 L54.5 21 A26 26 0 0 1 54.5 47 Z" fill="#F2A64A"/>
+  <path d="M32 34 L54.5 47 A26 26 0 0 1 32 60 Z" fill="#6F8C52"/>
+  <path d="M32 34 L32 60 A26 26 0 0 1 9.5 47 Z" fill="#8B5A2B"/>
+  <path d="M32 34 L9.5 47 A26 26 0 0 1 9.5 21 Z" fill="#F5E6C8"/>
+  <path d="M32 34 L9.5 21 A26 26 0 0 1 32 8 Z" fill="#F2A64A"/>
+  <circle cx="32" cy="34" r="5" fill="#8B5A2B"/>
+  <path d="M32 2 L26 12 L38 12 Z" fill="#B63E3E" stroke="#8B5A2B" stroke-width="1.5" stroke-linejoin="round"/>
+</svg>

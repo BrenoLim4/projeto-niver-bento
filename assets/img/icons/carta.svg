@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Cartas do jogo da memória">
+  <rect x="8" y="14" width="28" height="38" rx="5" fill="#F5E6C8" stroke="#8B5A2B" stroke-width="2"/>
+  <rect x="28" y="14" width="28" height="38" rx="5" fill="#FFF8EF" stroke="#8B5A2B" stroke-width="2"/>
+  <path d="M22 24 l3 6 7 1 -5 5 1 7 -6 -3 -6 3 1 -7 -5 -5 7 -1 Z" fill="#F2A64A"/>
+  <path d="M42 24 l3 6 7 1 -5 5 1 7 -6 -3 -6 3 1 -7 -5 -5 7 -1 Z" fill="#F2A64A"/>
+</svg>

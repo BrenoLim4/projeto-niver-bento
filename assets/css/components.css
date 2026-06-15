@@ -1,0 +1,144 @@
+/* Componentes - Fazendinha do Bento
+   Botões, cards, modais e badges reutilizáveis em Dashboard e TV.
+   Depende de variables.css e base.css. */
+
+/* Botões */
+.botao {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--espaco-sm);
+  padding: 12px 24px;
+  border: none;
+  border-radius: var(--raio-md);
+  font-family: var(--fonte-titulo);
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform var(--transicao-rapida), box-shadow var(--transicao-rapida);
+  text-decoration: none;
+}
+.botao:active { transform: scale(0.97); }
+.botao:disabled { opacity: 0.5; cursor: not-allowed; }
+.botao-bloco { width: 100%; }
+
+.botao-primario {
+  background: var(--cor-dourado);
+  color: var(--cor-marrom);
+  box-shadow: var(--sombra-suave);
+}
+.botao-primario:hover { box-shadow: var(--sombra-forte); }
+
+.botao-secundario {
+  background: var(--cor-superficie);
+  color: var(--cor-marrom);
+  border: 2px solid var(--cor-dourado);
+}
+
+.botao-sucesso { background: var(--cor-verde); color: var(--cor-branco); }
+.botao-perigo { background: var(--cor-vermelho); color: var(--cor-branco); }
+
+/* Cards */
+.card {
+  background: var(--cor-superficie);
+  border-radius: var(--raio-lg);
+  box-shadow: var(--sombra-suave);
+  padding: var(--espaco-md);
+}
+
+.grade-cards {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--espaco-md);
+}
+
+.card-link {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--espaco-sm);
+  text-align: center;
+  color: var(--cor-marrom);
+  text-decoration: none;
+  transition: transform var(--transicao-rapida);
+}
+.card-link:hover { transform: translateY(-2px); text-decoration: none; }
+.card-link img,
+.card-link svg { width: 48px; height: 48px; }
+.card-link span { font-family: var(--fonte-titulo); font-weight: 600; }
+
+/* Modal */
+.modal-fundo {
+  position: fixed;
+  inset: 0;
+  background: rgba(139, 90, 43, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--espaco-md);
+  z-index: 100;
+}
+
+.modal {
+  background: var(--cor-superficie);
+  border-radius: var(--raio-lg);
+  padding: var(--espaco-lg);
+  max-width: 400px;
+  width: 100%;
+  box-shadow: var(--sombra-forte);
+}
+
+.modal-titulo { margin-top: 0; }
+
+/* Badges de categoria de prêmio */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 12px;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  font-family: var(--fonte-titulo);
+}
+.badge-comum { background: var(--cor-bege); color: var(--cor-marrom); }
+.badge-raro { background: var(--cor-dourado); color: var(--cor-marrom); }
+.badge-lendario { background: var(--cor-vermelho); color: var(--cor-branco); }
+
+/* Badges de status de prêmio */
+.badge-disponivel { background: var(--cor-verde); color: var(--cor-branco); }
+.badge-reservado { background: var(--cor-dourado); color: var(--cor-marrom); }
+.badge-entregue { background: var(--cor-marrom); color: var(--cor-branco); }
+
+/* Badge de prêmio bloqueado (fora do sorteio) */
+.badge-bloqueado { background: var(--cor-vermelho); color: var(--cor-branco); }
+
+/* Campos de formulário */
+.campo {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espaco-xs);
+  margin-bottom: var(--espaco-md);
+}
+.campo label {
+  font-family: var(--fonte-titulo);
+  font-weight: 600;
+  color: var(--cor-marrom);
+}
+.campo input,
+.campo select,
+.campo textarea {
+  padding: 10px 12px;
+  border: 2px solid var(--cor-bege);
+  border-radius: var(--raio-sm);
+  font-family: var(--fonte-texto);
+  font-size: 1rem;
+  background: var(--cor-branco);
+  color: var(--cor-texto);
+}
+.campo input:focus,
+.campo select:focus,
+.campo textarea:focus {
+  outline: none;
+  border-color: var(--cor-dourado);
+}

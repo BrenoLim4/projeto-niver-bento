@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Entregas Pendentes - Fazendinha do Bento</title>
+  <link rel="stylesheet" href="../assets/css/variables.css" />
+  <link rel="stylesheet" href="../assets/css/base.css" />
+  <link rel="stylesheet" href="../assets/css/components.css" />
+  <style>
+    .secao-titulo { margin-top: var(--espaco-lg); }
+    .lista-entregas { display: flex; flex-direction: column; gap: var(--espaco-md); margin: var(--espaco-md) 0; }
+    .lista-vazia { opacity: 0.7; text-align: center; }
+
+    .entrega-item { display: flex; gap: var(--espaco-md); align-items: center; }
+    .entrega-imagem { width: 64px; height: 64px; object-fit: cover; border-radius: var(--raio-md); background: var(--cor-bege); flex-shrink: 0; }
+    .entrega-info { flex: 1; min-width: 0; }
+    .entrega-info p { margin: 4px 0; font-size: 0.9rem; color: var(--cor-marrom); }
+    .entrega-badges { display: flex; gap: var(--espaco-sm); align-items: center; flex-wrap: wrap; margin-top: 4px; }
+    .entrega-acao { flex-shrink: 0; }
+
+    .entrega-preview { display: flex; gap: var(--espaco-md); align-items: center; margin-bottom: var(--espaco-md); }
+    .entrega-preview img { width: 64px; height: 64px; object-fit: cover; border-radius: var(--raio-md); background: var(--cor-bege); }
+    .preview-foto { display: block; width: 100%; max-height: 240px; object-fit: cover; border-radius: var(--raio-md); margin: var(--espaco-sm) 0; }
+    .erro-entrega { color: var(--cor-vermelho); font-weight: 600; margin: var(--espaco-sm) 0; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="texto-centro">
+      <h1>📦 Entregas Pendentes</h1>
+      <p><a href="index.html">← Voltar ao Dashboard</a></p>
+    </div>
+
+    <h2 class="secao-titulo">Aguardando entrega</h2>
+    <div id="lista-pendentes" class="lista-entregas">Carregando...</div>
+
+    <h2 class="secao-titulo">Aguardando foto</h2>
+    <div id="lista-sem-foto" class="lista-entregas">Carregando...</div>
+  </div>
+
+  <div class="modal-fundo" id="modal-entrega" style="display: none;">
+    <div class="modal">
+      <h3 class="modal-titulo" id="modal-titulo">Registrar Entrega</h3>
+
+      <div class="entrega-preview">
+        <img id="preview-premio" src="" alt="" />
+        <div>
+          <strong id="preview-nome"></strong>
+          <p id="preview-vencedor"></p>
+        </div>
+      </div>
+
+      <div class="campo">
+        <label>Foto do ganhador</label>
+        <div class="flex gap-sm">
+          <button type="button" class="botao botao-secundario" id="btn-tirar-foto">📷 Tirar Foto</button>
+          <button type="button" class="botao botao-secundario" id="btn-enviar-foto">🖼️ Galeria</button>
+        </div>
+        <input type="file" id="input-camera" accept="image/*" capture="environment" class="oculto-visual" />
+        <input type="file" id="input-galeria" accept="image/*" class="oculto-visual" />
+      </div>
+
+      <img id="preview-foto" class="preview-foto" style="display: none;" alt="" />
+      <p id="erro-entrega" class="erro-entrega" style="display: none;"></p>
+
+      <div class="flex gap-sm">
+        <button type="button" class="botao botao-secundario botao-bloco" id="btn-cancelar-entrega">Cancelar</button>
+        <button type="button" class="botao botao-sucesso botao-bloco" id="btn-confirmar-entrega">Confirmar</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="../js/entregas.js"></script>
+</body>
+</html>

@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Estatísticas">
+  <line x1="10" y1="54" x2="56" y2="54" stroke="#8B5A2B" stroke-width="3" stroke-linecap="round"/>
+  <rect x="14" y="34" width="10" height="20" rx="2" fill="#F2A64A"/>
+  <rect x="28" y="22" width="10" height="32" rx="2" fill="#6F8C52"/>
+  <rect x="42" y="14" width="10" height="40" rx="2" fill="#B63E3E"/>
+</svg>

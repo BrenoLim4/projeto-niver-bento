@@ -1,0 +1,17 @@
+/* Paleta oficial - Fazendinha do Bento (ver CLAUDE.md) */
+:root {
+  --cor-dourado: #F2A64A;
+  --cor-marrom: #8B5A2B;
+  --cor-bege: #F5E6C8;
+  --cor-verde: #6F8C52;
+  --cor-vermelho: #B63E3E;
+  --cor-branco: #FFF8EF;
+
+  /* Aliases semânticos */
+  --cor-fundo: var(--cor-bege);
+  --cor-texto: var(--cor-marrom);
+  --cor-destaque: var(--cor-dourado);
+  --cor-sucesso: var(--cor-verde);
+  --cor-erro: var(--cor-vermelho);
+  --cor-superficie: var(--cor-branco);
+}

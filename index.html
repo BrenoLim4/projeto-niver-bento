@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Fazendinha do Bento</title>
+  <link rel="stylesheet" href="assets/css/variables.css" />
+  <link rel="stylesheet" href="assets/css/base.css" />
+  <link rel="stylesheet" href="assets/css/components.css" />
+  <style>
+    body {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .mascote {
+      width: 180px;
+      aspect-ratio: 4 / 5;
+      margin: 0 auto var(--espaco-md);
+      border-radius: var(--raio-lg);
+      overflow: hidden;
+      box-shadow: var(--sombra-suave);
+      background: var(--cor-bege) center/cover no-repeat url('assets/img/bento-foto.jpg');
+    }
+    .links { display: flex; gap: var(--espaco-md); justify-content: center; }
+  </style>
+</head>
+<body>
+  <div class="container texto-centro">
+    <div class="mascote"></div>
+    <h1>🐖 Fazendinha do Bento</h1>
+    <p>Plataforma de premiações da festa de 1 ano do Bento.</p>
+    <div class="links">
+      <a class="botao botao-primario" href="dashboard/index.html">Dashboard</a>
+      <a class="botao botao-secundario" href="tv/index.html">TV</a>
+    </div>
+  </div>
+</body>
+</html>

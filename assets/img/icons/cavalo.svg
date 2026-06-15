@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Cavalo">
+  <ellipse cx="32" cy="36" rx="20" ry="24" fill="#8B5A2B"/>
+  <ellipse cx="32" cy="46" rx="11" ry="14" fill="#F5E6C8"/>
+  <ellipse cx="24" cy="48" rx="2.5" ry="3" fill="#8B5A2B"/>
+  <ellipse cx="40" cy="48" rx="2.5" ry="3" fill="#8B5A2B"/>
+  <circle cx="22" cy="28" r="3" fill="#FFF8EF"/>
+  <circle cx="42" cy="28" r="3" fill="#FFF8EF"/>
+  <path d="M16 16 Q32 4 48 16 Q32 18 16 16 Z" fill="#F2A64A"/>
+  <ellipse cx="14" cy="32" rx="4" ry="7" fill="#8B5A2B" transform="rotate(-20 14 32)"/>
+  <ellipse cx="50" cy="32" rx="4" ry="7" fill="#8B5A2B" transform="rotate(20 50 32)"/>
+</svg>

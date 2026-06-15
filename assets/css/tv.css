@@ -1,0 +1,243 @@
+/* TV - Fazendinha do Bento
+   Estilos da rota única /tv: boot (desbloqueio de áudio), Estado Normal
+   (modos rotativos) e Estado Evento (placeholder de revelação).
+   Depende de variables.css e base.css. */
+
+.tv-boot,
+.tv-normal,
+.tv-evento {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--espaco-lg);
+  text-align: center;
+  padding: var(--espaco-xl);
+}
+
+.tv-mascote {
+  width: 220px;
+  aspect-ratio: 4 / 5;
+  border-radius: var(--raio-lg);
+  overflow: hidden;
+  box-shadow: var(--sombra-suave);
+  background: var(--cor-superficie) center/cover no-repeat url('../img/bento-foto.jpg');
+}
+
+.tv-boot h1,
+.tv-normal h1,
+.tv-evento h1 {
+  font-size: 2.5rem;
+}
+
+/* Estado Normal: modos rotativos (apenas 1 visível por vez) */
+.tv-modo {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--espaco-lg);
+}
+
+.tv-modo img {
+  width: 96px;
+  height: 96px;
+}
+
+/* Estado Evento: placeholder de revelação (substituído na FASE 5) */
+.tv-evento h1 {
+  color: var(--cor-dourado);
+}
+
+/* Hall da Fama (FASE 6) */
+.tv-hall {
+  width: 100%;
+  height: 100%;
+  justify-content: flex-start;
+  align-items: stretch;
+  gap: var(--espaco-md);
+  padding: var(--espaco-md) var(--espaco-xl);
+}
+
+/* Cabeçalho compacto: título + Tesouro + contadores numa única faixa,
+   para deixar o máximo de espaço vertical para o carrossel de fotos. */
+.hall-cabecalho {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--espaco-md);
+}
+
+.hall-titulo {
+  display: flex;
+  align-items: center;
+  gap: var(--espaco-sm);
+}
+
+.hall-titulo img {
+  width: 48px;
+  height: 48px;
+}
+
+.hall-titulo h1 {
+  margin: 0;
+}
+
+.hall-tesouro {
+  display: flex;
+  align-items: center;
+  gap: var(--espaco-sm);
+  background: var(--cor-superficie);
+  border: 2px solid var(--cor-dourado);
+  border-radius: var(--raio-lg);
+  padding: var(--espaco-xs) var(--espaco-md);
+  box-shadow: var(--sombra-suave);
+}
+
+.hall-tesouro img {
+  width: 36px;
+  height: 36px;
+}
+
+.hall-tesouro strong {
+  display: block;
+  font-family: var(--fonte-titulo);
+  font-size: 0.95rem;
+}
+
+.hall-tesouro span {
+  font-size: 0.9rem;
+}
+
+.hall-tesouro--encontrado {
+  border-color: var(--cor-verde);
+  box-shadow: var(--sombra-forte), 0 0 24px var(--cor-dourado);
+}
+
+.hall-tesouro--encontrado #hall-tesouro-status {
+  color: var(--cor-verde);
+  font-weight: 700;
+}
+
+.hall-contadores {
+  display: flex;
+  gap: var(--espaco-md);
+}
+
+.hall-contador {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: var(--cor-superficie);
+  border-radius: var(--raio-md);
+  padding: var(--espaco-xs) var(--espaco-md);
+  box-shadow: var(--sombra-suave);
+  min-width: 90px;
+}
+
+.hall-contador strong {
+  font-family: var(--fonte-titulo);
+  font-size: 1.6rem;
+  color: var(--cor-dourado);
+}
+
+.hall-contador span {
+  font-size: 0.8rem;
+}
+
+/* Carrossel horizontal: até 3 cards visíveis, fotos como elemento principal
+   de cada card. Com mais de 3 ganhadores, a trilha desliza lentamente para a
+   esquerda em loop contínuo (ver hall-trilha--deslizando). */
+.hall-grade {
+  flex: 1;
+  width: 100%;
+  overflow: hidden;
+  position: relative;
+}
+
+.hall-trilha {
+  display: flex;
+  height: 100%;
+  gap: var(--espaco-lg);
+  will-change: transform;
+}
+
+.hall-trilha--deslizando {
+  animation-name: hall-deslizar;
+  animation-duration: var(--hall-duracao, 30s);
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+}
+
+@keyframes hall-deslizar {
+  from { transform: translateX(0); }
+  to { transform: translateX(var(--hall-distancia, 0px)); }
+}
+
+.hall-card {
+  flex: 0 0 var(--hall-largura-card, 33%);
+  min-width: 0;
+  background: var(--cor-superficie);
+  border-radius: var(--raio-lg);
+  box-shadow: var(--sombra-suave);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  text-align: center;
+}
+
+.hall-card-foto {
+  flex: 3;
+  min-height: 0;
+  position: relative;
+  overflow: hidden;
+  background: var(--cor-bege);
+}
+
+.hall-card-foto img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.hall-card-info {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--espaco-xs);
+  padding: var(--espaco-md);
+}
+
+.hall-card-vencedor {
+  font-family: var(--fonte-titulo);
+  font-size: 1.6rem;
+}
+
+.hall-card-premio {
+  color: var(--cor-marrom);
+  font-size: 1.1rem;
+}
+
+.hall-card-data {
+  font-size: 0.85rem;
+  color: var(--cor-marrom);
+  opacity: 0.7;
+}
+
+.hall-card--tesouro {
+  border: 3px solid var(--cor-dourado);
+  box-shadow: var(--sombra-forte), 0 0 32px var(--cor-dourado);
+}
+
+.hall-vazio {
+  flex: 1 0 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  font-size: 1.4rem;
+  opacity: 0.7;
+}

@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Teste de Conexão - Fazendinha do Bento</title>
+  <link rel="stylesheet" href="assets/css/variables.css" />
+  <style>
+    body {
+      margin: 0;
+      font-family: system-ui, sans-serif;
+      background: var(--cor-fundo);
+      color: var(--cor-texto);
+      padding: 24px;
+    }
+    h1 { color: var(--cor-marrom); }
+    .paleta {
+      display: flex;
+      gap: 8px;
+      margin: 16px 0 32px;
+    }
+    .swatch {
+      width: 64px;
+      height: 64px;
+      border-radius: 8px;
+      border: 1px solid rgba(0,0,0,0.1);
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      font-size: 10px;
+      color: var(--cor-marrom);
+      padding-bottom: 4px;
+    }
+    #status {
+      padding: 16px;
+      border-radius: 8px;
+      background: var(--cor-superficie);
+      border: 1px solid var(--cor-dourado);
+    }
+    .ok { color: var(--cor-verde); font-weight: bold; }
+    .erro { color: var(--cor-vermelho); font-weight: bold; }
+    code { background: var(--cor-bege); padding: 2px 6px; border-radius: 4px; }
+  </style>
+</head>
+<body>
+  <h1>🐄 Fazendinha do Bento — Teste de Conexão</h1>
+
+  <h2>Paleta oficial</h2>
+  <div class="paleta">
+    <div class="swatch" style="background: var(--cor-dourado)">Dourado</div>
+    <div class="swatch" style="background: var(--cor-marrom)">Marrom</div>
+    <div class="swatch" style="background: var(--cor-bege)">Bege</div>
+    <div class="swatch" style="background: var(--cor-verde)">Verde</div>
+    <div class="swatch" style="background: var(--cor-vermelho)">Vermelho</div>
+    <div class="swatch" style="background: var(--cor-branco)">Branco</div>
+  </div>
+
+  <h2>Conexão Supabase</h2>
+  <div id="status">Testando conexão...</div>
+
+  <h2>Validação do Schema (FASE 2)</h2>
+  <p>Confere se <code>supabase/schema.sql</code> e <code>supabase/seed.sql</code> já foram
+  executados no SQL Editor do projeto.</p>
+  <ul id="checks"></ul>
+
+  <script type="module">
+    import { supabase } from './js/supabaseClient.js';
+
+    const statusEl = document.getElementById('status');
+    const checksEl = document.getElementById('checks');
+
+    try {
+      const { error } = await supabase.from('config').select('*').limit(1);
+
+      if (error) {
+        statusEl.innerHTML = `
+          <p class="erro">⚠ Conexão com Supabase ainda não está completa.</p>
+          <p>Erro retornado: <code>${error.message}</code></p>
+          <p>Isso é esperado até que:</p>
+          <ul>
+            <li>As credenciais reais sejam preenchidas em <code>js/supabaseClient.js</code>; e</li>
+            <li>A tabela <code>config</code> seja criada (FASE 2).</li>
+          </ul>
+        `;
+      } else {
+        statusEl.innerHTML = `<p class="ok">✔ Conexão com Supabase funcionando!</p>`;
+      }
+    } catch (err) {
+      statusEl.innerHTML = `
+        <p class="erro">✖ Falha ao inicializar o cliente Supabase.</p>
+        <p><code>${err.message}</code></p>
+        <p>Verifique se <code>js/supabaseClient.js</code> contém URL e chave anon válidas.</p>
+      `;
+    }
+
+    const checks = [
+      { label: 'Tabela premios (16 itens do seed)', run: () => supabase.from('premios').select('*', { count: 'exact', head: true }) },
+      { label: 'Tabela eventos', run: () => supabase.from('eventos').select('*', { count: 'exact', head: true }) },
+      { label: 'Tabela qr_codes', run: () => supabase.from('qr_codes').select('*', { count: 'exact', head: true }) },
+      { label: 'Tabela config (linha única)', run: () => supabase.from('config').select('*', { count: 'exact', head: true }) },
+      { label: 'View vw_hall_da_fama', run: () => supabase.from('vw_hall_da_fama').select('*', { count: 'exact', head: true }) },
+      { label: 'View vw_entregas_pendentes', run: () => supabase.from('vw_entregas_pendentes').select('*', { count: 'exact', head: true }) },
+      { label: 'View vw_estatisticas', run: () => supabase.from('vw_estatisticas').select('*', { count: 'exact', head: true }) },
+    ];
+
+    for (const check of checks) {
+      const li = document.createElement('li');
+      li.textContent = `${check.label}: verificando...`;
+      checksEl.appendChild(li);
+
+      try {
+        const { count, error } = await check.run();
+        if (error) {
+          li.innerHTML = `${check.label}: <span class="erro">✖ ${error.message}</span>`;
+        } else {
+          li.innerHTML = `${check.label}: <span class="ok">✔ ok (${count ?? 0} registro(s))</span>`;
+        }
+      } catch (err) {
+        li.innerHTML = `${check.label}: <span class="erro">✖ ${err.message}</span>`;
+      }
+    }
+  </script>
+</body>
+</html>

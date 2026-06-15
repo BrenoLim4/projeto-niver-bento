@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Guia de Estilo - Fazendinha do Bento</title>
+  <link rel="stylesheet" href="assets/css/variables.css" />
+  <link rel="stylesheet" href="assets/css/base.css" />
+  <link rel="stylesheet" href="assets/css/components.css" />
+  <style>
+    .secao { margin-bottom: var(--espaco-xl); }
+
+    .amostra-cores { display: flex; gap: var(--espaco-sm); flex-wrap: wrap; }
+    .swatch {
+      width: 72px; height: 72px;
+      border-radius: var(--raio-sm);
+      border: 1px solid rgba(0,0,0,0.1);
+      display: flex; align-items: flex-end; justify-content: center;
+      font-size: 10px; padding-bottom: 4px;
+      color: var(--cor-marrom);
+    }
+
+    .mascote-box {
+      width: 100%;
+      max-width: 220px;
+      aspect-ratio: 4 / 5;
+      margin: 0 auto;
+      border-radius: var(--raio-lg);
+      overflow: hidden;
+      box-shadow: var(--sombra-suave);
+      background: var(--cor-bege) center/cover no-repeat url('assets/img/bento-foto.jpg');
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      color: var(--cor-marrom);
+      font-weight: 600;
+      padding: var(--espaco-md);
+    }
+
+    .icones-grade {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: var(--espaco-md);
+      text-align: center;
+    }
+    .icones-grade img { width: 48px; height: 48px; margin: 0 auto; }
+    .icones-grade span { display: block; font-size: 0.75rem; margin-top: 4px; }
+
+    .tv-preview {
+      aspect-ratio: 16 / 9;
+      width: 100%;
+      border-radius: var(--raio-lg);
+      border: 4px solid var(--cor-marrom);
+      overflow: hidden;
+      background: var(--cor-bege);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: var(--espaco-md);
+    }
+    .tv-preview .mascote-tv {
+      width: 110px;
+      aspect-ratio: 4 / 5;
+      border-radius: var(--raio-md);
+      background: var(--cor-superficie) center/cover no-repeat url('assets/img/bento-foto.jpg');
+      box-shadow: var(--sombra-suave);
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🌾 Guia de Estilo — Fazendinha do Bento</h1>
+    <p>Componentes da FASE 1, validados em layout mobile (Dashboard) e em preview 16:9 (TV).</p>
+
+    <section class="secao">
+      <h2>Paleta oficial</h2>
+      <div class="amostra-cores">
+        <div class="swatch" style="background: var(--cor-dourado)">Dourado</div>
+        <div class="swatch" style="background: var(--cor-marrom); color: var(--cor-branco)">Marrom</div>
+        <div class="swatch" style="background: var(--cor-bege)">Bege</div>
+        <div class="swatch" style="background: var(--cor-verde); color: var(--cor-branco)">Verde</div>
+        <div class="swatch" style="background: var(--cor-vermelho); color: var(--cor-branco)">Vermelho</div>
+        <div class="swatch" style="background: var(--cor-branco)">Branco</div>
+      </div>
+    </section>
+
+    <section class="secao">
+      <h2>Mascote — Bento</h2>
+      <div class="mascote-box">
+        Foto do Bento<br />(assets/img/bento-foto.jpg)
+      </div>
+    </section>
+
+    <section class="secao">
+      <h2>Botões</h2>
+      <div class="flex gap-sm" style="flex-wrap: wrap;">
+        <button class="botao botao-primario">Primário</button>
+        <button class="botao botao-secundario">Secundário</button>
+        <button class="botao botao-sucesso">Sucesso</button>
+        <button class="botao botao-perigo">Perigo</button>
+      </div>
+      <button class="botao botao-primario botao-bloco" style="margin-top: var(--espaco-md);">Botão em bloco</button>
+    </section>
+
+    <section class="secao">
+      <h2>Badges</h2>
+      <p>Categoria do prêmio:</p>
+      <div class="flex gap-sm" style="flex-wrap: wrap;">
+        <span class="badge badge-comum">Comum</span>
+        <span class="badge badge-raro">Raro</span>
+        <span class="badge badge-lendario">Lendário</span>
+      </div>
+      <p>Status do prêmio:</p>
+      <div class="flex gap-sm" style="flex-wrap: wrap;">
+        <span class="badge badge-disponivel">Disponível</span>
+        <span class="badge badge-reservado">Reservado</span>
+        <span class="badge badge-entregue">Entregue</span>
+      </div>
+    </section>
+
+    <section class="secao">
+      <h2>Cards do Dashboard</h2>
+      <div class="grade-cards">
+        <a class="card card-link" href="#">
+          <img src="assets/img/icons/trofeu.svg" alt="" />
+          <span>Hall da Fama</span>
+        </a>
+        <a class="card card-link" href="#">
+          <img src="assets/img/icons/carta.svg" alt="" />
+          <span>Jogo da Memória</span>
+        </a>
+        <a class="card card-link" href="#">
+          <img src="assets/img/icons/peixe.svg" alt="" />
+          <span>Pescaria</span>
+        </a>
+        <a class="card card-link" href="#">
+          <img src="assets/img/icons/roleta.svg" alt="" />
+          <span>Roleta da Fazenda</span>
+        </a>
+        <a class="card card-link" href="#">
+          <img src="assets/img/icons/cavalo.svg" alt="" />
+          <span>Corrida dos Animais</span>
+        </a>
+        <a class="card card-link" href="#">
+          <img src="assets/img/icons/caixa-entrega.svg" alt="" />
+          <span>Entregas Pendentes</span>
+        </a>
+        <a class="card card-link" href="#">
+          <img src="assets/img/icons/grafico.svg" alt="" />
+          <span>Estatísticas</span>
+        </a>
+        <a class="card card-link" href="#">
+          <img src="assets/img/icons/bau.svg" alt="" />
+          <span>Gerenciar Prêmios</span>
+        </a>
+        <a class="card card-link" href="#">
+          <img src="assets/img/icons/estrela.svg" alt="" />
+          <span>Premiação Livre</span>
+        </a>
+        <a class="card card-link" href="#">
+          <img src="assets/img/icons/tv.svg" alt="" />
+          <span>Controle da TV</span>
+        </a>
+      </div>
+    </section>
+
+    <section class="secao">
+      <h2>Ícones temáticos</h2>
+      <div class="icones-grade">
+        <div><img src="assets/img/icons/cavalo.svg" alt="Cavalo" /><span>Cavalo</span></div>
+        <div><img src="assets/img/icons/vaca.svg" alt="Vaca" /><span>Vaca</span></div>
+        <div><img src="assets/img/icons/porco.svg" alt="Porco" /><span>Porco</span></div>
+        <div><img src="assets/img/icons/galinha.svg" alt="Galinha" /><span>Galinha</span></div>
+        <div><img src="assets/img/icons/chapeu.svg" alt="Chapéu" /><span>Chapéu</span></div>
+        <div><img src="assets/img/icons/celeiro.svg" alt="Celeiro" /><span>Celeiro</span></div>
+        <div><img src="assets/img/icons/bau.svg" alt="Baú" /><span>Tesouro</span></div>
+      </div>
+    </section>
+
+    <section class="secao">
+      <h2>Modal</h2>
+      <button class="botao botao-secundario" onclick="document.getElementById('modal-exemplo').style.display='flex'">
+        Abrir modal de exemplo
+      </button>
+      <div class="modal-fundo" id="modal-exemplo" style="display: none;">
+        <div class="modal">
+          <h3 class="modal-titulo">🏆 Prêmio revelado!</h3>
+          <p>Este é um exemplo de modal usando os componentes da FASE 1.</p>
+          <button class="botao botao-primario botao-bloco" onclick="document.getElementById('modal-exemplo').style.display='none'">
+            Fechar
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <section class="secao">
+      <h2>Preview da TV (16:9)</h2>
+      <div class="tv-preview">
+        <div class="mascote-tv"></div>
+        <h2 style="margin: 0;">Hall da Fama</h2>
+        <span class="badge badge-lendario">Tesouro da Fazenda: Ainda não encontrado</span>
+      </div>
+    </section>
+  </div>
+</body>
+</html>

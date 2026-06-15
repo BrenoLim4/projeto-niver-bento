@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Controle da TV">
+  <rect x="6" y="12" width="52" height="34" rx="4" fill="#F5E6C8" stroke="#8B5A2B" stroke-width="2"/>
+  <rect x="11" y="17" width="42" height="24" rx="2" fill="#6F8C52"/>
+  <line x1="24" y1="52" x2="40" y2="52" stroke="#8B5A2B" stroke-width="4" stroke-linecap="round"/>
+  <line x1="32" y1="46" x2="32" y2="52" stroke="#8B5A2B" stroke-width="4"/>
+</svg>
