@@ -57,6 +57,14 @@
           <div id="hall-trilha" class="hall-trilha"></div>
         </div>
       </div>
+      <div class="tv-modo tv-pescaria" data-modo="pescaria" style="display: none;">
+        <header class="tv-pescaria-cabecalho">
+          <h1>🎣 Pescaria da Lagoa do Bento</h1>
+          <span class="tv-pescaria-contador"><strong id="tv-pescados">0</strong>/9 pescados</span>
+        </header>
+        <div id="tv-grade-peixes" class="tv-grade-peixes"></div>
+      </div>
+
       <div class="tv-modo" data-modo="corrida_animais" style="display: none;">
         <img src="../assets/img/icons/cavalo.svg" alt="" />
         <h1>🐎 Corrida dos Animais</h1>
@@ -121,13 +129,26 @@
   </div>
 
   <script type="module">
+    import { supabase } from '../js/supabaseClient.js';
     import { subscribeNovosEventos, subscribeConfig, buscarConfigAtual, subscribeBroadcastEvento } from '../js/realtime.js';
     import { configurarFila, carregarFilaInicial, adicionarEvento, ressincronizarFila } from '../js/fila-eventos.js';
     import { executarRevelacao } from '../js/animacoes.js';
     import { desbloquear } from '../js/sons.js';
     import { inicializarHallDaFama, atualizarTesouroStatus } from '../js/halldafama.js';
 
-    const MODOS = ['hall_da_fama', 'corrida_animais', 'roleta_fazenda', 'estatisticas'];
+    const MODOS = ['hall_da_fama', 'pescaria', 'corrida_animais', 'roleta_fazenda', 'estatisticas'];
+
+    const TV_PEIXES = [
+      { codigo: 'QR-PEIXE-01', nome: 'Nemo',    emoji: '🐠', cor: '#E65100' },
+      { codigo: 'QR-PEIXE-02', nome: 'Bolinha', emoji: '🐡', cor: '#F9A825' },
+      { codigo: 'QR-PEIXE-03', nome: 'Bolhas',  emoji: '🐟', cor: '#1565C0' },
+      { codigo: 'QR-PEIXE-04', nome: 'Tubarão', emoji: '🦈', cor: '#37474F' },
+      { codigo: 'QR-PEIXE-05', nome: 'Polvo',   emoji: '🐙', cor: '#6A1B9A' },
+      { codigo: 'QR-PEIXE-06', nome: 'Lula',    emoji: '🦑', cor: '#00695C' },
+      { codigo: 'QR-PEIXE-07', nome: 'Lagosta', emoji: '🦞', cor: '#B71C1C' },
+      { codigo: 'QR-PEIXE-08', nome: 'Camarão', emoji: '🦐', cor: '#AD1457' },
+      { codigo: 'QR-PEIXE-09', nome: 'Dourado', emoji: '🦀', cor: '#8B5A2B' },
+    ];
 
     const tvBoot = document.getElementById('tv-boot');
     const tvNormal = document.getElementById('tv-normal');
@@ -160,6 +181,53 @@
       tesouroContainer: document.getElementById('hall-tesouro'),
       tesouroStatus: document.getElementById('hall-tesouro-status'),
     };
+
+    const tvGradePeixes = document.getElementById('tv-grade-peixes');
+    const tvPescadosEl  = document.getElementById('tv-pescados');
+    const statusPeixesTV = {};
+
+    function renderizarGradePescaria() {
+      tvGradePeixes.innerHTML = '';
+      TV_PEIXES.forEach((peixe) => {
+        const card = document.createElement('div');
+        card.id = `tv-peixe-${peixe.codigo}`;
+        card.className = 'tv-peixe-card' + (statusPeixesTV[peixe.codigo] ? ' tv-peixe-card--pescado' : '');
+        card.style.background = `linear-gradient(135deg, ${peixe.cor}cc, ${peixe.cor}88)`;
+        card.innerHTML = `
+          <span class="tv-peixe-emoji">${peixe.emoji}</span>
+          <span class="tv-peixe-nome">${peixe.nome}</span>
+          <div class="tv-peixe-badge">✅</div>
+        `;
+        tvGradePeixes.appendChild(card);
+      });
+      atualizarContadorPescaria();
+    }
+
+    function atualizarCardPeixeTV(codigo) {
+      statusPeixesTV[codigo] = true;
+      document.getElementById(`tv-peixe-${codigo}`)?.classList.add('tv-peixe-card--pescado');
+      atualizarContadorPescaria();
+    }
+
+    function atualizarContadorPescaria() {
+      if (tvPescadosEl) tvPescadosEl.textContent = Object.values(statusPeixesTV).filter(Boolean).length;
+    }
+
+    async function inicializarPescaria() {
+      const { data } = await supabase
+        .from('qr_codes')
+        .select('codigo, usado')
+        .in('codigo', TV_PEIXES.map((p) => p.codigo));
+      (data ?? []).forEach((qr) => { statusPeixesTV[qr.codigo] = qr.usado; });
+      renderizarGradePescaria();
+
+      supabase
+        .channel('tv-pescaria-status')
+        .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'qr_codes' }, (payload) => {
+          if (payload.new.usado) atualizarCardPeixeTV(payload.new.codigo);
+        })
+        .subscribe();
+    }
 
     let modoAtual = 'hall_da_fama';
 
@@ -243,6 +311,12 @@
         await carregarFilaInicial();
       } catch (err) {
         console.error('Erro ao carregar fila inicial:', err);
+      }
+
+      try {
+        await inicializarPescaria();
+      } catch (err) {
+        console.error('Erro ao inicializar pescaria:', err);
       }
     }
 

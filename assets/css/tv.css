@@ -242,6 +242,99 @@
   opacity: 0.7;
 }
 
+/* Modo Pescaria TV */
+.tv-pescaria {
+  width: 100%;
+  height: 100%;
+  justify-content: flex-start;
+  align-items: stretch;
+  gap: var(--espaco-md);
+  padding: var(--espaco-md) var(--espaco-xl);
+  background: linear-gradient(180deg, #1a6b9a 0%, #0d3b6e 55%, #5c3a1e 100%);
+}
+
+.tv-pescaria-cabecalho {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.tv-pescaria-cabecalho h1 {
+  font-size: 2rem;
+  margin: 0;
+  color: #fff;
+}
+
+.tv-pescaria-contador {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #fff;
+  background: rgba(255, 255, 255, 0.15);
+  padding: var(--espaco-xs) var(--espaco-lg);
+  border-radius: var(--raio-lg);
+}
+
+.tv-grade-peixes {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--espaco-lg);
+  flex: 1;
+  align-content: center;
+}
+
+.tv-peixe-card {
+  aspect-ratio: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--espaco-sm);
+  border-radius: var(--raio-lg);
+  box-shadow: var(--sombra-forte);
+  position: relative;
+  overflow: hidden;
+  transition: opacity 0.5s, filter 0.5s;
+}
+
+.tv-peixe-emoji {
+  font-size: 4.5rem;
+  display: block;
+  animation: nadar-tv 2.5s ease-in-out infinite;
+}
+
+.tv-peixe-nome {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #fff;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.6);
+}
+
+.tv-peixe-card--pescado {
+  opacity: 0.35;
+  filter: grayscale(1);
+}
+
+.tv-peixe-card--pescado .tv-peixe-emoji {
+  animation: none;
+}
+
+.tv-peixe-badge {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.3);
+  font-size: 3.5rem;
+}
+
+.tv-peixe-card:not(.tv-peixe-card--pescado) .tv-peixe-badge { display: none; }
+
+@keyframes nadar-tv {
+  0%, 100% { transform: translateY(0) rotate(-5deg); }
+  50%       { transform: translateY(-14px) rotate(5deg); }
+}
+
 /* Indicador de conexão Realtime (FASE 8) */
 .tv-conexao {
   position: fixed;
