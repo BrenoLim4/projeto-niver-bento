@@ -530,6 +530,18 @@ html {
   pointer-events: none;
 }
 
+/* Variante overlay: cobre toda a tela quando não está no hall */
+.hall-destaque-wrapper--overlay {
+  position: fixed;
+  z-index: 60;
+  background: rgba(0, 0, 0, 0.72);
+  animation: hall-overlay-fade 3.2s ease-out forwards;
+}
+
+.hall-destaque-wrapper--overlay .hall-destaque-cartao {
+  height: clamp(380px, 58vh, 650px);
+}
+
 /* Contêiner do card + efeitos (sparkles posicionados relativos a este) */
 .hall-destaque-cartao {
   position: relative;

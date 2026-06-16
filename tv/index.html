@@ -185,7 +185,8 @@
     const tvGradePeixes = document.getElementById('tv-grade-peixes');
     const tvPescadosEl  = document.getElementById('tv-pescados');
     const statusPeixesTV = {};
-    let promessaFoco = null; // resolve quando a animação do peixe terminar
+    let promessaFoco = null;        // resolve quando a animação do peixe terminar
+    let revelacaoEmAndamento = false; // bloqueia overlay do peixe durante revelação
 
     function renderizarGradePescaria() {
       tvGradePeixes.innerHTML = '';
@@ -206,6 +207,7 @@
 
     function animarPeixePescado(codigo) {
       if (modoAtual !== 'pescaria') return;
+      if (revelacaoEmAndamento) return;
       const peixe = TV_PEIXES.find((p) => p.codigo === codigo);
       if (!peixe) return;
 
@@ -311,12 +313,16 @@
         }
       }
       if (promessaFoco) await promessaFoco;
+      // A partir daqui a revelação está comprometida — nenhum overlay de peixe
+      // pode mais ser criado (animarPeixePescado checa revelacaoEmAndamento).
+      revelacaoEmAndamento = true;
       document.querySelectorAll('.tv-peixe-foco-overlay').forEach((el) => el.remove());
       tvNormal.style.display = 'none';
       tvEvento.style.display = '';
 
       await executarRevelacao(evento, elementosEvento);
 
+      revelacaoEmAndamento = false;
       tvNormal.style.display = '';
     }
 

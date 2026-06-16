@@ -19,6 +19,7 @@ const DURACAO_ENTRADA_MS = 3200;
 let elementos = null;
 let ultimosDados = [];
 let resizeTimeoutId = null;
+let obterModo = null;
 
 function formatarDataHora(iso) {
   if (!iso) return '';
@@ -133,6 +134,7 @@ function renderizarCarrossel(data, animarPrimeiro = false) {
   trilha.style.removeProperty('--hall-duracao');
   trilha.innerHTML = '';
   elementos.grade.querySelector('.hall-destaque-wrapper')?.remove();
+  document.querySelector('.hall-destaque-wrapper--overlay')?.remove();
 
   if (!data.length) {
     trilha.appendChild(criarMensagemVazia());
@@ -141,7 +143,9 @@ function renderizarCarrossel(data, animarPrimeiro = false) {
 
   const gap = obterGapPx();
   const largura = elementos.grade.getBoundingClientRect().width;
-  const larguraCard = (largura - gap * (ITENS_VISIVEIS - 1)) / ITENS_VISIVEIS;
+  const larguraCard = largura > 0
+    ? (largura - gap * (ITENS_VISIVEIS - 1)) / ITENS_VISIVEIS
+    : Math.min(Math.max(280, window.innerWidth * 0.22), 440);
   trilha.style.setProperty('--hall-largura-card', `${larguraCard}px`);
 
   const desliza = data.length > ITENS_VISIVEIS;
@@ -155,22 +159,39 @@ function renderizarCarrossel(data, animarPrimeiro = false) {
     trilha.classList.add('hall-trilha--deslizando');
   }
 
+  function reconstruirTrilha() {
+    trilha.innerHTML = '';
+    const itens = desliza ? [...data, ...data] : data;
+    itens.forEach((item) => trilha.appendChild(criarCardGanhador(item)));
+    iniciarCarrossel();
+  }
+
   if (animarPrimeiro && data.length) {
-    // Trilha começa sem data[0] — o novo ganhador só entra após a animação
     data.slice(1).forEach((item) => trilha.appendChild(criarCardGanhador(item)));
 
+    const ehHall = !obterModo || obterModo() === 'hall_da_fama';
+
     criarDestaqueEntrada(data[0], larguraCard).then((destaque) => {
-      elementos.grade.appendChild(destaque);
-      elementos.grade.classList.add('hall-destaque-ativo');
-      setTimeout(() => {
-        elementos.grade.classList.remove('hall-destaque-ativo');
-        destaque.remove();
-        // Reconstrói trilha completa com data[0] na posição 0
-        trilha.innerHTML = '';
-        const itens = desliza ? [...data, ...data] : data;
-        itens.forEach((item) => trilha.appendChild(criarCardGanhador(item)));
-        iniciarCarrossel();
-      }, DURACAO_ENTRADA_MS);
+      if (ehHall) {
+        elementos.grade.appendChild(destaque);
+        elementos.grade.classList.add('hall-destaque-ativo');
+        setTimeout(() => {
+          elementos.grade.classList.remove('hall-destaque-ativo');
+          destaque.remove();
+          reconstruirTrilha();
+        }, DURACAO_ENTRADA_MS);
+      } else {
+        // Overlay fixo sobre o modo atual (pescaria, corrida, etc.)
+        const overlayLargura = Math.min(Math.max(280, window.innerWidth * 0.22), 440);
+        destaque.querySelector('.hall-destaque-cartao')
+          ?.style.setProperty('--hall-largura-card', `${overlayLargura}px`);
+        destaque.classList.add('hall-destaque-wrapper--overlay');
+        document.querySelector('.tela-tv')?.appendChild(destaque);
+        setTimeout(() => {
+          destaque.remove();
+          reconstruirTrilha();
+        }, DURACAO_ENTRADA_MS);
+      }
     });
   } else {
     const itens = desliza ? [...data, ...data] : data;
@@ -207,14 +228,14 @@ export function atualizarTesouroStatus(status) {
 // inscreve-se no Realtime para manter tudo atualizado automaticamente.
 export function inicializarHallDaFama(els, configInicial, { getModo } = {}) {
   elementos = els;
+  obterModo = getModo ?? null;
 
   atualizarTesouroStatus(configInicial?.tesouro_status ?? 'nao_encontrado');
   carregarGanhadores();
   carregarEstatisticas();
 
   subscribeHallDaFama(() => {
-    const animarEntrada = !getModo || getModo() === 'hall_da_fama';
-    carregarGanhadores(animarEntrada);
+    carregarGanhadores(true);
     carregarEstatisticas();
   });
 
