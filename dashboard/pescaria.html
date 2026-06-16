@@ -7,12 +7,655 @@
   <link rel="stylesheet" href="../assets/css/variables.css" />
   <link rel="stylesheet" href="../assets/css/base.css" />
   <link rel="stylesheet" href="../assets/css/components.css" />
+  <link rel="stylesheet" href="../assets/css/animacoes.css" />
+  <style>
+    /* Grade 3x3 de peixes */
+    .grade-peixes {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: var(--espaco-md);
+      margin: var(--espaco-md) 0;
+    }
+
+    .peixe-card {
+      aspect-ratio: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: var(--espaco-xs);
+      border-radius: var(--raio-lg);
+      box-shadow: var(--sombra-suave);
+      cursor: default;
+      position: relative;
+      overflow: hidden;
+      transition: transform 0.2s, opacity 0.3s;
+      user-select: none;
+    }
+
+    .peixe-emoji {
+      font-size: 2.4rem;
+      animation: nadar 2.5s ease-in-out infinite;
+      display: block;
+    }
+
+    .peixe-nome {
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-align: center;
+      color: var(--cor-branco);
+      text-shadow: 0 1px 3px rgba(0,0,0,.4);
+    }
+
+    /* Peixe pescado */
+    .peixe-card--pescado {
+      opacity: 0.45;
+      filter: grayscale(0.8);
+    }
+
+    .peixe-card--pescado .peixe-emoji {
+      animation: none;
+    }
+
+    .peixe-pescado-badge {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(0,0,0,.3);
+      font-size: 1.6rem;
+    }
+
+    .peixe-card:not(.peixe-card--pescado) .peixe-pescado-badge { display: none; }
+
+    /* Estado: capturando (antes do voo) */
+    .peixe-card--pescando .peixe-emoji {
+      animation: peixe-pular 0.5s ease-in-out;
+    }
+
+    /* Scanner modal */
+    .scanner-video-wrap {
+      position: relative;
+      width: 100%;
+      max-width: 360px;
+      aspect-ratio: 4/3;
+      background: #000;
+      border-radius: var(--raio-lg);
+      overflow: hidden;
+      margin: 0 auto;
+    }
+
+    .scanner-video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .scanner-mira {
+      position: absolute;
+      inset: 15%;
+      border: 3px solid var(--cor-dourado);
+      border-radius: var(--raio-md);
+      pointer-events: none;
+    }
+
+    /* Peixe voador (flying fish during animation) */
+    .peixe-voador {
+      position: fixed;
+      z-index: 400;
+      pointer-events: none;
+      font-size: 3rem;
+      transform: translate(-50%, -50%);
+    }
+
+    /* Overlay de revelação */
+    .pescaria-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 300;
+      background: linear-gradient(160deg, var(--cor-marrom) 0%, #1a0a00 100%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: var(--espaco-lg);
+      padding: var(--espaco-xl);
+      text-align: center;
+    }
+
+    .pescaria-overlay h1 {
+      font-size: 2rem;
+      color: var(--cor-dourado);
+    }
+
+    .pescaria-overlay p {
+      font-size: 1.2rem;
+    }
+
+    .etapa-peixe-emoji {
+      font-size: 7rem;
+      animation: peixe-centro 1.5s ease-in-out infinite;
+      display: block;
+    }
+
+    .secao-scanner {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: var(--espaco-md);
+      margin-top: var(--espaco-lg);
+    }
+
+    .scanner-manual {
+      display: flex;
+      gap: var(--espaco-sm);
+      width: 100%;
+    }
+
+    .scanner-manual input {
+      flex: 1;
+    }
+
+    .erro-pescaria {
+      color: var(--cor-vermelho);
+      font-weight: 600;
+      text-align: center;
+    }
+
+    @media (min-width: 768px) {
+      .secao-scanner { display: none; }
+    }
+
+    /* Keyframes */
+    @keyframes nadar {
+      0%, 100% { transform: translateY(0) rotate(-5deg); }
+      50%       { transform: translateY(-8px) rotate(5deg); }
+    }
+
+    @keyframes peixe-pular {
+      0%   { transform: scale(1); }
+      40%  { transform: scale(1.5) rotate(20deg); }
+      100% { transform: scale(1) rotate(0); }
+    }
+
+    @keyframes peixe-centro {
+      0%, 100% { transform: scale(1) rotate(-8deg); }
+      50%       { transform: scale(1.12) rotate(8deg); }
+    }
+  </style>
 </head>
 <body>
-  <div class="container texto-centro">
-    <h1>🎣 Pescaria</h1>
-    <p>Em construção — implementação prevista para a FASE 9.</p>
-    <p><a href="index.html">← Voltar ao Dashboard</a></p>
+  <!-- Conteúdo principal -->
+  <div id="pescaria-main" class="container">
+    <div class="texto-centro">
+      <h1>🎣 Pescaria da Fazendinha</h1>
+      <p>
+        <a href="index.html">← Voltar ao Dashboard</a>
+        &nbsp;|&nbsp;
+        <strong id="contador-pescados">0</strong>/9 pescados
+      </p>
+    </div>
+
+    <div id="grade-peixes" class="grade-peixes"></div>
+
+    <div class="secao-scanner">
+      <button id="btn-escanear" class="botao botao-primario botao-bloco">
+        📷 Escanear QR Code
+      </button>
+      <div class="scanner-manual">
+        <input id="input-manual" type="text" class="campo-input"
+               placeholder="Código manual (ex: QR-PEIXE-01)" autocomplete="off" />
+        <button id="btn-manual" class="botao botao-secundario">Confirmar</button>
+      </div>
+      <p id="erro-pescaria" class="erro-pescaria" style="display:none;"></p>
+    </div>
   </div>
+
+  <!-- Modal: câmera scanner -->
+  <div id="modal-scanner" class="modal-fundo" style="display:none;">
+    <div class="modal">
+      <h3 class="modal-titulo">📷 Escanear QR Code</h3>
+      <div class="scanner-video-wrap">
+        <video id="scanner-video" class="scanner-video" playsinline muted></video>
+        <canvas id="scanner-canvas" style="display:none;"></canvas>
+        <div class="scanner-mira"></div>
+      </div>
+      <p style="text-align:center; font-size:0.9rem; opacity:0.7;">
+        Aponte para o QR Code do peixe
+      </p>
+      <button id="btn-cancelar-scanner" class="botao botao-secundario botao-bloco">
+        Cancelar
+      </button>
+    </div>
+  </div>
+
+  <!-- Modal: nome do ganhador -->
+  <div id="modal-nome" class="modal-fundo" style="display:none;">
+    <div class="modal">
+      <h3 class="modal-titulo" id="modal-nome-titulo">🐠 Peixe capturado!</h3>
+      <div class="campo">
+        <label for="input-vencedor">Nome do ganhador</label>
+        <input id="input-vencedor" type="text" class="campo-input"
+               placeholder="Ex: Maria" autocomplete="off" />
+      </div>
+      <p id="erro-nome" class="erro-pescaria" style="display:none;"></p>
+      <div class="flex gap-sm">
+        <button id="btn-cancelar-nome" class="botao botao-secundario botao-bloco">Cancelar</button>
+        <button id="btn-confirmar-nome" class="botao botao-sucesso botao-bloco">Confirmar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Peixe voador (posicionado por JS, anima de card → centro) -->
+  <div id="peixe-voador" class="peixe-voador" style="display:none;">
+    <span id="peixe-voador-emoji"></span>
+  </div>
+
+  <!-- Overlay de animação de revelação (reutiliza animacoes.css) -->
+  <div id="pescaria-overlay" class="tv-evento pescaria-overlay" style="display:none;">
+    <!-- Etapa 0: peixe capturado (exclusiva da Pescaria) -->
+    <div id="etapa-peixe" class="etapa-evento">
+      <span id="overlay-peixe-emoji" class="etapa-peixe-emoji"></span>
+      <h1 id="overlay-peixe-nome"></h1>
+      <p>capturado por <strong class="evento-vencedor"></strong>!</p>
+    </div>
+
+    <!-- Etapas 1-4: padrão (reutilizadas por executarRevelacao) -->
+    <div id="etapa-suspense" class="etapa-evento" style="display:none;">
+      <img src="../assets/img/bento-foto.jpg" alt="Bento"
+           style="width:160px;border-radius:var(--raio-lg);box-shadow:var(--sombra-suave);" />
+      <h1>🎁 Bento encontrou um presente para <span class="evento-vencedor"></span>!</h1>
+    </div>
+
+    <div id="etapa-bau" class="etapa-evento" style="display:none;">
+      <div class="bau-container">
+        <img src="../assets/img/icons/bau.svg" alt="" class="bau-icone" />
+        <div class="particulas">
+          <img class="particula" src="../assets/img/icons/estrela.svg" alt="" />
+          <img class="particula" src="../assets/img/icons/estrela.svg" alt="" />
+          <img class="particula" src="../assets/img/icons/estrela.svg" alt="" />
+          <img class="particula" src="../assets/img/icons/estrela.svg" alt="" />
+          <img class="particula" src="../assets/img/icons/estrela.svg" alt="" />
+          <img class="particula" src="../assets/img/icons/estrela.svg" alt="" />
+          <img class="particula" src="../assets/img/icons/estrela.svg" alt="" />
+          <img class="particula" src="../assets/img/icons/estrela.svg" alt="" />
+        </div>
+      </div>
+      <h1>Abrindo o baú...</h1>
+    </div>
+
+    <div id="etapa-revelacao" class="etapa-evento" style="display:none;">
+      <img id="revelacao-imagem" class="revelacao-imagem" src="" alt="" />
+      <h1 id="revelacao-nome"></h1>
+      <p>
+        Código: <strong id="revelacao-codigo"></strong>
+        <span id="revelacao-categoria" class="badge"></span>
+      </p>
+      <p>Ganhador: <strong class="evento-vencedor"></strong></p>
+    </div>
+
+    <div id="etapa-encerramento" class="etapa-evento" style="display:none;">
+      <img src="../assets/img/bento-foto.jpg" alt="Bento"
+           style="width:160px;border-radius:var(--raio-lg);box-shadow:var(--sombra-suave);" />
+      <h1>🎉 Parabéns, <span class="evento-vencedor"></span>!</h1>
+    </div>
+  </div>
+
+  <!-- jsQR deve ser carregado antes do módulo para expor jsQR no escopo global -->
+  <script src="../js/vendor/jsQR.js"></script>
+  <script type="module">
+    import { supabase } from '../js/supabaseClient.js';
+    import { iniciarScanner, pararScanner } from '../js/qrscanner.js';
+    import { executarRevelacao } from '../js/animacoes.js';
+    import { desbloquear } from '../js/sons.js';
+
+    // Definição dos 9 peixes: código QR, nome, emoji e cor de fundo do card
+    const PEIXES = [
+      { numero: 1, codigo: 'QR-PEIXE-01', nome: 'Nemo',    emoji: '🐠', cor: '#E65100' },
+      { numero: 2, codigo: 'QR-PEIXE-02', nome: 'Bolinha', emoji: '🐡', cor: '#F9A825' },
+      { numero: 3, codigo: 'QR-PEIXE-03', nome: 'Bolhas',  emoji: '🐟', cor: '#1565C0' },
+      { numero: 4, codigo: 'QR-PEIXE-04', nome: 'Tubarão', emoji: '🦈', cor: '#37474F' },
+      { numero: 5, codigo: 'QR-PEIXE-05', nome: 'Polvo',   emoji: '🐙', cor: '#6A1B9A' },
+      { numero: 6, codigo: 'QR-PEIXE-06', nome: 'Lula',    emoji: '🦑', cor: '#00695C' },
+      { numero: 7, codigo: 'QR-PEIXE-07', nome: 'Lagosta', emoji: '🦞', cor: '#B71C1C' },
+      { numero: 8, codigo: 'QR-PEIXE-08', nome: 'Camarão', emoji: '🦐', cor: '#AD1457' },
+      { numero: 9, codigo: 'QR-PEIXE-09', nome: 'Dourado', emoji: '🦀', cor: '#8B5A2B' },
+    ];
+
+    // DOM refs
+    const gradePeixes       = document.getElementById('grade-peixes');
+    const contadorEl        = document.getElementById('contador-pescados');
+    const btnEscanear       = document.getElementById('btn-escanear');
+    const btnManual         = document.getElementById('btn-manual');
+    const inputManual       = document.getElementById('input-manual');
+    const erroPescaria      = document.getElementById('erro-pescaria');
+    const modalScanner      = document.getElementById('modal-scanner');
+    const scannerVideo      = document.getElementById('scanner-video');
+    const scannerCanvas     = document.getElementById('scanner-canvas');
+    const btnCancelarScanner = document.getElementById('btn-cancelar-scanner');
+    const modalNome         = document.getElementById('modal-nome');
+    const modalNomeTitulo   = document.getElementById('modal-nome-titulo');
+    const inputVencedor     = document.getElementById('input-vencedor');
+    const erroNome          = document.getElementById('erro-nome');
+    const btnCancelarNome   = document.getElementById('btn-cancelar-nome');
+    const btnConfirmarNome  = document.getElementById('btn-confirmar-nome');
+    const peixeVoador       = document.getElementById('peixe-voador');
+    const peixeVoadorEmoji  = document.getElementById('peixe-voador-emoji');
+    const overlay           = document.getElementById('pescaria-overlay');
+    const main              = document.getElementById('pescaria-main');
+
+    // Estado local
+    const statusPeixes = {}; // codigo → boolean
+    let peixeAtual = null;
+    let processando = false;
+
+    // ── Inicialização ────────────────────────────────────────────
+
+    async function init() {
+      await carregarStatus();
+      renderizarGrade();
+      subscribeStatus();
+    }
+
+    async function carregarStatus() {
+      const { data } = await supabase
+        .from('qr_codes')
+        .select('codigo, usado')
+        .in('codigo', PEIXES.map((p) => p.codigo));
+      (data ?? []).forEach((qr) => { statusPeixes[qr.codigo] = qr.usado; });
+    }
+
+    function renderizarGrade() {
+      gradePeixes.innerHTML = '';
+      PEIXES.forEach((peixe) => {
+        const card = document.createElement('div');
+        card.id = `peixe-card-${peixe.codigo}`;
+        card.className = 'peixe-card' + (statusPeixes[peixe.codigo] ? ' peixe-card--pescado' : '');
+        card.style.background = `linear-gradient(135deg, ${peixe.cor}cc, ${peixe.cor}88)`;
+        card.innerHTML = `
+          <span class="peixe-emoji">${peixe.emoji}</span>
+          <span class="peixe-nome">${peixe.nome}</span>
+          <div class="peixe-pescado-badge">✅</div>
+        `;
+        gradePeixes.appendChild(card);
+      });
+      atualizarContador();
+    }
+
+    function atualizarContador() {
+      const pescados = Object.values(statusPeixes).filter(Boolean).length;
+      contadorEl.textContent = pescados;
+    }
+
+    function atualizarCardPeixe(codigo, usado) {
+      statusPeixes[codigo] = usado;
+      const card = document.getElementById(`peixe-card-${codigo}`);
+      if (card) card.classList.toggle('peixe-card--pescado', usado);
+      atualizarContador();
+    }
+
+    function subscribeStatus() {
+      supabase
+        .channel('pescaria-status')
+        .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'qr_codes' }, (payload) => {
+          if (payload.new.usado) atualizarCardPeixe(payload.new.codigo, true);
+        })
+        .subscribe();
+    }
+
+    // ── Scanner ──────────────────────────────────────────────────
+
+    function abrirScanner() {
+      modalScanner.style.display = 'flex';
+      iniciarScanner(scannerVideo, scannerCanvas, {
+        onLeitura: (codigo) => {
+          fecharScanner();
+          handleQRDetectado(codigo);
+        },
+        onErro: (msg) => {
+          fecharScanner();
+          mostrarErro(msg);
+        },
+      });
+    }
+
+    function fecharScanner() {
+      pararScanner(scannerVideo);
+      modalScanner.style.display = 'none';
+    }
+
+    // ── Validação do QR ──────────────────────────────────────────
+
+    function handleQRDetectado(codigo) {
+      ocultarErro();
+      const peixe = PEIXES.find((p) => p.codigo === codigo);
+      if (!peixe) {
+        mostrarErro(`QR Code não reconhecido: "${codigo}"`);
+        return;
+      }
+      if (statusPeixes[codigo]) {
+        mostrarErro(`${peixe.emoji} ${peixe.nome} já foi pescado!`);
+        return;
+      }
+      abrirModalNome(peixe);
+    }
+
+    // ── Modal nome ───────────────────────────────────────────────
+
+    function abrirModalNome(peixe) {
+      peixeAtual = peixe;
+      modalNomeTitulo.textContent = `${peixe.emoji} ${peixe.nome} capturado!`;
+      inputVencedor.value = '';
+      erroNome.style.display = 'none';
+      modalNome.style.display = 'flex';
+      setTimeout(() => inputVencedor.focus(), 50);
+    }
+
+    function fecharModalNome() {
+      modalNome.style.display = 'none';
+      peixeAtual = null;
+    }
+
+    // ── Criação do evento ────────────────────────────────────────
+
+    async function criarEventoPescaria(codigoQR, nomeGanhador) {
+      const { data: qr, error: qrErr } = await supabase
+        .from('qr_codes')
+        .select('*, premios(*)')
+        .eq('codigo', codigoQR)
+        .single();
+
+      if (qrErr || !qr) throw new Error('QR Code não encontrado no banco.');
+      if (qr.usado) throw new Error('Este QR Code já foi utilizado.');
+
+      const premio = qr.premios;
+      if (!premio) throw new Error('Prêmio vinculado não encontrado.');
+      if (premio.status === 'entregue') throw new Error('Prêmio já entregue.');
+
+      const { data: evento, error: evErr } = await supabase
+        .from('eventos')
+        .insert({
+          tipo: 'pescaria',
+          premio_id: premio.id,
+          premio_codigo: premio.codigo,
+          premio_nome: premio.nome,
+          premio_imagem_url: premio.imagem_url,
+          premio_categoria: premio.categoria,
+          vencedor: nomeGanhador,
+          status: 'pending',
+          metadata: { is_tesouro: premio.is_tesouro },
+        })
+        .select()
+        .single();
+
+      if (evErr) throw evErr;
+
+      await supabase.from('premios').update({ status: 'reservado' }).eq('id', premio.id);
+      await supabase.from('qr_codes').update({ usado: true, evento_id: evento.id }).eq('id', qr.id);
+
+      return evento;
+    }
+
+    // ── Animação completa ────────────────────────────────────────
+
+    function aguardar(ms) {
+      return new Promise((r) => setTimeout(r, ms));
+    }
+
+    function animarVoo(card, peixe) {
+      return new Promise((resolve) => {
+        const rect = card.getBoundingClientRect();
+        const cx = window.innerWidth / 2;
+        const cy = window.innerHeight / 2;
+
+        peixeVoadorEmoji.textContent = peixe.emoji;
+        peixeVoador.style.transition = 'none';
+        peixeVoador.style.left = `${rect.left + rect.width / 2}px`;
+        peixeVoador.style.top = `${rect.top + rect.height / 2}px`;
+        peixeVoador.style.fontSize = '3rem';
+        peixeVoador.style.display = '';
+
+        card.classList.add('peixe-card--pescando');
+
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => {
+            peixeVoador.style.transition =
+              'left 0.85s cubic-bezier(0.34,1.56,0.64,1),' +
+              'top 0.85s cubic-bezier(0.34,1.56,0.64,1),' +
+              'font-size 0.85s cubic-bezier(0.34,1.56,0.64,1)';
+            peixeVoador.style.left = `${cx}px`;
+            peixeVoador.style.top = `${cy}px`;
+            peixeVoador.style.fontSize = '8rem';
+
+            setTimeout(() => {
+              peixeVoador.style.display = 'none';
+              card.classList.remove('peixe-card--pescando');
+              resolve();
+            }, 900);
+          });
+        });
+      });
+    }
+
+    function mostrarEtapaOverlay(nome) {
+      ['peixe', 'suspense', 'bau', 'revelacao', 'encerramento'].forEach((e) => {
+        document.getElementById(`etapa-${e}`).style.display = e === nome ? '' : 'none';
+      });
+    }
+
+    async function executarAnimacaoCompleta(peixe, evento) {
+      const card = document.getElementById(`peixe-card-${peixe.codigo}`);
+
+      // Passo 1: peixe voa do card para o centro
+      await animarVoo(card, peixe);
+
+      // Passo 2: overlay com etapa do peixe
+      main.style.display = 'none';
+      overlay.style.display = '';
+
+      document.getElementById('overlay-peixe-emoji').textContent = peixe.emoji;
+      document.getElementById('overlay-peixe-nome').textContent = peixe.nome;
+      overlay.querySelectorAll('.evento-vencedor').forEach((el) => {
+        el.textContent = evento.vencedor;
+      });
+
+      mostrarEtapaOverlay('peixe');
+      await aguardar(2000);
+
+      // Passo 3: sequência padrão (suspense → baú → revelação → encerramento)
+      mostrarEtapaOverlay(null);
+
+      await executarRevelacao(evento, {
+        container: overlay,
+        etapas: {
+          suspense:      document.getElementById('etapa-suspense'),
+          bau:           document.getElementById('etapa-bau'),
+          revelacao:     document.getElementById('etapa-revelacao'),
+          encerramento:  document.getElementById('etapa-encerramento'),
+        },
+        vencedor:         overlay.querySelectorAll('.evento-vencedor'),
+        revelacaoImagem:  document.getElementById('revelacao-imagem'),
+        revelacaoNome:    document.getElementById('revelacao-nome'),
+        revelacaoCodigo:  document.getElementById('revelacao-codigo'),
+        revelacaoCategoria: document.getElementById('revelacao-categoria'),
+      });
+
+      // executarRevelacao já oculta o overlay; restaura o main
+      main.style.display = '';
+    }
+
+    // ── Handlers de eventos ──────────────────────────────────────
+
+    btnEscanear.addEventListener('click', () => {
+      desbloquear();
+      ocultarErro();
+      abrirScanner();
+    });
+
+    btnCancelarScanner.addEventListener('click', fecharScanner);
+
+    btnManual.addEventListener('click', () => {
+      const codigo = inputManual.value.trim().toUpperCase();
+      inputManual.value = '';
+      if (!codigo) return;
+      desbloquear();
+      handleQRDetectado(codigo);
+    });
+
+    inputManual.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') btnManual.click();
+    });
+
+    btnCancelarNome.addEventListener('click', fecharModalNome);
+
+    btnConfirmarNome.addEventListener('click', async () => {
+      const nome = inputVencedor.value.trim();
+      if (!nome) {
+        erroNome.textContent = 'Digite o nome do ganhador.';
+        erroNome.style.display = '';
+        return;
+      }
+      if (processando) return;
+
+      const peixe = peixeAtual;
+      fecharModalNome();
+      processando = true;
+      btnConfirmarNome.disabled = true;
+
+      try {
+        const evento = await criarEventoPescaria(peixe.codigo, nome);
+        atualizarCardPeixe(peixe.codigo, true);
+        await executarAnimacaoCompleta(peixe, evento);
+        await supabase
+          .from('eventos')
+          .update({ status: 'revealed', revealed_at: new Date().toISOString() })
+          .eq('id', evento.id);
+      } catch (err) {
+        mostrarErro(err.message);
+      } finally {
+        processando = false;
+        btnConfirmarNome.disabled = false;
+      }
+    });
+
+    inputVencedor.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') btnConfirmarNome.click();
+    });
+
+    // ── Helpers UI ───────────────────────────────────────────────
+
+    function mostrarErro(msg) {
+      erroPescaria.textContent = msg;
+      erroPescaria.style.display = '';
+    }
+
+    function ocultarErro() {
+      erroPescaria.style.display = 'none';
+    }
+
+    // ── Start ────────────────────────────────────────────────────
+    init();
+  </script>
 </body>
 </html>

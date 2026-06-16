@@ -189,6 +189,10 @@ do $$ begin
   alter publication supabase_realtime add table config;
 exception when duplicate_object then null; end $$;
 
+do $$ begin
+  alter publication supabase_realtime add table qr_codes;
+exception when duplicate_object then null; end $$;
+
 -- ------------------------------------------------------------
 -- RLS — policies permissivas para anon (leitura e escrita)
 -- ------------------------------------------------------------

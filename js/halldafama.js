@@ -14,6 +14,7 @@ const CATEGORIA_LABEL = { comum: 'Comum', raro: 'Raro', lendario: 'Lendário' };
 
 const ITENS_VISIVEIS = 3;
 const SEGUNDOS_POR_ITEM = 6;
+const DURACAO_ENTRADA_MS = 3200;
 
 let elementos = null;
 let ultimosDados = [];
@@ -59,15 +60,79 @@ function criarMensagemVazia() {
   return p;
 }
 
+const POSICOES_ESTRELAS = [
+  { t: '-5%',  l: '15%',  s: 8,  d: 0.10 },
+  { t: '-5%',  l: '65%',  s: 6,  d: 0.40 },
+  { t:  '3%',  l: '43%',  s: 13, d: 0.05 },
+  { t: '12%',  l: '-9%',  s: 10, d: 0.20 },
+  { t: '12%',  l:'109%',  s: 7,  d: 0.50 },
+  { t: '38%',  l:'-11%',  s: 6,  d: 0.70 },
+  { t: '38%',  l:'111%',  s: 9,  d: 0.30 },
+  { t: '62%',  l: '-8%',  s: 8,  d: 0.90 },
+  { t: '62%',  l:'108%',  s: 6,  d: 0.60 },
+  { t: '85%',  l: '43%',  s: 10, d: 0.25 },
+  { t: '92%',  l: '20%',  s: 9,  d: 0.35 },
+  { t: '92%',  l: '65%',  s: 6,  d: 0.55 },
+];
+
+function criarDestaqueEntrada(item, larguraCard) {
+  return new Promise((resolve) => {
+    const wrapper = document.createElement('div');
+    wrapper.className = 'hall-destaque-wrapper';
+
+    const cartao = document.createElement('div');
+    cartao.className = 'hall-destaque-cartao';
+    cartao.style.setProperty('--hall-largura-card', `${larguraCard}px`);
+
+    const glow = document.createElement('div');
+    glow.className = 'hall-destaque-glow';
+    cartao.appendChild(glow);
+
+    for (let i = 1; i <= 3; i++) {
+      const anel = document.createElement('div');
+      anel.className = `hall-destaque-anel hall-destaque-anel--${i}`;
+      cartao.appendChild(anel);
+    }
+
+    POSICOES_ESTRELAS.forEach(({ t, l, s, d }) => {
+      const e = document.createElement('div');
+      e.className = 'hall-destaque-estrela';
+      e.style.cssText = `top:${t};left:${l};width:${s}px;height:${s}px;animation-delay:${d}s`;
+      cartao.appendChild(e);
+    });
+
+    const card = criarCardGanhador(item);
+    cartao.appendChild(card);
+    wrapper.appendChild(cartao);
+
+    const img = card.querySelector('.hall-card-foto img');
+    if (!img || img.complete) { resolve(wrapper); return; }
+
+    const tid = setTimeout(() => {
+      img.onload = img.onerror = null;
+      resolve(wrapper);
+    }, 2500);
+
+    img.onload = img.onerror = () => {
+      clearTimeout(tid);
+      img.onload = img.onerror = null;
+      resolve(wrapper);
+    };
+  });
+}
+
 // Monta a trilha do carrossel. Com até `ITENS_VISIVEIS` ganhadores, exibe os
 // cards estáticos (sem deslizar). Com mais, duplica a lista para um loop
 // contínuo e desliza a trilha lentamente para a esquerda.
-function renderizarCarrossel(data) {
+// `animarPrimeiro`: exibe o primeiro ganhador em destaque centralizado com
+// efeitos de entrada; o carrossel inicia após a animação terminar.
+function renderizarCarrossel(data, animarPrimeiro = false) {
   const trilha = elementos.trilha;
   trilha.classList.remove('hall-trilha--deslizando');
   trilha.style.removeProperty('--hall-distancia');
   trilha.style.removeProperty('--hall-duracao');
   trilha.innerHTML = '';
+  elementos.grade.querySelector('.hall-destaque-wrapper')?.remove();
 
   if (!data.length) {
     trilha.appendChild(criarMensagemVazia());
@@ -80,24 +145,46 @@ function renderizarCarrossel(data) {
   trilha.style.setProperty('--hall-largura-card', `${larguraCard}px`);
 
   const desliza = data.length > ITENS_VISIVEIS;
-  const itens = desliza ? [...data, ...data] : data;
-  itens.forEach((item) => trilha.appendChild(criarCardGanhador(item)));
 
-  if (desliza) {
+  function iniciarCarrossel() {
+    if (!desliza) return;
     const distancia = (larguraCard + gap) * data.length;
     const duracao = data.length * SEGUNDOS_POR_ITEM;
     trilha.style.setProperty('--hall-distancia', `-${distancia}px`);
     trilha.style.setProperty('--hall-duracao', `${duracao}s`);
     trilha.classList.add('hall-trilha--deslizando');
   }
+
+  if (animarPrimeiro && data.length) {
+    // Trilha começa sem data[0] — o novo ganhador só entra após a animação
+    data.slice(1).forEach((item) => trilha.appendChild(criarCardGanhador(item)));
+
+    criarDestaqueEntrada(data[0], larguraCard).then((destaque) => {
+      elementos.grade.appendChild(destaque);
+      elementos.grade.classList.add('hall-destaque-ativo');
+      setTimeout(() => {
+        elementos.grade.classList.remove('hall-destaque-ativo');
+        destaque.remove();
+        // Reconstrói trilha completa com data[0] na posição 0
+        trilha.innerHTML = '';
+        const itens = desliza ? [...data, ...data] : data;
+        itens.forEach((item) => trilha.appendChild(criarCardGanhador(item)));
+        iniciarCarrossel();
+      }, DURACAO_ENTRADA_MS);
+    });
+  } else {
+    const itens = desliza ? [...data, ...data] : data;
+    itens.forEach((item) => trilha.appendChild(criarCardGanhador(item)));
+    iniciarCarrossel();
+  }
 }
 
-async function carregarGanhadores() {
+async function carregarGanhadores(animarPrimeiro = false) {
   const { data, error } = await supabase.from('vw_hall_da_fama').select('*').limit(15);
   if (error) { console.error('Erro ao carregar Hall da Fama:', error); return; }
 
   ultimosDados = data;
-  renderizarCarrossel(data);
+  renderizarCarrossel(data, animarPrimeiro);
 }
 
 async function carregarEstatisticas() {
@@ -126,7 +213,7 @@ export function inicializarHallDaFama(els, configInicial) {
   carregarEstatisticas();
 
   subscribeHallDaFama(() => {
-    carregarGanhadores();
+    carregarGanhadores(true);
     carregarEstatisticas();
   });
 

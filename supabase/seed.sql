@@ -31,3 +31,44 @@ on conflict (codigo) do nothing;
 insert into config (id, modo_apresentacao, tesouro_status, pin_dashboard, festa_ativa)
 values (1, 'hall_da_fama', 'nao_encontrado', '1234', true)
 on conflict (id) do nothing;
+
+-- ============================================================
+-- Seed: QR Codes da Pescaria (FASE 9)
+-- 9 peixes, cada um com prêmio fixo. Grade 3x3.
+-- Fish 1-6: comuns | Fish 7-8: raros | Fish 9: lendário
+-- ============================================================
+insert into qr_codes (codigo, tipo_qr, premio_id, usado)
+select 'QR-PEIXE-01', 'fixo'::tipo_qr, id, false from premios where codigo = 'P-001'
+on conflict (codigo) do nothing;
+
+insert into qr_codes (codigo, tipo_qr, premio_id, usado)
+select 'QR-PEIXE-02', 'fixo'::tipo_qr, id, false from premios where codigo = 'P-002'
+on conflict (codigo) do nothing;
+
+insert into qr_codes (codigo, tipo_qr, premio_id, usado)
+select 'QR-PEIXE-03', 'fixo'::tipo_qr, id, false from premios where codigo = 'P-003'
+on conflict (codigo) do nothing;
+
+insert into qr_codes (codigo, tipo_qr, premio_id, usado)
+select 'QR-PEIXE-04', 'fixo'::tipo_qr, id, false from premios where codigo = 'P-006'
+on conflict (codigo) do nothing;
+
+insert into qr_codes (codigo, tipo_qr, premio_id, usado)
+select 'QR-PEIXE-05', 'fixo'::tipo_qr, id, false from premios where codigo = 'P-007'
+on conflict (codigo) do nothing;
+
+insert into qr_codes (codigo, tipo_qr, premio_id, usado)
+select 'QR-PEIXE-06', 'fixo'::tipo_qr, id, false from premios where codigo = 'P-008'
+on conflict (codigo) do nothing;
+
+insert into qr_codes (codigo, tipo_qr, premio_id, usado)
+select 'QR-PEIXE-07', 'fixo'::tipo_qr, id, false from premios where codigo = 'P-009'
+on conflict (codigo) do nothing;
+
+insert into qr_codes (codigo, tipo_qr, premio_id, usado)
+select 'QR-PEIXE-08', 'fixo'::tipo_qr, id, false from premios where codigo = 'P-011'
+on conflict (codigo) do nothing;
+
+insert into qr_codes (codigo, tipo_qr, premio_id, usado)
+select 'QR-PEIXE-09', 'fixo'::tipo_qr, id, false from premios where codigo = 'P-014'
+on conflict (codigo) do nothing;

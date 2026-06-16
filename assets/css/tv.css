@@ -270,3 +270,113 @@
   0%, 100% { opacity: 1; }
   50%       { opacity: 0.5; }
 }
+
+/* Hall da Fama: entrada de novo ganhador */
+.hall-grade.hall-destaque-ativo::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.65);
+  z-index: 4;
+  pointer-events: none;
+  animation: hall-overlay-fade 3.2s ease-out forwards;
+}
+
+@keyframes hall-overlay-fade {
+  0%   { opacity: 0; }
+  12%  { opacity: 1; }
+  82%  { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+/* Wrapper absoluto: centraliza o cartão destaque na grade */
+.hall-destaque-wrapper {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+/* Contêiner do card + efeitos (sparkles posicionados relativos a este) */
+.hall-destaque-cartao {
+  position: relative;
+  width: var(--hall-largura-card, 33%);
+  height: 90%;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Card de destaque: ocupa todo o cartao e anima a entrada */
+.hall-destaque-cartao .hall-card {
+  flex: 1;
+  width: 100%;
+  animation: hall-card-entrada 3.2s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+/* Glow dourado atrás do card (box-shadow não é cortado pelo overflow:hidden do card) */
+.hall-destaque-glow {
+  position: absolute;
+  inset: 0;
+  border-radius: var(--raio-lg);
+  box-shadow: 0 0 90px 35px rgba(242, 166, 74, 0.55),
+              0 0 40px 15px rgba(242, 166, 74, 0.35);
+  z-index: -1;
+  animation: hall-glow-pulso 3.2s ease-out forwards;
+  pointer-events: none;
+}
+
+@keyframes hall-glow-pulso {
+  0%   { opacity: 0; transform: scale(0.75); }
+  22%  { opacity: 1; transform: scale(1.05); }
+  70%  { opacity: 1; transform: scale(1.02); }
+  100% { opacity: 0; transform: scale(1); }
+}
+
+/* Anéis dourados que se expandem ao redor do card */
+.hall-destaque-anel {
+  position: absolute;
+  inset: 0;
+  border: 2px solid rgba(242, 166, 74, 0.7);
+  border-radius: var(--raio-lg);
+  opacity: 0;
+  animation: hall-anel-expandir 1.8s ease-out forwards;
+  pointer-events: none;
+}
+
+.hall-destaque-anel--1 { animation-delay: 0.15s; }
+.hall-destaque-anel--2 { animation-delay: 0.55s; }
+.hall-destaque-anel--3 { animation-delay: 0.95s; }
+
+@keyframes hall-anel-expandir {
+  0%   { opacity: 0; transform: scale(0.95); }
+  10%  { opacity: 0.8; }
+  100% { opacity: 0; transform: scale(1.6); }
+}
+
+/* Faíscas douradas ao redor do card */
+.hall-destaque-estrela {
+  position: absolute;
+  background: var(--cor-dourado);
+  border-radius: 2px;
+  opacity: 0;
+  transform: rotate(45deg) scale(0);
+  animation: hall-estrela-aparecer 1.4s ease-out forwards;
+  pointer-events: none;
+}
+
+@keyframes hall-estrela-aparecer {
+  0%   { opacity: 0; transform: rotate(45deg) scale(0); }
+  25%  { opacity: 1; transform: rotate(45deg) scale(1.1); }
+  65%  { opacity: 0.9; transform: rotate(45deg) scale(0.9); }
+  100% { opacity: 0; transform: rotate(45deg) scale(0.3) translateY(-14px); }
+}
+
+@keyframes hall-card-entrada {
+  0%   { transform: scale(0.65) translateY(40px); opacity: 0; }
+  28%  { transform: scale(1.12) translateY(0);    opacity: 1; }
+  65%  { transform: scale(1.06); }
+  100% { transform: scale(1);    opacity: 1; }
+}

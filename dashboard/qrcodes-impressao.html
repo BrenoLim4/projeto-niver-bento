@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>QR Codes – Pescaria Fazendinha do Bento</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <style>
+    :root {
+      --dourado: #F2A64A;
+      --marrom: #8B5A2B;
+      --bege: #F5E6C8;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: var(--bege);
+      color: var(--marrom);
+      padding: 24px;
+    }
+
+    h1 {
+      text-align: center;
+      font-size: 1.5rem;
+      color: var(--marrom);
+      margin-bottom: 6px;
+    }
+
+    .subtitulo {
+      text-align: center;
+      font-size: 0.9rem;
+      opacity: 0.7;
+      margin-bottom: 20px;
+    }
+
+    .erro-lib {
+      display: none;
+      text-align: center;
+      color: #c00;
+      font-weight: 700;
+      margin-bottom: 16px;
+    }
+
+    .btn-imprimir {
+      display: block;
+      margin: 0 auto 24px;
+      padding: 10px 28px;
+      background: var(--dourado);
+      color: #fff;
+      border: none;
+      border-radius: 12px;
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .btn-imprimir:hover { opacity: 0.88; }
+
+    .grade {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+      max-width: 720px;
+      margin: 0 auto;
+    }
+
+    .qr-card {
+      background: #fff;
+      border: 2px solid var(--dourado);
+      border-radius: 16px;
+      padding: 14px 10px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 4px 12px rgba(139, 90, 43, 0.15);
+      page-break-inside: avoid;
+    }
+
+    .qr-emoji  { font-size: 2rem; line-height: 1; }
+    .qr-nome   { font-weight: 700; font-size: 0.95rem; }
+
+    /* qrcodejs cria um <canvas> ou <img> dentro do container */
+    .qr-canvas-wrap canvas,
+    .qr-canvas-wrap img {
+      display: block;
+      border-radius: 8px;
+    }
+
+    .qr-codigo {
+      font-size: 0.7rem;
+      background: var(--bege);
+      border-radius: 6px;
+      padding: 2px 8px;
+      letter-spacing: 0.04em;
+      font-family: monospace;
+    }
+
+    @media print {
+      body { background: #fff; padding: 10px; }
+      .btn-imprimir, .subtitulo, .erro-lib { display: none !important; }
+      h1 { font-size: 1.1rem; margin-bottom: 10px; }
+      .grade { max-width: 100%; gap: 12px; }
+      .qr-card { border: 1.5px solid #bbb; box-shadow: none; }
+    }
+  </style>
+</head>
+<body>
+  <h1>🎣 QR Codes – Pescaria Fazendinha do Bento</h1>
+  <p class="subtitulo">Abra no navegador, aguarde os QR Codes aparecerem e clique em Imprimir.</p>
+  <p class="erro-lib" id="erro-lib">
+    ⚠️ Biblioteca não carregou. Verifique a conexão com a internet e recarregue a página.
+  </p>
+  <button class="btn-imprimir" onclick="window.print()">🖨️ Imprimir</button>
+
+  <div class="grade" id="grade"></div>
+
+  <script>
+    const PEIXES = [
+      { codigo: 'QR-PEIXE-01', nome: 'Nemo',    emoji: '🐠' },
+      { codigo: 'QR-PEIXE-02', nome: 'Bolinha', emoji: '🐡' },
+      { codigo: 'QR-PEIXE-03', nome: 'Bolhas',  emoji: '🐟' },
+      { codigo: 'QR-PEIXE-04', nome: 'Tubarão', emoji: '🦈' },
+      { codigo: 'QR-PEIXE-05', nome: 'Polvo',   emoji: '🐙' },
+      { codigo: 'QR-PEIXE-06', nome: 'Lula',    emoji: '🦑' },
+      { codigo: 'QR-PEIXE-07', nome: 'Lagosta', emoji: '🦞' },
+      { codigo: 'QR-PEIXE-08', nome: 'Camarão', emoji: '🦐' },
+      { codigo: 'QR-PEIXE-09', nome: 'Dourado', emoji: '🦀' },
+    ];
+
+    if (typeof QRCode === 'undefined') {
+      document.getElementById('erro-lib').style.display = 'block';
+    } else {
+      const grade = document.getElementById('grade');
+
+      PEIXES.forEach((peixe) => {
+        const card = document.createElement('div');
+        card.className = 'qr-card';
+
+        const emoji = document.createElement('span');
+        emoji.className = 'qr-emoji';
+        emoji.textContent = peixe.emoji;
+
+        const nome = document.createElement('span');
+        nome.className = 'qr-nome';
+        nome.textContent = peixe.nome;
+
+        const wrap = document.createElement('div');
+        wrap.className = 'qr-canvas-wrap';
+
+        const codigo = document.createElement('span');
+        codigo.className = 'qr-codigo';
+        codigo.textContent = peixe.codigo;
+
+        card.appendChild(emoji);
+        card.appendChild(nome);
+        card.appendChild(wrap);
+        card.appendChild(codigo);
+        grade.appendChild(card);
+
+        new QRCode(wrap, {
+          text: peixe.codigo,
+          width: 160,
+          height: 160,
+          colorDark: '#8B5A2B',
+          colorLight: '#ffffff',
+          correctLevel: QRCode.CorrectLevel.M,
+        });
+      });
+    }
+  </script>
+</body>
+</html>
