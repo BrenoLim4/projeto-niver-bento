@@ -74,6 +74,25 @@ export function subscribeConfig(callback, { onReconectar } = {}) {
     });
 }
 
+// Canal de Broadcast para notificar a TV de novos eventos de forma imediata e
+// confiável, sem depender de políticas RLS do postgres_changes.
+const CANAL_BROADCAST = 'fazendinha-tv';
+
+export function subscribeBroadcastEvento(callback) {
+  return supabase
+    .channel(CANAL_BROADCAST)
+    .on('broadcast', { event: 'novo_evento' }, ({ payload }) => {
+      callback(payload);
+    })
+    .subscribe();
+}
+
+export function criarCanalBroadcast() {
+  const canal = supabase.channel(CANAL_BROADCAST);
+  canal.subscribe();
+  return canal;
+}
+
 // Notifica `callback()` sempre que um evento entrar/sair de Entregas
 // Pendentes (revealed → delivered/completed), para o Dashboard recarregar
 // as listas de `vw_entregas_pendentes` e "aguardando foto".

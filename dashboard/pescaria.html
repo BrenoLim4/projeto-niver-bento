@@ -211,6 +211,7 @@
     import { supabase } from '../js/supabaseClient.js';
     import { iniciarScanner, pararScanner } from '../js/qrscanner.js';
     import { desbloquear } from '../js/sons.js';
+    import { criarCanalBroadcast } from '../js/realtime.js';
 
     const PEIXES = [
       { numero: 1, codigo: 'QR-PEIXE-01', nome: 'Nemo',    emoji: '🐠', cor: '#E65100' },
@@ -245,6 +246,7 @@
     let peixeAtual = null;
     let processando = false;
     let toastTimeout = null;
+    const canalBroadcast = criarCanalBroadcast();
 
     // ── Inicialização ────────────────────────────────────────────
 
@@ -424,7 +426,8 @@
       btnConfirmarNome.disabled = true;
 
       try {
-        await criarEventoPescaria(peixe.codigo, nome);
+        const evento = await criarEventoPescaria(peixe.codigo, nome);
+        canalBroadcast.send({ type: 'broadcast', event: 'novo_evento', payload: evento });
         atualizarCardPeixe(peixe.codigo, true);
         mostrarToast(`${peixe.emoji} Enviado para a TV!`);
       } catch (err) {

@@ -121,7 +121,7 @@
   </div>
 
   <script type="module">
-    import { subscribeNovosEventos, subscribeConfig, buscarConfigAtual } from '../js/realtime.js';
+    import { subscribeNovosEventos, subscribeConfig, buscarConfigAtual, subscribeBroadcastEvento } from '../js/realtime.js';
     import { configurarFila, carregarFilaInicial, adicionarEvento, ressincronizarFila } from '../js/fila-eventos.js';
     import { executarRevelacao } from '../js/animacoes.js';
     import { desbloquear } from '../js/sons.js';
@@ -222,7 +222,12 @@
       tvBoot.style.display = 'none';
       tvNormal.style.display = '';
 
-      const config = await buscarConfigAtual();
+      let config;
+      try {
+        config = await buscarConfigAtual();
+      } catch (_) {
+        config = { modo_apresentacao: 'hall_da_fama', tesouro_status: 'nao_encontrado' };
+      }
       inicializarHallDaFama(elementosHall, config);
       aplicarConfig(config);
 
@@ -231,9 +236,14 @@
         onStatus: atualizarStatusConexao,
         onReconectar: agendarRessincronizacao,
       });
+      subscribeBroadcastEvento(adicionarEvento);
       subscribeConfig(aplicarConfig, { onReconectar: agendarRessincronizacao });
 
-      await carregarFilaInicial();
+      try {
+        await carregarFilaInicial();
+      } catch (err) {
+        console.error('Erro ao carregar fila inicial:', err);
+      }
     }
 
     btnIniciar.addEventListener('click', () => {

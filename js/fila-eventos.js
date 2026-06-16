@@ -53,8 +53,10 @@ export async function ressincronizarFila() {
   processarProximo();
 }
 
-// Novo evento recebido via Realtime ('INSERT', status='pending').
+// Novo evento recebido via Realtime ou Broadcast.
+// Ignora se já estiver na fila (evita duplicatas quando ambos os canais entregam).
 export function adicionarEvento(evento) {
+  if (fila.some((e) => e.id === evento.id)) return;
   fila.push(evento);
   processarProximo();
 }
