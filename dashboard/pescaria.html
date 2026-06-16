@@ -148,7 +148,7 @@
 <body>
   <div class="container">
     <div class="texto-centro">
-      <h1>🎣 Pescaria da Fazendinha do Bento</h1>
+      <h1>🎣 Pescaria da Lagoa do Bento</h1>
       <p>
         <a href="index.html">← Voltar ao Dashboard</a>
         &nbsp;|&nbsp;
@@ -427,9 +427,11 @@
 
       try {
         const evento = await criarEventoPescaria(peixe.codigo, nome);
-        canalBroadcast.send({ type: 'broadcast', event: 'novo_evento', payload: evento });
+        const resultadoBroadcast = await canalBroadcast.send({ type: 'broadcast', event: 'novo_evento', payload: evento });
         atualizarCardPeixe(peixe.codigo, true);
-        mostrarToast(`${peixe.emoji} Enviado para a TV!`);
+        mostrarToast(resultadoBroadcast === 'ok'
+          ? `${peixe.emoji} Enviado para a TV!`
+          : `⚠️ Broadcast: ${resultadoBroadcast ?? 'sem resposta'}`);
       } catch (err) {
         mostrarErro(err.message);
       } finally {
