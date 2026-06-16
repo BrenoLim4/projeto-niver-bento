@@ -34,6 +34,25 @@ export async function carregarFilaInicial() {
   processarProximo();
 }
 
+// Re-sincroniza a fila após reconexão do Realtime: reseta processing→pending e
+// injeta na fila local apenas eventos ainda não presentes (evita duplicatas).
+export async function ressincronizarFila() {
+  await supabase.from('eventos').update({ status: 'pending' }).eq('status', 'processing');
+
+  const { data, error } = await supabase
+    .from('eventos')
+    .select('*')
+    .in('status', ['pending', 'processing'])
+    .order('created_at', { ascending: true });
+
+  if (error) return;
+
+  const idsNaFila = new Set(fila.map((e) => e.id));
+  const novos = (data ?? []).filter((e) => !idsNaFila.has(e.id));
+  if (novos.length > 0) fila.push(...novos);
+  processarProximo();
+}
+
 // Novo evento recebido via Realtime ('INSERT', status='pending').
 export function adicionarEvento(evento) {
   fila.push(evento);

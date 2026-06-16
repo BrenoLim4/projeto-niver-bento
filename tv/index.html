@@ -74,6 +74,11 @@
       </div>
     </div>
 
+    <!-- Indicador de conexão Realtime (FASE 8) -->
+    <div id="tv-conexao" class="tv-conexao" style="display: none;" aria-live="polite">
+      <span id="tv-conexao-texto">Conectado</span>
+    </div>
+
     <!-- Estado Evento: Suspense → Baú → Revelação → Encerramento -->
     <div id="tv-evento" class="tv-evento" style="display: none;">
       <div id="etapa-suspense" class="etapa-evento">
@@ -117,7 +122,7 @@
 
   <script type="module">
     import { subscribeNovosEventos, subscribeConfig, buscarConfigAtual } from '../js/realtime.js';
-    import { configurarFila, carregarFilaInicial, adicionarEvento } from '../js/fila-eventos.js';
+    import { configurarFila, carregarFilaInicial, adicionarEvento, ressincronizarFila } from '../js/fila-eventos.js';
     import { executarRevelacao } from '../js/animacoes.js';
     import { desbloquear } from '../js/sons.js';
     import { inicializarHallDaFama, atualizarTesouroStatus } from '../js/halldafama.js';
@@ -128,6 +133,8 @@
     const tvNormal = document.getElementById('tv-normal');
     const tvEvento = document.getElementById('tv-evento');
     const btnIniciar = document.getElementById('btn-iniciar-tv');
+    const tvConexao = document.getElementById('tv-conexao');
+    const tvConexaoTexto = document.getElementById('tv-conexao-texto');
 
     const elementosEvento = {
       container: tvEvento,
@@ -155,6 +162,38 @@
     };
 
     let modoAtual = 'hall_da_fama';
+
+    // Indicador de conexão Realtime (FASE 8).
+    // Fica visível com "Reconectando..." quando o canal cai e desaparece 3s
+    // após a reconexão bem-sucedida.
+    let ocultarConexaoTimeout = null;
+
+    function atualizarStatusConexao(status) {
+      clearTimeout(ocultarConexaoTimeout);
+      tvConexao.style.display = '';
+      if (status === 'conectado') {
+        tvConexao.className = 'tv-conexao tv-conexao-ok';
+        tvConexaoTexto.textContent = 'Conectado';
+        ocultarConexaoTimeout = setTimeout(() => { tvConexao.style.display = 'none'; }, 3000);
+      } else {
+        tvConexao.className = 'tv-conexao tv-conexao-erro';
+        tvConexaoTexto.textContent = 'Reconectando...';
+      }
+    }
+
+    // Chamado por qualquer canal que reconecte após queda; debounced para
+    // evitar dupla execução quando ambos os canais voltam juntos.
+    let debounceRessincronizar = null;
+    async function agendarRessincronizacao() {
+      clearTimeout(debounceRessincronizar);
+      debounceRessincronizar = setTimeout(async () => {
+        try {
+          const config = await buscarConfigAtual();
+          aplicarConfig(config);
+        } catch (_) { /* ignora falha pontual */ }
+        await ressincronizarFila();
+      }, 800);
+    }
 
     function mostrarModo(modo) {
       modoAtual = MODOS.includes(modo) ? modo : MODOS[0];
@@ -188,8 +227,11 @@
       aplicarConfig(config);
 
       configurarFila({ onProcessarEvento: mostrarEvento });
-      subscribeNovosEventos(adicionarEvento);
-      subscribeConfig(aplicarConfig);
+      subscribeNovosEventos(adicionarEvento, {
+        onStatus: atualizarStatusConexao,
+        onReconectar: agendarRessincronizacao,
+      });
+      subscribeConfig(aplicarConfig, { onReconectar: agendarRessincronizacao });
 
       await carregarFilaInicial();
     }

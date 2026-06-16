@@ -241,3 +241,32 @@
   font-size: 1.4rem;
   opacity: 0.7;
 }
+
+/* Indicador de conexão Realtime (FASE 8) */
+.tv-conexao {
+  position: fixed;
+  bottom: var(--espaco-md);
+  right: var(--espaco-md);
+  padding: var(--espaco-xs) var(--espaco-md);
+  border-radius: var(--raio-lg);
+  font-size: 0.85rem;
+  font-weight: 600;
+  z-index: 200;
+  pointer-events: none;
+}
+
+.tv-conexao-ok {
+  background: rgba(111, 140, 82, 0.92);
+  color: #fff;
+}
+
+.tv-conexao-erro {
+  background: rgba(182, 62, 62, 0.92);
+  color: #fff;
+  animation: piscar-conexao 1s ease-in-out infinite;
+}
+
+@keyframes piscar-conexao {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.5; }
+}

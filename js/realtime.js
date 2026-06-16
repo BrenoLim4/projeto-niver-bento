@@ -6,17 +6,38 @@
 // - `eventos` (UPDATE → revealed/delivered/completed) → Dashboard atualiza
 //   Entregas Pendentes.
 // - `config` (UPDATE) → TV troca modo de apresentação e status do tesouro.
+//
+// Reconexão (FASE 8): `subscribeNovosEventos` e `subscribeConfig` aceitam
+// `{ onStatus, onReconectar }` opcionais. `onStatus('conectado'|'desconectado')`
+// alimenta o indicador visual da TV. `onReconectar()` é disparado somente quando
+// o canal volta ao ar após uma queda anterior (não na conexão inicial).
 
 import { supabase } from './supabaseClient.js';
 
 // Notifica `callback(evento)` para cada novo evento criado com status 'pending'.
-export function subscribeNovosEventos(callback) {
+// `onStatus(status)` recebe 'conectado'|'desconectado' para controle de UI.
+// `onReconectar()` é chamado quando o canal volta ao ar após ter caído.
+export function subscribeNovosEventos(callback, { onStatus, onReconectar } = {}) {
+  let jaConectou = false;
+  let conectado = false;
+
   return supabase
     .channel('tv-eventos')
     .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'eventos' }, (payload) => {
       if (payload.new.status === 'pending') callback(payload.new);
     })
-    .subscribe();
+    .subscribe((status) => {
+      if (status === 'SUBSCRIBED') {
+        const reconectando = jaConectou && !conectado;
+        jaConectou = true;
+        conectado = true;
+        onStatus?.('conectado');
+        if (reconectando) onReconectar?.();
+      } else if (['CHANNEL_ERROR', 'TIMED_OUT', 'CLOSED'].includes(status)) {
+        conectado = false;
+        onStatus?.('desconectado');
+      }
+    });
 }
 
 // Notifica `callback(evento)` sempre que um evento entrar em `delivered`/`completed`
@@ -31,16 +52,29 @@ export function subscribeHallDaFama(callback) {
 }
 
 // Notifica `callback(config)` sempre que a linha única de `config` for atualizada.
-export function subscribeConfig(callback) {
+// `onReconectar()` é chamado quando o canal volta ao ar após ter caído.
+export function subscribeConfig(callback, { onReconectar } = {}) {
+  let jaConectou = false;
+  let conectado = false;
+
   return supabase
     .channel('tv-config')
     .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'config' }, (payload) => {
       callback(payload.new);
     })
-    .subscribe();
+    .subscribe((status) => {
+      if (status === 'SUBSCRIBED') {
+        const reconectando = jaConectou && !conectado;
+        jaConectou = true;
+        conectado = true;
+        if (reconectando) onReconectar?.();
+      } else if (['CHANNEL_ERROR', 'TIMED_OUT', 'CLOSED'].includes(status)) {
+        conectado = false;
+      }
+    });
 }
 
-// Notifica `callback()` sempre que um evento entrar/saiir de Entregas
+// Notifica `callback()` sempre que um evento entrar/sair de Entregas
 // Pendentes (revealed → delivered/completed), para o Dashboard recarregar
 // as listas de `vw_entregas_pendentes` e "aguardando foto".
 export function subscribeEntregasPendentes(callback) {
