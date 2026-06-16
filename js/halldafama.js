@@ -205,7 +205,7 @@ export function atualizarTesouroStatus(status) {
 
 // Inicializa o Hall da Fama: carrega dados, aplica o status do Tesouro e
 // inscreve-se no Realtime para manter tudo atualizado automaticamente.
-export function inicializarHallDaFama(els, configInicial) {
+export function inicializarHallDaFama(els, configInicial, { getModo } = {}) {
   elementos = els;
 
   atualizarTesouroStatus(configInicial?.tesouro_status ?? 'nao_encontrado');
@@ -213,7 +213,8 @@ export function inicializarHallDaFama(els, configInicial) {
   carregarEstatisticas();
 
   subscribeHallDaFama(() => {
-    carregarGanhadores(true);
+    const animarEntrada = !getModo || getModo() === 'hall_da_fama';
+    carregarGanhadores(animarEntrada);
     carregarEstatisticas();
   });
 

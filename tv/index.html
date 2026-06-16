@@ -301,6 +301,15 @@
     }
 
     async function mostrarEvento(evento) {
+      // Em modo pescaria o UPDATE de qr_codes (que cria promessaFoco) pode
+      // chegar ligeiramente DEPOIS do INSERT em eventos. Aguardamos até 600ms
+      // para que promessaFoco seja definido antes de verificar.
+      if (modoAtual === 'pescaria' && !promessaFoco) {
+        const prazo = Date.now() + 600;
+        while (!promessaFoco && Date.now() < prazo) {
+          await new Promise((r) => setTimeout(r, 50));
+        }
+      }
       if (promessaFoco) await promessaFoco;
       document.querySelectorAll('.tv-peixe-foco-overlay').forEach((el) => el.remove());
       tvNormal.style.display = 'none';
@@ -328,7 +337,7 @@
       } catch (_) {
         config = { modo_apresentacao: 'hall_da_fama', tesouro_status: 'nao_encontrado' };
       }
-      inicializarHallDaFama(elementosHall, config);
+      inicializarHallDaFama(elementosHall, config, { getModo: () => modoAtual });
       aplicarConfig(config);
 
       configurarFila({ onProcessarEvento: mostrarEvento });
