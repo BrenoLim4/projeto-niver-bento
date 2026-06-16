@@ -307,7 +307,6 @@
   <script type="module">
     import { supabase } from '../js/supabaseClient.js';
     import { iniciarScanner, pararScanner } from '../js/qrscanner.js';
-    import { executarRevelacao } from '../js/animacoes.js';
     import { desbloquear } from '../js/sons.js';
 
     // Definição dos 9 peixes: código QR, nome, emoji e cor de fundo do card
@@ -547,10 +546,10 @@
     async function executarAnimacaoCompleta(peixe, evento) {
       const card = document.getElementById(`peixe-card-${peixe.codigo}`);
 
-      // Passo 1: peixe voa do card para o centro
+      // Peixe voa do card para o centro
       await animarVoo(card, peixe);
 
-      // Passo 2: overlay com etapa do peixe
+      // Confirmação rápida no celular — a animação completa acontece na TV
       main.style.display = 'none';
       overlay.style.display = '';
 
@@ -561,27 +560,9 @@
       });
 
       mostrarEtapaOverlay('peixe');
-      await aguardar(2000);
+      await aguardar(2200);
 
-      // Passo 3: sequência padrão (suspense → baú → revelação → encerramento)
-      mostrarEtapaOverlay(null);
-
-      await executarRevelacao(evento, {
-        container: overlay,
-        etapas: {
-          suspense:      document.getElementById('etapa-suspense'),
-          bau:           document.getElementById('etapa-bau'),
-          revelacao:     document.getElementById('etapa-revelacao'),
-          encerramento:  document.getElementById('etapa-encerramento'),
-        },
-        vencedor:         overlay.querySelectorAll('.evento-vencedor'),
-        revelacaoImagem:  document.getElementById('revelacao-imagem'),
-        revelacaoNome:    document.getElementById('revelacao-nome'),
-        revelacaoCodigo:  document.getElementById('revelacao-codigo'),
-        revelacaoCategoria: document.getElementById('revelacao-categoria'),
-      });
-
-      // executarRevelacao já oculta o overlay; restaura o main
+      overlay.style.display = 'none';
       main.style.display = '';
     }
 
