@@ -96,6 +96,30 @@
   to { transform: scale(1); opacity: 1; }
 }
 
+/* === TV Grande (1080p+) === */
+@media (min-width: 1200px) {
+  .bau-icone {
+    width: clamp(200px, 14vw, 300px);
+    height: clamp(200px, 14vw, 300px);
+  }
+
+  .revelacao-imagem {
+    width: clamp(200px, 14vw, 300px);
+    height: clamp(200px, 14vw, 300px);
+  }
+
+  .particula {
+    width: 44px;
+    height: 44px;
+    margin: -22px;
+  }
+
+  @keyframes particula-voar {
+    0%   { opacity: 1; transform: rotate(var(--angulo)) translateY(0) scale(0.4); }
+    100% { opacity: 0; transform: rotate(var(--angulo)) translateY(-280px) scale(1); }
+  }
+}
+
 /* Tesouro da Fazenda: efeitos exclusivos (mais brilho/partículas) */
 .tv-evento--tesouro.tv-evento--animando .bau-icone {
   animation: bau-tremer 0.4s ease-in-out infinite, bau-brilhar-tesouro 0.8s ease-in-out infinite;

@@ -185,6 +185,7 @@
     const tvGradePeixes = document.getElementById('tv-grade-peixes');
     const tvPescadosEl  = document.getElementById('tv-pescados');
     const statusPeixesTV = {};
+    let promessaFoco = null; // resolve quando a animação do peixe terminar
 
     function renderizarGradePescaria() {
       tvGradePeixes.innerHTML = '';
@@ -219,10 +220,16 @@
       `;
       document.querySelector('.tela-tv').appendChild(overlay);
 
-      setTimeout(() => {
-        overlay.classList.add('tv-peixe-foco-saindo');
-        setTimeout(() => overlay.remove(), 500);
-      }, 2000);
+      promessaFoco = new Promise((resolve) => {
+        setTimeout(() => {
+          overlay.classList.add('tv-peixe-foco-saindo');
+          setTimeout(() => {
+            overlay.remove();
+            promessaFoco = null;
+            resolve();
+          }, 500);
+        }, 2000);
+      });
     }
 
     function atualizarCardPeixeTV(codigo) {
@@ -294,6 +301,7 @@
     }
 
     async function mostrarEvento(evento) {
+      if (promessaFoco) await promessaFoco;
       document.querySelectorAll('.tv-peixe-foco-overlay').forEach((el) => el.remove());
       tvNormal.style.display = 'none';
       tvEvento.style.display = '';

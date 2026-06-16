@@ -400,6 +400,78 @@
   100% { transform: rotate(-5deg) scale(1); }
 }
 
+/* === TV Grande (1080p+) ===
+   tv.css só é carregado em tv/index.html — seguro alterar html diretamente.
+   clamp escala a tipografia (rem) proporcional à largura:
+     1280px → ~18px | 1920px → ~27px | 4K → 28px (cap) */
+html {
+  font-size: clamp(16px, 1.4vw, 28px);
+}
+
+@media (min-width: 1200px) {
+  /* Espaçamentos internos maiores para tela grande */
+  .tela-tv {
+    --espaco-xs: 6px;
+    --espaco-sm: 12px;
+    --espaco-md: 22px;
+    --espaco-lg: 36px;
+    --espaco-xl: 60px;
+    --raio-md: 20px;
+    --raio-lg: 28px;
+  }
+
+  .tv-mascote {
+    width: clamp(220px, 16vw, 380px);
+  }
+
+  /* Hall da Fama: ícones acompanham a fonte */
+  .hall-titulo img { width: 3rem; height: 3rem; }
+  .hall-tesouro img { width: 2.2rem; height: 2.2rem; }
+  .hall-contador { min-width: 8rem; }
+
+  /* Pescaria TV: header compacto + grade quadrada centrada.
+     min(87vh, 96vw) usa a menor dimensão como referência —
+     numa TV 16:9 isso é ~87% da altura, garantindo que os
+     9 cards apareçam inteiros sem overflow. */
+  .tv-pescaria {
+    padding: var(--espaco-sm);
+    gap: var(--espaco-xs);
+    align-items: center;
+    justify-content: center;
+  }
+
+  .tv-pescaria-cabecalho {
+    width: 100%;
+    flex-shrink: 0;
+    padding: 0 var(--espaco-sm);
+  }
+
+  .tv-pescaria-cabecalho h1 {
+    font-size: 1.4rem;
+  }
+
+  .tv-grade-peixes {
+    flex: none;
+    width: min(87vh, 96vw);
+    height: min(87vh, 96vw);
+    grid-template-columns: repeat(3, 1fr);
+    grid-template-rows: repeat(3, 1fr);
+    gap: var(--espaco-sm);
+    margin: 0;
+  }
+
+  .tv-peixe-card {
+    aspect-ratio: 1;
+    min-height: 0;
+    min-width: 0;
+  }
+
+  /* Focus do peixe: card escala com o viewport */
+  .tv-peixe-foco-card {
+    width: clamp(320px, 28vw, 580px);
+  }
+}
+
 /* Indicador de conexão Realtime (FASE 8) */
 .tv-conexao {
   position: fixed;
