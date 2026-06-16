@@ -88,8 +88,27 @@ export function subscribeBroadcastEvento(callback) {
 }
 
 export function criarCanalBroadcast() {
-  const canal = supabase.channel(CANAL_BROADCAST);
-  canal.subscribe();
+  let pronto = false;
+  const aguardando = [];
+
+  const canal = supabase
+    .channel(CANAL_BROADCAST)
+    .subscribe((status) => {
+      if (status === 'SUBSCRIBED') {
+        pronto = true;
+        aguardando.splice(0).forEach((r) => r());
+      }
+    });
+
+  // Resolve imediatamente se já subscrito, ou aguarda até 3s pelo SUBSCRIBED.
+  canal.aguardarPronto = () =>
+    pronto
+      ? Promise.resolve()
+      : new Promise((resolve) => {
+          aguardando.push(resolve);
+          setTimeout(resolve, 3000);
+        });
+
   return canal;
 }
 

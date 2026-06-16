@@ -427,6 +427,7 @@
 
       try {
         const evento = await criarEventoPescaria(peixe.codigo, nome);
+        await canalBroadcast.aguardarPronto();
         const resultadoBroadcast = await canalBroadcast.send({ type: 'broadcast', event: 'novo_evento', payload: evento });
         atualizarCardPeixe(peixe.codigo, true);
         mostrarToast(resultadoBroadcast === 'ok'
