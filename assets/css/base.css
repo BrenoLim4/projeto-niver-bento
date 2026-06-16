@@ -37,7 +37,7 @@ body {
   font-family: var(--fonte-texto);
   background-color: var(--cor-bege);
   background-image: url('../img/background-fazendinha.png');
-  background-size: cover;
+  background-size: auto;
   background-position: center top;
   background-repeat: no-repeat;
   background-attachment: fixed;
