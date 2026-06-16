@@ -203,7 +203,30 @@
       atualizarContadorPescaria();
     }
 
+    function animarPeixePescado(codigo) {
+      if (modoAtual !== 'pescaria') return;
+      const peixe = TV_PEIXES.find((p) => p.codigo === codigo);
+      if (!peixe) return;
+
+      const overlay = document.createElement('div');
+      overlay.className = 'tv-peixe-foco-overlay';
+      overlay.innerHTML = `
+        <div class="tv-peixe-foco-card" style="background: linear-gradient(135deg, ${peixe.cor}cc, ${peixe.cor}88)">
+          <span class="tv-peixe-foco-emoji">${peixe.emoji}</span>
+          <span class="tv-peixe-foco-nome">${peixe.nome}</span>
+          <span class="tv-peixe-foco-label">🎣 Pescado!</span>
+        </div>
+      `;
+      document.querySelector('.tela-tv').appendChild(overlay);
+
+      setTimeout(() => {
+        overlay.classList.add('tv-peixe-foco-saindo');
+        setTimeout(() => overlay.remove(), 500);
+      }, 2000);
+    }
+
     function atualizarCardPeixeTV(codigo) {
+      animarPeixePescado(codigo);
       statusPeixesTV[codigo] = true;
       document.getElementById(`tv-peixe-${codigo}`)?.classList.add('tv-peixe-card--pescado');
       atualizarContadorPescaria();
@@ -271,6 +294,7 @@
     }
 
     async function mostrarEvento(evento) {
+      document.querySelectorAll('.tv-peixe-foco-overlay').forEach((el) => el.remove());
       tvNormal.style.display = 'none';
       tvEvento.style.display = '';
 

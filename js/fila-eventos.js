@@ -7,6 +7,7 @@
 import { supabase } from './supabaseClient.js';
 
 const fila = [];
+const vistos = new Set(); // IDs já adicionados à fila ou processados — evita duplicata mesmo após shift
 let processando = false;
 let onProcessarEvento = null;
 
@@ -47,8 +48,8 @@ export async function ressincronizarFila() {
 
   if (error) return;
 
-  const idsNaFila = new Set(fila.map((e) => e.id));
-  const novos = (data ?? []).filter((e) => !idsNaFila.has(e.id));
+  const novos = (data ?? []).filter((e) => !vistos.has(e.id));
+  novos.forEach((e) => vistos.add(e.id));
   if (novos.length > 0) fila.push(...novos);
   processarProximo();
 }
@@ -56,7 +57,8 @@ export async function ressincronizarFila() {
 // Novo evento recebido via Realtime ou Broadcast.
 // Ignora se já estiver na fila (evita duplicatas quando ambos os canais entregam).
 export function adicionarEvento(evento) {
-  if (fila.some((e) => e.id === evento.id)) return;
+  if (vistos.has(evento.id)) return;
+  vistos.add(evento.id);
   fila.push(evento);
   processarProximo();
 }
