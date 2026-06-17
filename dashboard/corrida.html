@@ -3,16 +3,262 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Corrida dos Animais - Fazendinha do Bento</title>
+  <title>Corrida dos Tratores - Fazendinha do Bento</title>
   <link rel="stylesheet" href="../assets/css/variables.css" />
   <link rel="stylesheet" href="../assets/css/base.css" />
   <link rel="stylesheet" href="../assets/css/components.css" />
+  <style>
+    .grade-tratores {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: var(--espaco-md);
+      margin-top: var(--espaco-lg);
+    }
+
+    .trator-card {
+      background: var(--cor-superficie);
+      border-radius: var(--raio-lg);
+      box-shadow: var(--sombra-suave);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .trator-card-cabecalho {
+      padding: var(--espaco-sm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .trator-card-cabecalho span {
+      font-family: var(--fonte-titulo);
+      font-weight: 700;
+      font-size: 0.85rem;
+      color: #fff;
+      text-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
+    }
+
+    .trator-card-imagem {
+      padding: var(--espaco-sm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(0, 0, 0, 0.04);
+      min-height: 90px;
+    }
+
+    .trator-card-imagem img {
+      height: 72px;
+      width: auto;
+      object-fit: contain;
+    }
+
+    .trator-card-nome {
+      padding: var(--espaco-sm);
+    }
+
+    .trator-card-nome input {
+      width: 100%;
+      padding: 8px 10px;
+      border: 2px solid var(--cor-bege);
+      border-radius: var(--raio-sm);
+      font-family: var(--fonte-texto);
+      font-size: 0.9rem;
+      background: var(--cor-branco);
+      color: var(--cor-texto);
+      box-sizing: border-box;
+    }
+
+    .trator-card-nome input:focus {
+      outline: none;
+      border-color: var(--cor-dourado);
+    }
+
+    .erro {
+      color: var(--cor-vermelho);
+      font-weight: 600;
+      margin: var(--espaco-md) 0 0;
+    }
+
+    .toast-sucesso {
+      position: fixed;
+      bottom: var(--espaco-xl);
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--cor-verde);
+      color: #fff;
+      font-weight: 700;
+      font-size: 1.1rem;
+      padding: var(--espaco-md) var(--espaco-xl);
+      border-radius: var(--raio-lg);
+      box-shadow: var(--sombra-forte);
+      z-index: 100;
+      white-space: nowrap;
+      animation: toast-subir 0.3s ease-out;
+    }
+
+    @keyframes toast-subir {
+      from { opacity: 0; transform: translateX(-50%) translateY(16px); }
+      to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+    }
+  </style>
 </head>
 <body>
-  <div class="container texto-centro">
-    <h1>🐎 Corrida dos Animais</h1>
-    <p>Em construção — implementação prevista para a FASE 13.</p>
-    <p><a href="index.html">← Voltar ao Dashboard</a></p>
+  <div class="container">
+    <div class="texto-centro">
+      <h1>🚜 Corrida dos Tratores</h1>
+      <p><a href="/dashboard/">← Voltar ao Dashboard</a></p>
+    </div>
+
+    <p class="texto-centro" style="opacity: 0.75; font-size: 0.95rem;">
+      Insira o nome do participante de cada trator. Pelo menos 2 participantes são necessários.
+    </p>
+
+    <div class="grade-tratores" id="grade-tratores"></div>
+
+    <p id="erro-corrida" class="erro texto-centro" style="display: none;"></p>
+
+    <button id="btn-iniciar" class="botao botao-primario botao-bloco" style="margin-top: var(--espaco-lg);">
+      🏁 Iniciar Corrida!
+    </button>
   </div>
+
+  <script type="module">
+    import { supabase } from '../js/supabaseClient.js';
+    import { sortearPremio, reservarPremio } from '../js/sorteio.js';
+    import { criarCanalBroadcast } from '../js/realtime.js';
+    import { TRATORES } from '../js/corrida.js';
+
+    const grade          = document.getElementById('grade-tratores');
+    const erroCorrida    = document.getElementById('erro-corrida');
+    const btnIniciar     = document.getElementById('btn-iniciar');
+    const canalBroadcast = criarCanalBroadcast();
+    let processando      = false;
+    let toastTimeout     = null;
+
+    // ── Renderiza cards dos tratores ─────────────────────────────
+
+    TRATORES.forEach((trator) => {
+      const card = document.createElement('div');
+      card.className = 'trator-card';
+      card.innerHTML = `
+        <div class="trator-card-cabecalho" style="background: ${trator.corHex};">
+          <span>${trator.label}</span>
+        </div>
+        <div class="trator-card-imagem">
+          <img src="${trator.imagem}" alt="${trator.label}" />
+        </div>
+        <div class="trator-card-nome">
+          <input
+            id="nome-${trator.cor}"
+            type="text"
+            placeholder="Nome do participante"
+            autocomplete="off"
+          />
+        </div>
+      `;
+      grade.appendChild(card);
+    });
+
+    // ── Iniciar corrida ──────────────────────────────────────────
+
+    btnIniciar.addEventListener('click', async () => {
+      erroCorrida.style.display = 'none';
+
+      const participantes = {};
+      const comNome = [];
+      for (const t of TRATORES) {
+        const nome = document.getElementById(`nome-${t.cor}`)?.value.trim() || null;
+        participantes[t.cor] = nome;
+        if (nome) comNome.push(t.cor);
+      }
+
+      if (comNome.length < 2) {
+        mostrarErro('Insira o nome de pelo menos 2 participantes.');
+        return;
+      }
+      if (processando) return;
+
+      processando = true;
+      btnIniciar.disabled = true;
+      btnIniciar.textContent = '⏳ Preparando corrida...';
+
+      const vencedorCor = comNome[Math.floor(Math.random() * comNome.length)];
+
+      try {
+        const premio = await sortearPremio('corrida');
+        if (!premio) {
+          mostrarErro('Nenhum prêmio elegível disponível para corrida.');
+          return;
+        }
+
+        const { data: evento, error } = await supabase
+          .from('eventos')
+          .insert({
+            tipo: 'corrida',
+            premio_id: premio.id,
+            premio_codigo: premio.codigo,
+            premio_nome: premio.nome,
+            premio_imagem_url: premio.imagem_url,
+            premio_categoria: premio.categoria,
+            vencedor: participantes[vencedorCor],
+            status: 'pending',
+            metadata: {
+              is_tesouro: false,
+              tipo: 'corrida_tratores',
+              trator_vencedor: vencedorCor,
+              participantes,
+            },
+          })
+          .select()
+          .single();
+
+        if (error) throw error;
+
+        await reservarPremio(premio.id);
+
+        await canalBroadcast.aguardarPronto();
+        const result = await canalBroadcast.send({
+          type: 'broadcast',
+          event: 'novo_evento',
+          payload: evento,
+        });
+
+        limparFormulario();
+        mostrarToast(result === 'ok'
+          ? '🏁 Corrida iniciada na TV!'
+          : `⚠️ Broadcast: ${result ?? 'sem resposta'}`);
+      } catch (err) {
+        mostrarErro(err.message);
+      } finally {
+        processando = false;
+        btnIniciar.disabled = false;
+        btnIniciar.textContent = '🏁 Iniciar Corrida!';
+      }
+    });
+
+    function limparFormulario() {
+      TRATORES.forEach((t) => {
+        const input = document.getElementById(`nome-${t.cor}`);
+        if (input) input.value = '';
+      });
+    }
+
+    function mostrarErro(msg) {
+      erroCorrida.textContent = msg;
+      erroCorrida.style.display = '';
+    }
+
+    function mostrarToast(msg) {
+      clearTimeout(toastTimeout);
+      document.querySelector('.toast-sucesso')?.remove();
+      const toast = document.createElement('div');
+      toast.className = 'toast-sucesso';
+      toast.textContent = msg;
+      document.body.appendChild(toast);
+      toastTimeout = setTimeout(() => toast.remove(), 3500);
+    }
+  </script>
 </body>
 </html>

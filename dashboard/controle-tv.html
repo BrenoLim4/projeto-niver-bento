@@ -7,12 +7,370 @@
   <link rel="stylesheet" href="../assets/css/variables.css" />
   <link rel="stylesheet" href="../assets/css/base.css" />
   <link rel="stylesheet" href="../assets/css/components.css" />
+  <style>
+    /* ── Modo switcher ───────────────────────────────────── */
+    .modo-atual {
+      font-size: 0.85rem;
+      color: var(--cor-texto-secundario);
+      margin-bottom: var(--espaco-sm);
+    }
+    .modo-atual strong {
+      color: var(--cor-texto);
+    }
+
+    .grade-modos {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: var(--espaco-sm);
+      margin-bottom: var(--espaco-lg);
+    }
+
+    .btn-modo {
+      padding: var(--espaco-sm) var(--espaco-md);
+      border: 2px solid var(--cor-bege);
+      border-radius: var(--raio-md);
+      background: var(--cor-superficie);
+      color: var(--cor-texto);
+      font-family: var(--fonte-texto);
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: border-color 0.15s, background 0.15s, color 0.15s;
+      text-align: center;
+    }
+
+    .btn-modo:hover {
+      border-color: var(--cor-dourado);
+    }
+
+    .btn-modo--ativo {
+      background: var(--cor-dourado);
+      border-color: var(--cor-dourado);
+      color: #fff;
+    }
+
+    /* ── Seção corrida ───────────────────────────────────── */
+    .secao-titulo {
+      font-family: var(--fonte-titulo);
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--cor-texto);
+      margin: var(--espaco-lg) 0 var(--espaco-sm);
+      padding-bottom: var(--espaco-xs);
+      border-bottom: 2px solid var(--cor-bege);
+    }
+
+    .grade-tratores {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: var(--espaco-sm);
+      margin-bottom: var(--espaco-md);
+    }
+
+    .trator-card {
+      background: var(--cor-superficie);
+      border-radius: var(--raio-md);
+      box-shadow: var(--sombra-suave);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .trator-card-cabecalho {
+      padding: 6px var(--espaco-sm);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .trator-card-cabecalho img {
+      height: 36px;
+      width: auto;
+      object-fit: contain;
+    }
+
+    .trator-card-cabecalho span {
+      font-family: var(--fonte-titulo);
+      font-weight: 700;
+      font-size: 0.78rem;
+      color: #fff;
+      text-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
+    }
+
+    .trator-card input {
+      width: 100%;
+      padding: 8px 10px;
+      border: none;
+      border-top: 1px solid var(--cor-bege);
+      font-family: var(--fonte-texto);
+      font-size: 0.88rem;
+      background: var(--cor-branco);
+      color: var(--cor-texto);
+      box-sizing: border-box;
+    }
+
+    .trator-card input:focus {
+      outline: none;
+      background: #fffbf3;
+    }
+
+    /* ── Status / erro ───────────────────────────────────── */
+    .msg-erro {
+      color: var(--cor-vermelho);
+      font-weight: 600;
+      font-size: 0.9rem;
+      margin: var(--espaco-sm) 0 0;
+      display: none;
+    }
+
+    .toast-sucesso {
+      position: fixed;
+      bottom: var(--espaco-xl);
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--cor-verde);
+      color: #fff;
+      font-weight: 700;
+      font-size: 1rem;
+      padding: var(--espaco-sm) var(--espaco-xl);
+      border-radius: var(--raio-lg);
+      box-shadow: var(--sombra-forte);
+      z-index: 100;
+      white-space: nowrap;
+      animation: toast-subir 0.3s ease-out;
+    }
+
+    @keyframes toast-subir {
+      from { opacity: 0; transform: translateX(-50%) translateY(12px); }
+      to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+    }
+  </style>
 </head>
 <body>
-  <div class="container texto-centro">
-    <h1>📺 Controle da TV</h1>
-    <p>Em construção — implementação prevista para a FASE 15.</p>
-    <p><a href="index.html">← Voltar ao Dashboard</a></p>
+  <div class="container">
+    <div class="texto-centro">
+      <h1>📺 Controle da TV</h1>
+      <p><a href="/dashboard/">← Voltar ao Dashboard</a></p>
+    </div>
+
+    <!-- ── Modo da TV ──────────────────────────────────────── -->
+    <p class="modo-atual">Modo atual: <strong id="label-modo-atual">carregando…</strong></p>
+
+    <div class="grade-modos">
+      <button class="btn-modo" data-modo="hall_da_fama">🏆 Hall da Fama</button>
+      <button class="btn-modo" data-modo="corrida_animais">🚜 Corrida</button>
+      <button class="btn-modo" data-modo="pescaria">🎣 Pescaria</button>
+      <button class="btn-modo" data-modo="roleta_fazenda">🎡 Roleta</button>
+      <button class="btn-modo" data-modo="estatisticas" style="grid-column: span 2;">📊 Estatísticas</button>
+    </div>
+
+    <!-- ── Disparar corrida ────────────────────────────────── -->
+    <p class="secao-titulo">🚜 Iniciar Corrida dos Tratores</p>
+
+    <p style="font-size:0.85rem; opacity:0.75; margin-bottom: var(--espaco-md);">
+      Insira o nome do participante de cada trator. Pelo menos 2 são necessários.
+    </p>
+
+    <div class="grade-tratores" id="grade-tratores"></div>
+
+    <p id="erro-corrida" class="msg-erro texto-centro"></p>
+
+    <button id="btn-iniciar" class="botao botao-primario botao-bloco">
+      🏁 Iniciar Corrida!
+    </button>
   </div>
+
+  <script type="module">
+    import { supabase } from '../js/supabaseClient.js';
+    import { buscarConfigAtual } from '../js/realtime.js';
+    import { sortearPremio, reservarPremio } from '../js/sorteio.js';
+    import { criarCanalBroadcast } from '../js/realtime.js';
+    import { TRATORES } from '../js/corrida.js';
+
+    // ── Labels legíveis para cada modo ──────────────────────
+    const LABELS_MODO = {
+      hall_da_fama:     'Hall da Fama',
+      corrida_animais:  'Corrida dos Tratores',
+      pescaria:         'Pescaria',
+      roleta_fazenda:   'Roleta da Fazenda',
+      estatisticas:     'Estatísticas',
+    };
+
+    const labelModoAtual = document.getElementById('label-modo-atual');
+    const btnsModo       = document.querySelectorAll('.btn-modo');
+    const erroCorrida    = document.getElementById('erro-corrida');
+    const btnIniciar     = document.getElementById('btn-iniciar');
+    const grade          = document.getElementById('grade-tratores');
+    const canalBroadcast = criarCanalBroadcast();
+
+    let modoAtual    = null;
+    let processando  = false;
+    let toastTimeout = null;
+
+    // ── Modo atual ───────────────────────────────────────────
+    async function carregarModoAtual() {
+      try {
+        const config = await buscarConfigAtual();
+        aplicarModoUI(config.modo_apresentacao);
+      } catch {
+        labelModoAtual.textContent = 'erro ao carregar';
+      }
+    }
+
+    function aplicarModoUI(modo) {
+      modoAtual = modo;
+      labelModoAtual.textContent = LABELS_MODO[modo] ?? modo;
+      btnsModo.forEach((btn) => {
+        btn.classList.toggle('btn-modo--ativo', btn.dataset.modo === modo);
+      });
+    }
+
+    // ── Trocar modo da TV ────────────────────────────────────
+    btnsModo.forEach((btn) => {
+      btn.addEventListener('click', async () => {
+        const modo = btn.dataset.modo;
+        if (modo === modoAtual) return;
+
+        btn.disabled = true;
+        try {
+          const { error } = await supabase
+            .from('config')
+            .update({ modo_apresentacao: modo })
+            .eq('id', 1);
+
+          if (error) throw error;
+          aplicarModoUI(modo);
+          mostrarToast(`TV → ${LABELS_MODO[modo] ?? modo}`);
+        } catch (err) {
+          mostrarToast(`⚠️ ${err.message}`);
+        } finally {
+          btn.disabled = false;
+        }
+      });
+    });
+
+    // ── Renderiza cards dos tratores ─────────────────────────
+    TRATORES.forEach((trator) => {
+      const card = document.createElement('div');
+      card.className = 'trator-card';
+      card.innerHTML = `
+        <div class="trator-card-cabecalho" style="background: ${trator.corHex};">
+          <img src="${trator.imagem}" alt="${trator.label}" />
+          <span>${trator.label}</span>
+        </div>
+        <input
+          id="nome-${trator.cor}"
+          type="text"
+          placeholder="Nome do participante"
+          autocomplete="off"
+        />
+      `;
+      grade.appendChild(card);
+    });
+
+    // ── Iniciar corrida ──────────────────────────────────────
+    btnIniciar.addEventListener('click', async () => {
+      esconderErro();
+
+      const participantes = {};
+      const comNome = [];
+      for (const t of TRATORES) {
+        const nome = document.getElementById(`nome-${t.cor}`)?.value.trim() || null;
+        participantes[t.cor] = nome;
+        if (nome) comNome.push(t.cor);
+      }
+
+      if (comNome.length < 2) {
+        mostrarErro('Insira o nome de pelo menos 2 participantes.');
+        return;
+      }
+      if (processando) return;
+
+      processando = true;
+      btnIniciar.disabled = true;
+      btnIniciar.textContent = '⏳ Preparando…';
+
+      const vencedorCor = comNome[Math.floor(Math.random() * comNome.length)];
+
+      try {
+        const premio = await sortearPremio('corrida');
+        if (!premio) {
+          mostrarErro('Nenhum prêmio disponível para corrida.');
+          return;
+        }
+
+        const { data: evento, error } = await supabase
+          .from('eventos')
+          .insert({
+            tipo: 'corrida',
+            premio_id: premio.id,
+            premio_codigo: premio.codigo,
+            premio_nome: premio.nome,
+            premio_imagem_url: premio.imagem_url,
+            premio_categoria: premio.categoria,
+            vencedor: participantes[vencedorCor],
+            status: 'pending',
+            metadata: {
+              is_tesouro: false,
+              tipo: 'corrida_tratores',
+              trator_vencedor: vencedorCor,
+              participantes,
+            },
+          })
+          .select()
+          .single();
+
+        if (error) throw error;
+
+        await reservarPremio(premio.id);
+
+        await canalBroadcast.aguardarPronto();
+        const result = await canalBroadcast.send({
+          type: 'broadcast',
+          event: 'novo_evento',
+          payload: evento,
+        });
+
+        limparFormulario();
+        mostrarToast(result === 'ok'
+          ? '🏁 Corrida iniciada na TV!'
+          : `⚠️ Broadcast: ${result ?? 'sem resposta'}`);
+      } catch (err) {
+        mostrarErro(err.message);
+      } finally {
+        processando = false;
+        btnIniciar.disabled = false;
+        btnIniciar.textContent = '🏁 Iniciar Corrida!';
+      }
+    });
+
+    function limparFormulario() {
+      TRATORES.forEach((t) => {
+        const el = document.getElementById(`nome-${t.cor}`);
+        if (el) el.value = '';
+      });
+    }
+
+    function mostrarErro(msg) {
+      erroCorrida.textContent = msg;
+      erroCorrida.style.display = '';
+    }
+
+    function esconderErro() {
+      erroCorrida.style.display = 'none';
+    }
+
+    function mostrarToast(msg) {
+      clearTimeout(toastTimeout);
+      document.querySelector('.toast-sucesso')?.remove();
+      const toast = document.createElement('div');
+      toast.className = 'toast-sucesso';
+      toast.textContent = msg;
+      document.body.appendChild(toast);
+      toastTimeout = setTimeout(() => toast.remove(), 3500);
+    }
+
+    carregarModoAtual();
+  </script>
 </body>
 </html>

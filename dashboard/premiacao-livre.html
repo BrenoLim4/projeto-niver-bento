@@ -7,12 +7,313 @@
   <link rel="stylesheet" href="../assets/css/variables.css" />
   <link rel="stylesheet" href="../assets/css/base.css" />
   <link rel="stylesheet" href="../assets/css/components.css" />
+  <style>
+    .secao-tesouro {
+      margin-top: var(--espaco-xl);
+      border: 2px solid var(--cor-dourado);
+      border-radius: var(--raio-lg);
+      padding: var(--espaco-lg);
+      text-align: center;
+      background: linear-gradient(135deg, #FFF8EF, #F5E6C8);
+    }
+
+    .secao-tesouro h2 { margin-top: 0; }
+
+    .tesouro-icone {
+      font-size: 3rem;
+      display: block;
+      margin-bottom: var(--espaco-sm);
+    }
+
+    .erro {
+      color: var(--cor-vermelho);
+      font-weight: 600;
+      margin-bottom: var(--espaco-md);
+    }
+
+    .toast-sucesso {
+      position: fixed;
+      bottom: var(--espaco-xl);
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--cor-verde);
+      color: #fff;
+      font-weight: 700;
+      font-size: 1.1rem;
+      padding: var(--espaco-md) var(--espaco-xl);
+      border-radius: var(--raio-lg);
+      box-shadow: var(--sombra-forte);
+      z-index: 100;
+      white-space: nowrap;
+      animation: toast-subir 0.3s ease-out;
+    }
+
+    @keyframes toast-subir {
+      from { opacity: 0; transform: translateX(-50%) translateY(16px); }
+      to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+    }
+  </style>
 </head>
 <body>
-  <div class="container texto-centro">
-    <h1>⭐ Premiação Livre</h1>
-    <p>Em construção — implementação prevista para a FASE 11.</p>
-    <p><a href="index.html">← Voltar ao Dashboard</a></p>
+  <div class="container">
+    <div class="texto-centro">
+      <h1>⭐ Premiação Livre</h1>
+      <p><a href="/dashboard/">← Voltar ao Dashboard</a></p>
+    </div>
+
+    <!-- Sorteio principal -->
+    <div class="card" style="margin-top: var(--espaco-lg);">
+      <h2 style="margin-top: 0;">Registrar Ganhador</h2>
+      <div class="campo">
+        <label for="input-vencedor">Nome do ganhador *</label>
+        <input id="input-vencedor" type="text" placeholder="Ex: João" autocomplete="off" />
+      </div>
+      <div class="campo">
+        <label for="select-brincadeira">Brincadeira (opcional)</label>
+        <select id="select-brincadeira">
+          <option value="">— Premiação Livre —</option>
+          <option value="Jogo da Memória">🃏 Jogo da Memória</option>
+          <option value="Cadeira Musical">🎵 Cadeira Musical</option>
+          <option value="Caça ao Tesouro">🗺️ Caça ao Tesouro</option>
+          <option value="Outro">✏️ Outro...</option>
+        </select>
+      </div>
+      <div class="campo" id="campo-outro" style="display: none;">
+        <label for="input-outro">Nome da brincadeira</label>
+        <input id="input-outro" type="text" placeholder="Ex: Gincana da Fazenda" autocomplete="off" />
+      </div>
+      <p id="erro-sorteio" class="erro" style="display: none;"></p>
+      <button id="btn-sortear" class="botao botao-primario botao-bloco">
+        🎲 Sortear e Enviar para a TV!
+      </button>
+    </div>
+
+    <!-- Tesouro da Fazenda -->
+    <div class="secao-tesouro">
+      <span class="tesouro-icone">🏆</span>
+      <h2>Tesouro da Fazenda</h2>
+      <p>Prêmio especial — deve ser liberado manualmente pelo organizador.</p>
+      <button id="btn-tesouro" class="botao botao-primario">
+        🔓 Liberar Tesouro da Fazenda
+      </button>
+    </div>
   </div>
+
+  <!-- Modal: Confirmar Tesouro -->
+  <div id="modal-tesouro" class="modal-fundo" style="display: none;">
+    <div class="modal">
+      <h3 class="modal-titulo">🏆 Liberar Tesouro da Fazenda</h3>
+      <p>Quem encontrou o Tesouro da Fazenda?</p>
+      <div class="campo">
+        <label for="input-vencedor-tesouro">Nome do ganhador *</label>
+        <input id="input-vencedor-tesouro" type="text" placeholder="Ex: Ana" autocomplete="off" />
+      </div>
+      <p id="erro-tesouro-modal" class="erro" style="display: none;"></p>
+      <div class="flex gap-sm">
+        <button id="btn-cancelar-tesouro" class="botao botao-secundario botao-bloco">Cancelar</button>
+        <button id="btn-confirmar-tesouro" class="botao botao-sucesso botao-bloco">Confirmar 🎉</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { supabase } from '../js/supabaseClient.js';
+    import { sortearPremio, reservarPremio } from '../js/sorteio.js';
+    import { criarCanalBroadcast } from '../js/realtime.js';
+
+    const inputVencedor        = document.getElementById('input-vencedor');
+    const selectBrincadeira    = document.getElementById('select-brincadeira');
+    const campoOutro           = document.getElementById('campo-outro');
+    const inputOutro           = document.getElementById('input-outro');
+    const erroSorteio          = document.getElementById('erro-sorteio');
+    const btnSortear           = document.getElementById('btn-sortear');
+    const btnTesouro           = document.getElementById('btn-tesouro');
+    const modalTesouro         = document.getElementById('modal-tesouro');
+    const inputVencedorTesouro = document.getElementById('input-vencedor-tesouro');
+    const erroTesouroModal     = document.getElementById('erro-tesouro-modal');
+    const btnCancelarTesouro   = document.getElementById('btn-cancelar-tesouro');
+    const btnConfirmarTesouro  = document.getElementById('btn-confirmar-tesouro');
+
+    let processando = false;
+    let toastTimeout = null;
+    const canalBroadcast = criarCanalBroadcast();
+
+    // ── Brincadeira "Outro" toggle ───────────────────────────────
+
+    selectBrincadeira.addEventListener('change', () => {
+      const mostrar = selectBrincadeira.value === 'Outro';
+      campoOutro.style.display = mostrar ? '' : 'none';
+      if (mostrar) inputOutro.focus();
+    });
+
+    // ── Sorteio principal ────────────────────────────────────────
+
+    function obterContextoBrincadeira() {
+      const val = selectBrincadeira.value;
+      if (!val) return null;
+      if (val === 'Outro') return inputOutro.value.trim() || null;
+      return val;
+    }
+
+    btnSortear.addEventListener('click', async () => {
+      const nome = inputVencedor.value.trim();
+      if (!nome) { mostrarErro(erroSorteio, 'Digite o nome do ganhador.'); return; }
+      if (processando) return;
+
+      erroSorteio.style.display = 'none';
+      processando = true;
+      btnSortear.disabled = true;
+      btnSortear.textContent = '⏳ Sorteando...';
+
+      try {
+        const premio = await sortearPremio('livre');
+        if (!premio) {
+          mostrarErro(erroSorteio, 'Nenhum prêmio elegível disponível. Verifique o cadastro de prêmios.');
+          return;
+        }
+
+        const brincadeira = obterContextoBrincadeira();
+        const metadata = { is_tesouro: false };
+        if (brincadeira) metadata.brincadeira = brincadeira;
+
+        const { data: evento, error: evErr } = await supabase
+          .from('eventos')
+          .insert({
+            tipo: 'livre',
+            premio_id: premio.id,
+            premio_codigo: premio.codigo,
+            premio_nome: premio.nome,
+            premio_imagem_url: premio.imagem_url,
+            premio_categoria: premio.categoria,
+            vencedor: nome,
+            status: 'pending',
+            metadata,
+          })
+          .select()
+          .single();
+
+        if (evErr) throw evErr;
+
+        await reservarPremio(premio.id);
+
+        await canalBroadcast.aguardarPronto();
+        const resultadoBroadcast = await canalBroadcast.send({
+          type: 'broadcast',
+          event: 'novo_evento',
+          payload: evento,
+        });
+
+        inputVencedor.value = '';
+        selectBrincadeira.value = '';
+        campoOutro.style.display = 'none';
+        inputOutro.value = '';
+
+        mostrarToast(resultadoBroadcast === 'ok'
+          ? '⭐ Enviado para a TV!'
+          : `⚠️ Broadcast: ${resultadoBroadcast ?? 'sem resposta'}`);
+      } catch (err) {
+        mostrarErro(erroSorteio, err.message);
+      } finally {
+        processando = false;
+        btnSortear.disabled = false;
+        btnSortear.textContent = '🎲 Sortear e Enviar para a TV!';
+      }
+    });
+
+    inputVencedor.addEventListener('keydown', (e) => { if (e.key === 'Enter') btnSortear.click(); });
+
+    // ── Tesouro da Fazenda ───────────────────────────────────────
+
+    btnTesouro.addEventListener('click', () => {
+      inputVencedorTesouro.value = '';
+      erroTesouroModal.style.display = 'none';
+      modalTesouro.style.display = 'flex';
+      setTimeout(() => inputVencedorTesouro.focus(), 50);
+    });
+
+    btnCancelarTesouro.addEventListener('click', () => {
+      modalTesouro.style.display = 'none';
+    });
+
+    btnConfirmarTesouro.addEventListener('click', async () => {
+      const nome = inputVencedorTesouro.value.trim();
+      if (!nome) { mostrarErro(erroTesouroModal, 'Digite o nome do ganhador.'); return; }
+      if (processando) return;
+
+      processando = true;
+      btnConfirmarTesouro.disabled = true;
+      btnConfirmarTesouro.textContent = '⏳ Processando...';
+      erroTesouroModal.style.display = 'none';
+
+      try {
+        const { data: tesouro, error: tErr } = await supabase
+          .from('premios')
+          .select('*')
+          .eq('is_tesouro', true)
+          .single();
+
+        if (tErr || !tesouro) throw new Error('Tesouro da Fazenda não encontrado no banco de dados.');
+        if (tesouro.status === 'entregue') throw new Error('O Tesouro da Fazenda já foi entregue!');
+        if (tesouro.status === 'reservado') throw new Error('O Tesouro da Fazenda já está reservado para outro ganhador.');
+
+        const { data: evento, error: evErr } = await supabase
+          .from('eventos')
+          .insert({
+            tipo: 'livre',
+            premio_id: tesouro.id,
+            premio_codigo: tesouro.codigo,
+            premio_nome: tesouro.nome,
+            premio_imagem_url: tesouro.imagem_url,
+            premio_categoria: tesouro.categoria,
+            vencedor: nome,
+            status: 'pending',
+            metadata: { is_tesouro: true },
+          })
+          .select()
+          .single();
+
+        if (evErr) throw evErr;
+
+        await supabase.from('premios').update({ status: 'reservado' }).eq('id', tesouro.id);
+
+        await canalBroadcast.aguardarPronto();
+        const resultadoBroadcast = await canalBroadcast.send({
+          type: 'broadcast',
+          event: 'novo_evento',
+          payload: evento,
+        });
+
+        modalTesouro.style.display = 'none';
+        mostrarToast(resultadoBroadcast === 'ok'
+          ? '🏆 Tesouro enviado para a TV!'
+          : `⚠️ Broadcast: ${resultadoBroadcast ?? 'sem resposta'}`);
+      } catch (err) {
+        mostrarErro(erroTesouroModal, err.message);
+      } finally {
+        processando = false;
+        btnConfirmarTesouro.disabled = false;
+        btnConfirmarTesouro.textContent = 'Confirmar 🎉';
+      }
+    });
+
+    inputVencedorTesouro.addEventListener('keydown', (e) => { if (e.key === 'Enter') btnConfirmarTesouro.click(); });
+
+    // ── Helpers ──────────────────────────────────────────────────
+
+    function mostrarErro(el, msg) {
+      el.textContent = msg;
+      el.style.display = '';
+    }
+
+    function mostrarToast(msg) {
+      clearTimeout(toastTimeout);
+      document.querySelector('.toast-sucesso')?.remove();
+      const toast = document.createElement('div');
+      toast.className = 'toast-sucesso';
+      toast.textContent = msg;
+      document.body.appendChild(toast);
+      toastTimeout = setTimeout(() => toast.remove(), 3500);
+    }
+  </script>
 </body>
 </html>

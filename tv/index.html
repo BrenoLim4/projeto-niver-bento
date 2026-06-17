@@ -65,10 +65,27 @@
         <div id="tv-grade-peixes" class="tv-grade-peixes"></div>
       </div>
 
-      <div class="tv-modo" data-modo="corrida_animais" style="display: none;">
-        <img src="../assets/img/icons/cavalo.svg" alt="" />
-        <h1>🐎 Corrida dos Animais</h1>
-        <p>Em construção — implementação prevista para a FASE 13.</p>
+      <div class="tv-modo tv-corrida-ambiente" data-modo="corrida_animais" style="display: none;">
+        <div class="tv-corrida-ambiente-bg"></div>
+        <h2 class="tv-corrida-ambiente-titulo">🚜 Corrida dos Tratores da Fazendinha</h2>
+        <div class="tv-corrida-ambiente-pista">
+          <div class="tv-corrida-ambiente-raia">
+            <img class="tv-corrida-ambiente-trator tv-corrida-ambiente-trator--1"
+                 src="../assets/img/corrida/tratores/Bento_Trator_Vermelho.webp" alt="Trator Vermelho" />
+          </div>
+          <div class="tv-corrida-ambiente-raia">
+            <img class="tv-corrida-ambiente-trator tv-corrida-ambiente-trator--2"
+                 src="../assets/img/corrida/tratores/Bento_Trator_Azul.webp" alt="Trator Azul" />
+          </div>
+          <div class="tv-corrida-ambiente-raia">
+            <img class="tv-corrida-ambiente-trator tv-corrida-ambiente-trator--3"
+                 src="../assets/img/corrida/tratores/Bento_Trator_verde.webp" alt="Trator Verde" />
+          </div>
+          <div class="tv-corrida-ambiente-raia">
+            <img class="tv-corrida-ambiente-trator tv-corrida-ambiente-trator--4"
+                 src="../assets/img/corrida/tratores/Bento_Trator_Amarelo.webp" alt="Trator Amarelo" />
+          </div>
+        </div>
       </div>
       <div class="tv-modo" data-modo="roleta_fazenda" style="display: none;">
         <img src="../assets/img/icons/roleta.svg" alt="" />
@@ -85,6 +102,51 @@
     <!-- Indicador de conexão Realtime (FASE 8) -->
     <div id="tv-conexao" class="tv-conexao" style="display: none;" aria-live="polite">
       <span id="tv-conexao-texto">Conectado</span>
+    </div>
+
+    <!-- Corrida dos Tratores: overlay de corrida (eventos tipo='corrida') -->
+    <div id="tv-corrida" class="tv-corrida" style="display:none;">
+      <div class="tv-corrida-bg">
+        <div class="tv-corrida-layer-ceu"></div>
+        <div class="tv-corrida-layer-pista"></div>
+      </div>
+      <div class="tv-corrida-espaco-ceu"></div>
+      <div class="tv-corrida-pista">
+        <div class="tv-corrida-linha-largada" data-label="START"></div>
+        <div class="tv-corrida-linha-chegada" data-label="FINISH"></div>
+        <div class="tv-corrida-raias">
+          <div class="tv-corrida-raia" id="raia-vermelho" style="--progresso:0">
+            <span class="tv-corrida-raia-label" id="label-vermelho">🔴</span>
+            <div class="tv-corrida-trator-inner">
+              <div class="tv-poeira"></div>
+              <img class="tv-corrida-trator-img" src="../assets/img/corrida/tratores/Bento_Trator_Vermelho.webp" alt="Vermelho" />
+            </div>
+          </div>
+          <div class="tv-corrida-raia" id="raia-azul" style="--progresso:0">
+            <span class="tv-corrida-raia-label" id="label-azul">🔵</span>
+            <div class="tv-corrida-trator-inner">
+              <div class="tv-poeira"></div>
+              <img class="tv-corrida-trator-img" src="../assets/img/corrida/tratores/Bento_Trator_Azul.webp" alt="Azul" />
+            </div>
+          </div>
+          <div class="tv-corrida-raia" id="raia-verde" style="--progresso:0">
+            <span class="tv-corrida-raia-label" id="label-verde">🟢</span>
+            <div class="tv-corrida-trator-inner">
+              <div class="tv-poeira"></div>
+              <img class="tv-corrida-trator-img" src="../assets/img/corrida/tratores/Bento_Trator_verde.webp" alt="Verde" />
+            </div>
+          </div>
+          <div class="tv-corrida-raia" id="raia-amarelo" style="--progresso:0">
+            <span class="tv-corrida-raia-label" id="label-amarelo">🟡</span>
+            <div class="tv-corrida-trator-inner">
+              <div class="tv-poeira"></div>
+              <img class="tv-corrida-trator-img" src="../assets/img/corrida/tratores/Bento_Trator_Amarelo.webp" alt="Amarelo" />
+            </div>
+          </div>
+        </div>
+      </div>
+      <div id="tv-corrida-contador" class="tv-corrida-contador"></div>
+      <div id="tv-corrida-resultado" class="tv-corrida-resultado" style="display:none;"></div>
     </div>
 
     <!-- Estado Evento: Suspense → Baú → Revelação → Encerramento -->
@@ -135,6 +197,7 @@
     import { executarRevelacao } from '../js/animacoes.js';
     import { desbloquear } from '../js/sons.js';
     import { inicializarHallDaFama, atualizarTesouroStatus } from '../js/halldafama.js';
+    import { executarCorrida } from '../js/corrida.js';
 
     const MODOS = ['hall_da_fama', 'pescaria', 'corrida_animais', 'roleta_fazenda', 'estatisticas'];
 
@@ -153,9 +216,28 @@
     const tvBoot = document.getElementById('tv-boot');
     const tvNormal = document.getElementById('tv-normal');
     const tvEvento = document.getElementById('tv-evento');
+    const tvCorrida = document.getElementById('tv-corrida');
     const btnIniciar = document.getElementById('btn-iniciar-tv');
     const tvConexao = document.getElementById('tv-conexao');
     const tvConexaoTexto = document.getElementById('tv-conexao-texto');
+
+    const elementosCorrida = {
+      overlay: tvCorrida,
+      raias: {
+        vermelho: document.getElementById('raia-vermelho'),
+        azul:     document.getElementById('raia-azul'),
+        verde:    document.getElementById('raia-verde'),
+        amarelo:  document.getElementById('raia-amarelo'),
+      },
+      labels: {
+        vermelho: document.getElementById('label-vermelho'),
+        azul:     document.getElementById('label-azul'),
+        verde:    document.getElementById('label-verde'),
+        amarelo:  document.getElementById('label-amarelo'),
+      },
+      contador:  document.getElementById('tv-corrida-contador'),
+      resultado: document.getElementById('tv-corrida-resultado'),
+    };
 
     const elementosEvento = {
       container: tvEvento,
@@ -295,8 +377,11 @@
       }, 800);
     }
 
+    const ALIASES_MODO = { corrida: 'corrida_animais', roleta: 'roleta_fazenda', hall: 'hall_da_fama' };
+
     function mostrarModo(modo) {
-      modoAtual = MODOS.includes(modo) ? modo : MODOS[0];
+      const normalizado = ALIASES_MODO[modo] ?? modo;
+      modoAtual = MODOS.includes(normalizado) ? normalizado : MODOS[0];
       document.querySelectorAll('.tv-modo').forEach((el) => {
         el.style.display = el.dataset.modo === modoAtual ? '' : 'none';
       });
@@ -318,8 +403,18 @@
       revelacaoEmAndamento = true;
       document.querySelectorAll('.tv-peixe-foco-overlay').forEach((el) => el.remove());
       tvNormal.style.display = 'none';
-      tvEvento.style.display = '';
 
+      // Corrida dos Tratores: anima a corrida antes da revelação do prêmio.
+      if (evento.tipo === 'corrida') {
+        // Preenche labels das raias com nomes dos participantes (se houver).
+        const participantes = evento.metadata?.participantes ?? {};
+        for (const [cor, labelEl] of Object.entries(elementosCorrida.labels)) {
+          if (participantes[cor]) labelEl.textContent = participantes[cor];
+        }
+        await executarCorrida(evento, elementosCorrida);
+      }
+
+      tvEvento.style.display = '';
       await executarRevelacao(evento, elementosEvento);
 
       revelacaoEmAndamento = false;
