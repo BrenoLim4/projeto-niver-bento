@@ -660,28 +660,24 @@ re-sincronizar buscando `eventos` com `status IN ('pending','processing')` e est
 - **Entregáveis**: `dashboard/jogo-memoria.html`.
 
 ### FASE 11 — Premiação Livre
-- **Objetivo**: tela oficial de premiação livre.
-- **Escopo**: `dashboard/premiacao-livre.html` — nome do vencedor → `js/sorteio.js` (elegível
-  `livre`/universal) → cria `eventos` (`tipo='livre'`, `pending`) + snapshot,
+- **Objetivo**: tela unificada para premiações avulsas — cobre qualquer brincadeira física
+  (Jogo da Memória, Cadeira Musical, Caça ao Tesouro, etc.) e premiações espontâneas,
+  substituindo também a FASE 10 (Jogo da Memória sem QR, pulada).
+- **Escopo**: `dashboard/premiacao-livre.html` — operador escolhe opcionalmente o contexto da
+  brincadeira (campo livre ou lista: Jogo da Memória, Cadeira Musical, Caça ao Tesouro, Livre…)
+  + digita o nome do vencedor → `js/sorteio.js` (elegível `livre`/universal) → cria `eventos`
+  (`tipo='livre'`, `pending`) com contexto salvo em `metadata.brincadeira` + snapshot,
   `premios.status='reservado'`. Inclui a ação "Liberar Tesouro da Fazenda" (seleção explícita
-  do prêmio Tesouro, fora do sorteio), acessível também por aqui ou por `controle-tv.html`.
-- **Critérios de aceite**: fluxo completo igual ao Jogo da Memória, mas com pool `livre`;
-  liberar o Tesouro cria evento com o prêmio Tesouro e dispara a animação exclusiva (Fase 13).
+  do prêmio Tesouro, fora do sorteio), acessível também por `controle-tv.html`.
+- **Critérios de aceite**: digitar nome + confirmar cria evento com prêmio sorteado
+  corretamente (respeitando elegibilidade/bloqueio/reservas); contexto da brincadeira é
+  opcional e não afeta o sorteio; liberar o Tesouro cria evento com o prêmio Tesouro e dispara
+  a animação exclusiva (Fase 13); operador não escolhe o prêmio em nenhum momento.
 - **Dependências**: FASE 2, FASE 3, FASE 5.
 - **Entregáveis**: `dashboard/premiacao-livre.html`.
 
 ### FASE 12 — Roleta da Fazenda
-- **Objetivo**: roleta como modo da TV + disparo no dashboard.
-- **Escopo**: `dashboard/roleta.html` (sorteio elegível `roleta`/universal + cálculo do
-  ângulo final, salvo em `eventos.metadata`); modo `roleta_fazenda` em `tv/index.html`:
-  loop ambiente (sem prêmio) quando ocioso, animação de giro determinística (usa
-  `metadata.angulo`) quando há evento `tipo='roleta'` em `processing`.
-- **Critérios de aceite**: disparo no dashboard cria evento com prêmio sorteado e ângulo;
-  TV gira de forma fluida até o ângulo definido e segue para revelação; modo ambiente roda em
-  loop quando não há evento.
-- **Dependências**: FASE 2, FASE 5, FASE 4.
-- **Entregáveis**: `dashboard/roleta.html`, `js/roleta.js`, seção `roleta_fazenda` em
-  `tv/index.html`.
+- seguir prompt do arquivo @FASE 13.md
 
 ### FASE 13 — Corrida dos Animais + Tesouro da Fazenda
 - **Objetivo**: corrida como modo da TV + disparo no dashboard; animação exclusiva do
@@ -839,4 +835,44 @@ vira `completed` (com foto) ou `delivered` (sem foto, permite reenvio depois),
 listas sem reload. Testado em `http://localhost:8123/dashboard/entregas-pendentes.html`
 (2 eventos `revealed` de teste — "Teste"/P-001 — disponíveis para registrar entrega).
 
-▶️ Próximo passo: **FASE 8** (Realtime: Consolidação e Resiliência).
+✅ **FASE 8 concluída** — Realtime consolidado e endurecido: revisão dos 2 canais principais,
+reconexão automática com debounce, ressincronização da fila e do `config` ao reconectar,
+indicador visual de status de conexão na TV ("Conectado"/"Reconectando..."), broadcast
+de eventos via `subscribeBroadcastEvento` como canal auxiliar. Testado com múltiplos eventos
+em sequência rápida, queda/retomada de conexão e reload da TV com fila pendente.
+
+✅ **FASE 9 concluída** — `dashboard/pescaria.html` com leitor `jsQR` + fallback de entrada
+manual; lookup em `qr_codes` (`tipo_qr='fixo'` → snapshot direto sem sorteio;
+`tipo_qr='aleatorio'` → pede nome do ganhador + `js/sorteio.js`); cria evento
+(`tipo='pescaria'`, `pending`) com snapshot do prêmio, `premios.status='reservado'` e
+`qr_codes.usado=true`; QR já usado bloqueia com mensagem clara; `js/qrscanner.js` isolado e
+reutilizável; grade de peixes na TV atualizada via Realtime ao escanear.
+
+⏭️ **FASE 10 pulada** — Jogo da Memória será conduzido fisicamente durante a festa. Sua
+premiação será registrada através da tela de Premiação Livre (FASE 11), que já suporta
+qualquer brincadeira sem vínculo a QR Code ou fluxo dedicado.
+
+✅ **FASE 11 concluída** — `dashboard/premiacao-livre.html`: formulário com nome do ganhador +
+seletor opcional de contexto (Jogo da Memória, Cadeira Musical, Caça ao Tesouro, Livre ou
+campo livre "Outro"); chama `js/sorteio.js` (`sortearPremio('livre')`) para sortear prêmio
+elegível (`livre`/universal), cria evento (`tipo='livre'`, `pending`) com snapshot e contexto em
+`metadata.brincadeira`, reserva o prêmio via `reservarPremio()`, envia broadcast para a TV.
+Inclui seção "Tesouro da Fazenda" com modal de confirmação que busca o prêmio `is_tesouro=true`,
+valida seu status, cria evento com `metadata.is_tesouro=true` e dispara a animação exclusiva na
+TV (implementada na Fase 5). Operador não escolhe o prêmio em nenhum momento.
+
+⏭️ **FASE 12 pulada** — Roleta da Fazenda não foi priorizada.
+
+✅ **FASE 13 concluída** — `dashboard/corrida.html`: grade 2×2 com 4 tratores (Vermelho, Azul,
+Verde, Amarelo; Branco excluído), campo de nome por trator, botão "Iniciar Corrida!" sorteia
+o vencedor aleatoriamente entre os tratores com nome, chama `sortearPremio('corrida')` e cria
+evento (`tipo='corrida'`, `pending`) com `metadata.tipo='corrida_tratores'`,
+`metadata.trator_vencedor` e `metadata.participantes`. `js/corrida.js`: constante `TRATORES`
+compartilhada + `executarCorrida` (contagem regressiva 3→2→1→VAI!, animação `requestAnimationFrame`
+com boost progressivo do vencedor após 65% do trajeto, efeito de poeira via CSS, tela de resultado,
+fade out). `tv/index.html`: modo ambiente `corrida_animais` substituído por 4 tratores em loop
+decorativo com parallax CSS de 3 camadas (céu, cenário, pista); overlay `#tv-corrida` adicionado;
+`mostrarEvento` detecta `tipo='corrida'` e executa `executarCorrida` antes de `executarRevelacao`;
+animação do Tesouro já ativa via Fase 5. `assets/css/tv.css`: estilos completos da corrida.
+
+▶️ Próximo passo: **FASE 14** (Estatísticas) ou **FASE 15** (Controle da TV).
