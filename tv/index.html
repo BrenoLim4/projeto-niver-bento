@@ -201,6 +201,24 @@
       </div>
     </div>
 
+    <!-- Overlay de celebração: animal encontrado na Caça ao Tesouro -->
+    <div id="tv-ct-overlay-animal" class="tv-ct-overlay-animal" style="display:none;" aria-live="assertive">
+      <div class="tv-ct-particulas" id="tv-ct-particulas"></div>
+      <div class="tv-ct-overlay-content">
+        <p class="tv-ct-overlay-subtitulo">🐾 Animal encontrado!</p>
+        <div class="tv-ct-overlay-img-wrap">
+          <img id="tv-ct-overlay-img" src="" alt="" />
+        </div>
+        <h2 id="tv-ct-overlay-nome" class="tv-ct-overlay-nome"></h2>
+        <div class="tv-ct-overlay-progresso">
+          <div class="tv-ct-overlay-barra-wrap">
+            <div id="tv-ct-overlay-barra" class="tv-ct-overlay-barra"></div>
+          </div>
+          <span id="tv-ct-overlay-contador" class="tv-ct-overlay-contador"></span>
+        </div>
+      </div>
+    </div>
+
     <!-- Indicador de conexão Realtime (FASE 8) -->
     <div id="tv-conexao" class="tv-conexao" style="display: none;" aria-live="polite">
       <span id="tv-conexao-texto">Conectado</span>
@@ -552,7 +570,10 @@
     // ── Caça ao Tesouro: modo de apresentação ambiente ───────────────
     const ANIMAIS_CT = []; // preenchido em inicializarCacaTesouro
     const animaisEncontradosCT = new Set(); // animal_id já encontrados
-    let notifTimeout = null;
+
+    // Fila de celebrações (evita sobreposição quando vários animais chegam juntos)
+    const filaOverlayCT = [];
+    let overlayAnimalAtivo = false;
 
     async function inicializarCacaTesouro() {
       try {
@@ -593,7 +614,7 @@
               renderizarGradeCT();
               atualizarStatsCT({ totalAnimais: total, totalAnimaisMax: max });
 
-              if (animal) mostrarNotificacaoAnimal(animal, total, max);
+              if (animal) enfileirarOverlayCT(animal, total, max);
             })
           .on('postgres_changes',
             { event: 'INSERT', schema: 'public', table: 'tesouro_participantes' },
@@ -648,29 +669,78 @@
       });
     }
 
-    function mostrarNotificacaoAnimal(animal, totalEncontrados, totalMax) {
-      clearTimeout(notifTimeout);
-      const el     = document.getElementById('tv-ct-notificacao');
-      const imgEl  = document.getElementById('tv-ct-notif-img');
-      const nomeEl = document.getElementById('tv-ct-notif-nome');
-      const contEl = document.getElementById('tv-ct-notif-contador');
+    function enfileirarOverlayCT(animal, total, max) {
+      filaOverlayCT.push({ animal, total, max });
+      if (!overlayAnimalAtivo) processarFilaOverlayCT();
+    }
+
+    function processarFilaOverlayCT() {
+      if (filaOverlayCT.length === 0) { overlayAnimalAtivo = false; return; }
+      overlayAnimalAtivo = true;
+      const { animal, total, max } = filaOverlayCT.shift();
+      exibirOverlayCT(animal, total, max);
+    }
+
+    function gerarParticulasCT() {
+      const cont = document.getElementById('tv-ct-particulas');
+      if (!cont) return;
+      cont.innerHTML = '';
+      const EMOJIS = ['🌟', '⭐', '✨', '🌾', '🍀', '🌻', '💛', '🎉', '🐾', '🌈'];
+      for (let i = 0; i < 28; i++) {
+        const p = document.createElement('span');
+        p.textContent = EMOJIS[Math.floor(Math.random() * EMOJIS.length)];
+        const dur   = (1.4 + Math.random() * 2).toFixed(2);
+        const delay = (Math.random() * 1.4).toFixed(2);
+        const dx    = ((Math.random() - 0.5) * 220).toFixed(0);
+        const rot   = ((Math.random() - 0.5) * 80).toFixed(0);
+        p.style.cssText = [
+          `left:${(5 + Math.random() * 90).toFixed(1)}%`,
+          `top:${(10 + Math.random() * 80).toFixed(1)}%`,
+          `font-size:${(0.8 + Math.random() * 1.8).toFixed(2)}rem`,
+          `--dur:${dur}s`,
+          `--delay:${delay}s`,
+          `--dx:${dx}px`,
+          `--rot:${rot}deg`,
+        ].join(';');
+        cont.appendChild(p);
+      }
+    }
+
+    function exibirOverlayCT(animal, total, max) {
+      const el      = document.getElementById('tv-ct-overlay-animal');
+      const imgEl   = document.getElementById('tv-ct-overlay-img');
+      const nomeEl  = document.getElementById('tv-ct-overlay-nome');
+      const contEl  = document.getElementById('tv-ct-overlay-contador');
+      const barraEl = document.getElementById('tv-ct-overlay-barra');
+      if (!el) { processarFilaOverlayCT(); return; }
 
       const imgSrc = ANIMAL_IMG[animal.codigo];
-      if (imgEl) {
-        imgEl.src = imgSrc ?? '';
-        imgEl.alt = animal.nome;
-        imgEl.style.display = imgSrc ? '' : 'none';
-      }
-      nomeEl.textContent = `${animal.nome} foi encontrado!`;
-      contEl.textContent = `${totalEncontrados} de ${totalMax} animais`;
+      imgEl.src = imgSrc ?? '';
+      imgEl.alt = animal.nome;
+      nomeEl.textContent = animal.nome;
+      contEl.textContent = `${total} de ${max} ${total !== 1 ? 'animais' : 'animal'} encontrado${total !== 1 ? 's' : ''}`;
 
-      el.classList.remove('tv-ct-notif--saindo');
+      barraEl.style.transition = 'none';
+      barraEl.style.width = '0%';
+
+      el.classList.remove('tv-ct-overlay--saindo');
       el.style.display = '';
 
-      notifTimeout = setTimeout(() => {
-        el.classList.add('tv-ct-notif--saindo');
-        setTimeout(() => { el.style.display = 'none'; el.classList.remove('tv-ct-notif--saindo'); }, 500);
-      }, 3500);
+      requestAnimationFrame(() => requestAnimationFrame(() => {
+        barraEl.style.transition = 'width 1.2s cubic-bezier(0.4, 0, 0.2, 1)';
+        barraEl.style.width = `${Math.round(total / max * 100)}%`;
+      }));
+
+      gerarParticulasCT();
+
+      setTimeout(() => {
+        el.classList.add('tv-ct-overlay--saindo');
+        setTimeout(() => {
+          el.style.display = 'none';
+          el.classList.remove('tv-ct-overlay--saindo');
+          processarFilaOverlayCT();
+        }, 600);
+      }, 4500);
     }
 
     // Atualiza status do tesouro quando config muda (já ouvido pelo subscribeConfig)
