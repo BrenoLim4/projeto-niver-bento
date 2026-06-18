@@ -8,50 +8,50 @@ export const TRATORES = [
     label: 'Trator Vermelho',
     imagem: '../assets/img/corrida/tratores/Bento_Trator_Vermelho.webp',
     corHex: '#C0392B',
-    offset: 0,
   },
   {
     cor: 'azul',
     label: 'Trator Azul',
     imagem: '../assets/img/corrida/tratores/Bento_Trator_Azul.webp',
     corHex: '#2980B9',
-    offset: 1.3,
   },
   {
     cor: 'verde',
     label: 'Trator Verde',
     imagem: '../assets/img/corrida/tratores/Bento_Trator_verde.webp',
     corHex: '#27AE60',
-    offset: 2.6,
   },
   {
     cor: 'amarelo',
     label: 'Trator Amarelo',
     imagem: '../assets/img/corrida/tratores/Bento_Trator_Amarelo.webp',
     corHex: '#F1C40F',
-    offset: 3.9,
   },
 ];
 
 const DURACAO_CORRIDA_MS = 22000;
+
+// Fases aleatórias de jitter — regeneradas a cada corrida por executarCorrida().
+// Garante que a aparência da corrida muda a cada vez, sem viés fixo por trator.
+let fasesJitter = TRATORES.map(() => Math.random() * Math.PI * 2);
 
 function aguardar(ms) {
   return new Promise((r) => setTimeout(r, ms));
 }
 
 // Progresso de 0 a 1 para cada trator em função do tempo t (0-1).
-// O vencedor recebe boost gradual após 65% do trajeto para assumir liderança
-// com clareza. Os demais param entre 78–88% do trajeto.
-function calcularProgresso(trator, vencedor, t) {
+// O vencedor recebe boost que começa em t=0.5 e cresce até 1.0, garantindo
+// liderança clara na segunda metade da corrida.
+// Os perdedores têm cap fixo (0.82) — sem hierarquia determinística entre eles.
+function calcularProgresso(trator, vencedor, t, idx) {
   const base = t * t * (3 - 2 * t); // smoothstep
-  const jitter = Math.sin(t * 22 + trator.offset * 4.1) * 0.028 * Math.max(0, 1 - t * 1.4);
+  const jitter = Math.sin(t * 18 + fasesJitter[idx]) * 0.03 * Math.max(0, 1 - t * 1.5);
 
   if (trator.cor === vencedor) {
-    const boost = t > 0.65 ? Math.pow((t - 0.65) / 0.35, 1.4) * 0.22 : 0;
+    const boost = t > 0.5 ? Math.pow((t - 0.5) / 0.5, 1.3) * 0.38 : 0;
     return Math.min(base + jitter + boost, 1.0);
   }
-  const cap = 0.78 + trator.offset * 0.025;
-  return Math.min((base + jitter) * cap, cap);
+  return Math.min((base + jitter) * 0.82, 0.82);
 }
 
 async function contarRegressiva(el) {
@@ -70,6 +70,9 @@ async function contarRegressiva(el) {
 export async function executarCorrida(evento, elementos) {
   const { overlay, raias, contador, resultado } = elementos;
   const vencedor = evento.metadata?.trator_vencedor ?? TRATORES[0].cor;
+
+  // Fases aleatórias novas a cada corrida — aparência diferente sempre.
+  fasesJitter = TRATORES.map(() => Math.random() * Math.PI * 2);
 
   overlay.style.display = '';
   overlay.classList.remove('tv-corrida--saindo', 'tv-corrida--correndo');
@@ -90,11 +93,11 @@ export async function executarCorrida(evento, elementos) {
   await new Promise((resolve) => {
     function frame(agora) {
       const t = Math.min((agora - inicio) / DURACAO_CORRIDA_MS, 1);
-      for (const trator of TRATORES) {
+      TRATORES.forEach((trator, idx) => {
         const raia = raias[trator.cor];
-        if (!raia) continue;
-        raia.style.setProperty('--progresso', calcularProgresso(trator, vencedor, t).toFixed(5));
-      }
+        if (!raia) return;
+        raia.style.setProperty('--progresso', calcularProgresso(trator, vencedor, t, idx).toFixed(5));
+      });
       if (t < 1) requestAnimationFrame(frame);
       else resolve();
     }
