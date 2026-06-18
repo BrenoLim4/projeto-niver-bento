@@ -161,6 +161,22 @@
       font-weight: 900;
       text-shadow: 0 0 3px #fff;
     }
+    .animal-chip--de-outro {
+      background: linear-gradient(135deg, #fde8e8, #ffcdd2);
+      border-color: var(--cor-vermelho);
+      box-shadow: 0 2px 8px rgba(182,62,62,.3);
+    }
+    .animal-chip--de-outro img {
+      filter: grayscale(0.4) opacity(0.55);
+    }
+    .animal-chip--de-outro::after {
+      content: '❌';
+      position: absolute;
+      bottom: 0px;
+      right: 2px;
+      font-size: 0.6rem;
+      line-height: 1;
+    }
 
     /* Scanner QR */
     .scanner-section {
@@ -502,7 +518,8 @@
     // ── Estado global ──────────────────────────────────────────────
     let participante = null;
     let animaisTodos = [];
-    let animaisEncontrados = new Set(); // animal_id
+    let animaisEncontrados = new Set(); // animal_id encontrados por mim
+    let animaisDeOutros   = new Set(); // animal_id encontrados por outros participantes
     let minAnimais = 3;
     let tesouroStatus = 'nao_encontrado';
     let scannerAtivo = false;
@@ -546,7 +563,10 @@
       animaisTodos.forEach((animal) => {
         const chip = document.createElement('div');
         const encontrado = animaisEncontrados.has(animal.id);
-        chip.className = 'animal-chip' + (encontrado ? ' animal-chip--encontrado' : '');
+        const deOutro    = !encontrado && animaisDeOutros.has(animal.id);
+        chip.className = 'animal-chip'
+          + (encontrado ? ' animal-chip--encontrado' : '')
+          + (deOutro    ? ' animal-chip--de-outro'   : '');
         chip.title = animal.nome;
 
         const imgSrc = ANIMAL_IMG[animal.codigo];
@@ -565,7 +585,7 @@
       document.getElementById('progresso-contador').textContent = `${total}/${minAnimais}`;
       document.getElementById('progresso-fill').style.width = `${pct}%`;
       document.getElementById('perfil-progresso-txt').textContent =
-        `${total} animal${total !== 1 ? 'is' : ''} encontrado${total !== 1 ? 's' : ''}`;
+        `${total} ${total !== 1 ? 'animais' : 'animal'} encontrado${total !== 1 ? 's' : ''}`;
 
       const desbloqueado = total >= minAnimais;
       const statusEl = document.getElementById('status-tesouro');
@@ -578,7 +598,7 @@
       } else {
         const faltam = minAnimais - total;
         statusEl.className = 'status-tesouro status-tesouro--bloqueado';
-        statusEl.textContent = `🔒 Encontre mais ${faltam} animal${faltam !== 1 ? 'is' : ''} para desbloquear`;
+        statusEl.textContent = `🔒 Encontre mais ${faltam} ${faltam !== 1 ? 'animais' : 'animal'} para desbloquear`;
       }
     }
 
@@ -599,11 +619,13 @@
           { data: p },
           { data: animais },
           { data: encontrados },
+          { data: encontradosPorOutros },
           { data: config },
         ] = await Promise.all([
           supabase.from('tesouro_participantes').select('*').eq('id', participanteId).single(),
           supabase.from('tesouro_animais').select('*').eq('ativo', true).order('ordem'),
           supabase.from('tesouro_participante_animais').select('animal_id').eq('participante_id', participanteId),
+          supabase.from('tesouro_participante_animais').select('animal_id').neq('participante_id', participanteId),
           supabase.from('config').select('tesouro_min_animais, tesouro_status').eq('id', 1).single(),
         ]);
 
@@ -612,6 +634,9 @@
         participante = p;
         animaisTodos = animais ?? [];
         (encontrados ?? []).forEach((r) => animaisEncontrados.add(r.animal_id));
+        (encontradosPorOutros ?? []).forEach((r) => {
+          if (!animaisEncontrados.has(r.animal_id)) animaisDeOutros.add(r.animal_id);
+        });
         minAnimais = config?.tesouro_min_animais ?? 3;
         tesouroStatus = config?.tesouro_status ?? 'nao_encontrado';
 
@@ -747,7 +772,7 @@
       const total = animaisEncontrados.size;
       if (total < minAnimais) {
         const faltam = minAnimais - total;
-        mostrarToast(`🔒 Faltam ${faltam} animal${faltam !== 1 ? 'is'  : ''} para desbloquear!`, 'aviso');
+        mostrarToast(`🔒 Faltam ${faltam} ${faltam !== 1 ? 'animais' : 'animal'} para desbloquear!`, 'aviso');
         reativarScanner();
         return;
       }
@@ -1004,6 +1029,15 @@
         tesouroStatus = payload.new.tesouro_status ?? tesouroStatus;
         minAnimais = payload.new.tesouro_min_animais ?? minAnimais;
         atualizarProgresso();
+      })
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'tesouro_participante_animais' }, (payload) => {
+        const { animal_id, participante_id } = payload.new;
+        if (participante_id === participanteId) return; // meu próprio insert, já tratado localmente
+        if (animaisEncontrados.has(animal_id) || animaisDeOutros.has(animal_id)) return;
+        animaisDeOutros.add(animal_id);
+        renderizarGrade();
+        const animal = animaisTodos.find((a) => a.id === animal_id);
+        if (animal) mostrarToast(`😅 ${animal.nome} já foi encontrado por outro participante!`, 'aviso');
       })
       .subscribe();
 
