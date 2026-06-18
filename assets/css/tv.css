@@ -1760,3 +1760,107 @@ html {
   transform-origin: left center;
   /* transition duration definida pelo JS: barraEl.style.transition = `transform ${ms}ms linear` */
 }
+
+/* ── Responsividade para telas menores (tablet / projetor / preview) ─────── */
+
+@media (max-width: 1199px) {
+  /* Notificação de animal: sem nowrap, pode quebrar linha */
+  .tv-ct-notificacao {
+    white-space: normal;
+    flex-wrap: wrap;
+    justify-content: center;
+    text-align: center;
+    max-width: 90vw;
+  }
+
+  /* Estatísticas: categorias quebram linha */
+  .tv-stats-categorias {
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: var(--espaco-md);
+  }
+
+  /* Linha de totais também pode quebrar */
+  .tv-stats-linha {
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: var(--espaco-lg);
+  }
+
+  /* Foco do peixe: não vazar além da viewport */
+  .tv-peixe-foco-card {
+    width: min(320px, 90vw);
+  }
+
+  /* Grade de peixes: perde o tamanho fixo quadrado */
+  .tv-grade-peixes {
+    width: 100%;
+    height: auto;
+    grid-template-columns: repeat(3, 1fr);
+    grid-template-rows: auto;
+    gap: var(--espaco-md);
+    margin: var(--espaco-sm);
+  }
+
+  .tv-peixe-card {
+    aspect-ratio: 1;
+    min-height: 0;
+    min-width: 0;
+  }
+}
+
+@media (max-width: 900px) {
+  /* Hall da Fama: cabeçalho empilha verticalmente */
+  .hall-cabecalho {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--espaco-sm);
+    padding: var(--espaco-sm) var(--espaco-md);
+  }
+
+  .hall-contadores {
+    flex-wrap: wrap;
+    gap: var(--espaco-sm);
+  }
+
+  .hall-contador { min-width: 70px; }
+
+  /* Separador de stats menor */
+  .tv-stats-separador { height: 40px; }
+}
+
+@media (max-width: 600px) {
+  /* Espaçamento geral compacto */
+  .tv-boot,
+  .tv-normal,
+  .tv-evento {
+    padding: var(--espaco-md);
+    gap: var(--espaco-md);
+  }
+
+  /* Hall: ícones menores */
+  .hall-titulo img { width: 32px; height: 32px; }
+  .hall-tesouro img { width: 24px; height: 24px; }
+  .hall-contador { min-width: 56px; padding: var(--espaco-xs) var(--espaco-sm); }
+
+  /* Stats: remove separadores, compacta categorias */
+  .tv-stats-separador { display: none; }
+  .tv-stats-categorias { gap: var(--espaco-sm); }
+  .tv-stats-categoria { min-width: 100px; }
+
+  /* Caça ao Tesouro: grade bem compacta */
+  .tv-ct-animais {
+    padding: var(--espaco-xs) var(--espaco-sm);
+    gap: var(--espaco-xs);
+  }
+
+  /* Notificação mínima */
+  .tv-ct-notificacao {
+    max-width: 96vw;
+    padding: var(--espaco-sm) var(--espaco-md);
+    font-size: 0.85rem;
+  }
+
+  /* Corrida: grama levemente menor */
+  .tv-corrida-grama { height: 15%; }
+}

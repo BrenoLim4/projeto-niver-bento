@@ -9,6 +9,28 @@
   <link rel="stylesheet" href="../assets/css/components.css" />
   <link rel="stylesheet" href="../assets/css/tv.css" />
   <link rel="stylesheet" href="../assets/css/animacoes.css" />
+  <style>
+    /* Imagens dos animais na grade da Caça ao Tesouro (TV) */
+    .tv-ct-animal img {
+      width: 78%; height: 78%;
+      object-fit: contain;
+      filter: grayscale(1) opacity(0.3);
+      transition: filter 0.5s ease;
+      pointer-events: none;
+    }
+    .tv-ct-animal--encontrado img {
+      filter: none;
+      filter: drop-shadow(0 0 10px rgba(111,140,82,.7));
+    }
+    /* Imagem na notificação flutuante */
+    .tv-ct-notif-img {
+      width: 56px; height: 56px;
+      border-radius: 50%; object-fit: cover;
+      border: 3px solid #fff;
+      box-shadow: 0 2px 10px rgba(0,0,0,.3);
+      flex-shrink: 0;
+    }
+  </style>
 </head>
 <body>
   <div class="tela-tv">
@@ -172,7 +194,7 @@
 
     <!-- Notificação flutuante: animal encontrado na Caça ao Tesouro -->
     <div id="tv-ct-notificacao" class="tv-ct-notificacao" style="display:none;" aria-live="polite">
-      <span class="tv-ct-notif-emoji" id="tv-ct-notif-emoji">🐄</span>
+      <img id="tv-ct-notif-img" class="tv-ct-notif-img" src="" alt="" />
       <div class="tv-ct-notif-texto">
         <strong id="tv-ct-notif-nome">Vaca Mimosa encontrada!</strong>
         <span id="tv-ct-notif-contador">3 de 10 animais</span>
@@ -352,6 +374,19 @@
     import { executarRoleta, desenharRoleta, ROTACAO_INICIAL } from '../js/roleta.js';
 
     const MODOS = ['hall_da_fama', 'pescaria', 'corrida_animais', 'roleta_fazenda', 'estatisticas', 'caca_tesouro'];
+
+    const ANIMAL_IMG = {
+      'ANIMAL-VACA':     '../assets/img/animais/bento_vaca.png',
+      'ANIMAL-CAVALO':   '../assets/img/animais/bento_cavalo.png',
+      'ANIMAL-PORCO':    '../assets/img/animais/bento_porquinho.png',
+      'ANIMAL-GALINHA':  '../assets/img/animais/bento_galinha.png',
+      'ANIMAL-OVELHA':   '../assets/img/animais/bento_ovelha.png',
+      'ANIMAL-CABRA':    '../assets/img/animais/bento_cabra.png',
+      'ANIMAL-PATO':     '../assets/img/animais/bento_pato.png',
+      'ANIMAL-PINTINHO': '../assets/img/animais/bento_pintinho.png',
+      'ANIMAL-CACHORRO': '../assets/img/animais/bento_cachorro.png',
+      'ANIMAL-GATO':     '../assets/img/animais/bento_gato.png',
+    };
 
     const TV_PEIXES = [
       { codigo: 'QR-PEIXE-01', nome: 'Nemo',    emoji: '🐠', cor: '#E65100' },
@@ -605,24 +640,29 @@
         const encontrado = animaisEncontradosCT.has(animal.id);
         const card = document.createElement('div');
         card.className = 'tv-ct-animal' + (encontrado ? ' tv-ct-animal--encontrado' : '');
-        card.innerHTML = `
-          <span class="tv-ct-animal-emoji">${animal.emoji || '❓'}</span>
-          ${encontrado ? '<span class="tv-ct-animal-check">✓</span>' : ''}
-        `;
+        const imgSrc = ANIMAL_IMG[animal.codigo];
+        card.innerHTML = imgSrc
+          ? `<img src="${imgSrc}" alt="${animal.nome}" />${encontrado ? '<span class="tv-ct-animal-check">✓</span>' : ''}`
+          : `<span class="tv-ct-animal-emoji">${animal.emoji || '❓'}</span>${encontrado ? '<span class="tv-ct-animal-check">✓</span>' : ''}`;
         grade.appendChild(card);
       });
     }
 
     function mostrarNotificacaoAnimal(animal, totalEncontrados, totalMax) {
       clearTimeout(notifTimeout);
-      const el      = document.getElementById('tv-ct-notificacao');
-      const emojiEl = document.getElementById('tv-ct-notif-emoji');
-      const nomeEl  = document.getElementById('tv-ct-notif-nome');
-      const contEl  = document.getElementById('tv-ct-notif-contador');
+      const el     = document.getElementById('tv-ct-notificacao');
+      const imgEl  = document.getElementById('tv-ct-notif-img');
+      const nomeEl = document.getElementById('tv-ct-notif-nome');
+      const contEl = document.getElementById('tv-ct-notif-contador');
 
-      emojiEl.textContent = animal.emoji || '🐾';
-      nomeEl.textContent  = `${animal.nome} foi encontrado!`;
-      contEl.textContent  = `${totalEncontrados} de ${totalMax} animais`;
+      const imgSrc = ANIMAL_IMG[animal.codigo];
+      if (imgEl) {
+        imgEl.src = imgSrc ?? '';
+        imgEl.alt = animal.nome;
+        imgEl.style.display = imgSrc ? '' : 'none';
+      }
+      nomeEl.textContent = `${animal.nome} foi encontrado!`;
+      contEl.textContent = `${totalEncontrados} de ${totalMax} animais`;
 
       el.classList.remove('tv-ct-notif--saindo');
       el.style.display = '';
