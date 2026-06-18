@@ -267,6 +267,27 @@
       </div>
       <div id="tv-corrida-contador" class="tv-corrida-contador"></div>
       <div id="tv-corrida-resultado" class="tv-corrida-resultado" style="display:none;"></div>
+      <!-- Apresentação de competidores (antes da contagem regressiva) -->
+      <div class="tv-corrida-apresentacao" style="display:none;" aria-live="polite">
+        <div class="tv-corrida-apres-spotlight"></div>
+        <div class="tv-corrida-apres-particulas"></div>
+        <div class="tv-corrida-apres-conteudo">
+          <div class="tv-corrida-apres-trator-wrap">
+            <img class="tv-corrida-apres-trator-img" src="" alt="" />
+            <div class="tv-corrida-apres-poeira"></div>
+          </div>
+          <div class="tv-corrida-apres-info">
+            <span class="tv-corrida-apres-trator-nome"></span>
+            <div class="tv-corrida-apres-separador"></div>
+            <strong class="tv-corrida-apres-participante"></strong>
+          </div>
+        </div>
+        <div class="tv-corrida-apres-bolha" style="display:none;"></div>
+      </div>
+      <!-- Comentário esportivo (A) -->
+      <div class="tv-corrida-comentario" style="display:none;"></div>
+      <!-- Banner Reta Final (D) -->
+      <div class="tv-corrida-reta-final" style="display:none;">🏁 RETA FINAL!</div>
     </div>
 
     <!-- Roleta da Fazenda: overlay de giro (eventos tipo='roleta') -->
@@ -389,7 +410,7 @@
     import { inicializarHallDaFama, atualizarTesouroStatus } from '../js/halldafama.js';
     import { executarCorrida } from '../js/corrida.js';
     import { inicializarEstatisticas } from '../js/estatisticas.js';
-    import { executarRoleta, desenharRoleta, ROTACAO_INICIAL } from '../js/roleta.js';
+    import { executarRoleta, desenharRoleta, ROTACAO_INICIAL, carregarImagens } from '../js/roleta.js';
 
     const MODOS = ['hall_da_fama', 'pescaria', 'corrida_animais', 'roleta_fazenda', 'estatisticas', 'caca_tesouro'];
 
@@ -1017,7 +1038,10 @@
       // Desenha a roleta estática no modo ambiente (CSS gira o canvas).
       try {
         const canvasAmbiente = document.getElementById('tv-roleta-canvas-ambiente');
-        if (canvasAmbiente) desenharRoleta(canvasAmbiente, ROTACAO_INICIAL);
+        if (canvasAmbiente) {
+          await carregarImagens();
+          desenharRoleta(canvasAmbiente, ROTACAO_INICIAL);
+        }
       } catch (_) { /* áudio/canvas indisponível */ }
 
       configurarFila({ onProcessarEvento: mostrarEvento });

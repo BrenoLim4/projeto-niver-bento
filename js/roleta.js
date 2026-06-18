@@ -6,15 +6,31 @@
 import { tocar, tocarLoop, pararSom } from './sons.js';
 
 export const ANIMAIS = [
-  { key: 'vaca',     emoji: '🐄', nome: 'Vaca Mimosa',          cor: '#C8A46E' },
-  { key: 'cavalo',   emoji: '🐴', nome: 'Cavalo Trovão',         cor: '#A0784B' },
-  { key: 'porco',    emoji: '🐷', nome: 'Porquinho Baconzinho',  cor: '#F4A7B9' },
-  { key: 'galinha',  emoji: '🐔', nome: 'Galinha Cocó',          cor: '#F2A64A' },
-  { key: 'ovelha',   emoji: '🐑', nome: 'Ovelha Floquinha',      cor: '#D4D4D4' },
-  { key: 'cabra',    emoji: '🐐', nome: 'Cabrita Estrelinha',    cor: '#C8B89A' },
-  { key: 'pato',     emoji: '🦆', nome: 'Patinho Pingo',         cor: '#5BB8F5' },
-  { key: 'pintinho', emoji: '🐣', nome: 'Pintinho Amarelinho',   cor: '#FFD700' },
+  { key: 'vaca',     emoji: '🐄', nome: 'Vaca Mimosa',          cor: '#C8A46E', imgPath: '../assets/img/animais/bento_vaca.png' },
+  { key: 'cavalo',   emoji: '🐴', nome: 'Cavalo Trovão',         cor: '#A0784B', imgPath: '../assets/img/animais/bento_cavalo.png' },
+  { key: 'porco',    emoji: '🐷', nome: 'Porquinho Baconzinho',  cor: '#F4A7B9', imgPath: '../assets/img/animais/bento_porquinho.png' },
+  { key: 'galinha',  emoji: '🐔', nome: 'Galinha Cocó',          cor: '#F2A64A', imgPath: '../assets/img/animais/bento_galinha.png' },
+  { key: 'ovelha',   emoji: '🐑', nome: 'Ovelha Floquinha',      cor: '#D4D4D4', imgPath: '../assets/img/animais/bento_ovelha.png' },
+  { key: 'cabra',    emoji: '🐐', nome: 'Cabrita Estrelinha',    cor: '#C8B89A', imgPath: '../assets/img/animais/bento_cabra.png' },
+  { key: 'pato',     emoji: '🦆', nome: 'Patinho Pingo',         cor: '#5BB8F5', imgPath: '../assets/img/animais/bento_pato.png' },
+  { key: 'pintinho', emoji: '🐣', nome: 'Pintinho Amarelinho',   cor: '#FFD700', imgPath: '../assets/img/animais/bento_pintinho.png' },
 ];
+
+const _imgCache = {};
+
+export function carregarImagens() {
+  return Promise.all(
+    ANIMAIS.map((animal) => {
+      if (_imgCache[animal.key]) return Promise.resolve();
+      return new Promise((resolve) => {
+        const img = new Image();
+        img.onload  = () => { _imgCache[animal.key] = img; resolve(); };
+        img.onerror = resolve; // fallback para emoji se a imagem falhar
+        img.src = animal.imgPath;
+      });
+    })
+  );
+}
 
 const N     = ANIMAIS.length;          // 8
 const SLICE = (2 * Math.PI) / N;       // π/4 (45°)
@@ -59,13 +75,22 @@ export function desenharRoleta(canvas, anguloRotacao) {
     ctx.lineWidth   = 3;
     ctx.stroke();
 
-    // Emoji centralizado no setor
-    const ex = cx + Math.cos(mid) * r * 0.65;
-    const ey = cy + Math.sin(mid) * r * 0.65;
-    ctx.font         = `${Math.round(r * 0.16)}px serif`;
-    ctx.textAlign    = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText(animal.emoji, ex, ey);
+    // Imagem (ou emoji de fallback) centralizada no setor
+    const ex  = cx + Math.cos(mid) * r * 0.65;
+    const ey  = cy + Math.sin(mid) * r * 0.65;
+    const img = _imgCache[animal.key];
+    if (img) {
+      const size = r * 0.30;
+      ctx.save();
+      ctx.translate(ex, ey);
+      ctx.drawImage(img, -size / 2, -size / 2, size, size);
+      ctx.restore();
+    } else {
+      ctx.font         = `${Math.round(r * 0.16)}px serif`;
+      ctx.textAlign    = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(animal.emoji, ex, ey);
+    }
   });
 
   // Aro externo
@@ -100,6 +125,8 @@ export async function executarRoleta(evento, elementos) {
   const finalAngle = calcularAngulo(animalKey);
   const delta      = finalAngle - ROTACAO_INICIAL;
   const DURACAO    = 5500; // ms
+
+  await carregarImagens();
 
   // Mostra overlay com fade-in
   overlay.style.display = 'flex';
@@ -149,7 +176,7 @@ export async function executarRoleta(evento, elementos) {
   tocar('roleta_fim');
 
   // Exibe resultado
-  resultadoAnimal.textContent   = `${animal.emoji} ${animal.nome}`;
+  resultadoAnimal.innerHTML     = `<img src="${animal.imgPath}" alt="${animal.nome}" style="height:2.2em;vertical-align:middle;object-fit:contain;"> ${animal.nome}`;
   resultadoVencedor.textContent = evento.vencedor ?? '';
   resultado.style.display       = 'flex';
 
