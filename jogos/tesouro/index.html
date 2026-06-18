@@ -302,6 +302,17 @@
       border-radius: 999px;
       transform-origin: left center;
     }
+    .visual-fase-spinner {
+      width: 40px; height: 40px;
+      border: 4px solid rgba(242,166,74,0.25);
+      border-top-color: var(--cor-dourado);
+      border-radius: 50%;
+      animation: spinner-girar 0.9s linear infinite;
+      margin-top: var(--espaco-sm);
+    }
+    @keyframes spinner-girar {
+      to { transform: rotate(360deg); }
+    }
     .visual-fase-contador {
       font-family: var(--fonte-titulo);
       font-size: 3rem;
@@ -465,6 +476,17 @@
         <div id="visual-fase-barra" class="visual-fase-barra"></div>
       </div>
       <div id="visual-fase-contador" class="visual-fase-contador">3</div>
+    </div>
+
+    <!-- Fase aguardando: após inserir tentativa, enquanto TV exibe o desafio -->
+    <div id="aguardando-fase" class="visual-fase" style="display:none;">
+      <div class="visual-fase-emoji">📺</div>
+      <div class="visual-fase-titulo">Aguarde...</div>
+      <div class="visual-fase-instrucao">
+        O desafio visual está sendo exibido na TV.<br>
+        As opções de resposta aparecerão assim que terminar!
+      </div>
+      <div class="visual-fase-spinner"></div>
     </div>
 
     <!-- Fase de resposta (pergunta + alternativas) -->
@@ -812,13 +834,16 @@
 
       const charada = charadas[Math.floor(Math.random() * charadas.length)];
 
-      // Cria a tentativa no banco
+      // Mostra contagem de 5s "Olhe para a TV!" antes de inserir no banco
+      await iniciarContagemTV();
+
+      // Cria a tentativa com status 'aguardando_tv' — a TV atualizará para 'aguardando_resposta'
       const { data: tentativa, error: errTentativa } = await supabase
         .from('tesouro_tentativas')
         .insert({
           participante_id: participanteId,
           charada_id: charada.id,
-          status: 'aguardando_resposta',
+          status: 'aguardando_tv',
         })
         .select('id')
         .single();
@@ -830,17 +855,16 @@
       }
 
       tentativaAtual = { id: tentativa.id, charada, respondida: false };
-      mostrarCharada(charada);
+      preencherCharada(charada);
+      mostrarAguardandoFase(); // aguarda sinal da TV via Realtime
     }
 
     // ── Charada / Desafio visual ───────────────────────────────────
-    let visualFaseInterval = null; // intervalo do contador regressivo
+    let visualFaseInterval  = null;
+    let aguardandoTVTimeout = null;
+    const CONTAGEM_TV_MS    = 5000; // duração da contagem "Olhe para a TV!"
 
-    function mostrarCharada(charada) {
-      pararScanner(videoEl);
-      scannerAtivo = false;
-
-      // Pré-carrega pergunta e alternativas (pode estar oculto durante fase visual)
+    function preencherCharada(charada) {
       document.getElementById('charada-pergunta').textContent = charada.pergunta;
       document.getElementById('charada-alt-a').textContent = charada.alternativa_a;
       document.getElementById('charada-alt-b').textContent = charada.alternativa_b;
@@ -849,50 +873,68 @@
       document.getElementById('charada-feedback').textContent = '';
       document.getElementById('charada-cooldown').textContent = '';
       document.getElementById('btn-fechar-charada').style.display = 'none';
-
       document.querySelectorAll('.charada-alt').forEach((btn) => {
         btn.disabled = false;
         btn.className = 'charada-alt';
       });
+    }
 
-      const visualFaseEl  = document.getElementById('visual-fase');
-      const respostaFaseEl = document.getElementById('resposta-fase');
-      const overlayEl     = document.getElementById('charada-overlay');
+    function iniciarContagemTV() {
+      return new Promise((resolve) => {
+        pararScanner(videoEl);
+        scannerAtivo = false;
 
-      // +500 ms de buffer para latência Realtime (TV recebe ~200-400 ms depois)
-      const tempoExibicao = (charada.payload_json?.tempo_exibicao ?? 3000);
-      const tempoMobile   = tempoExibicao + 500;
+        const overlayEl    = document.getElementById('charada-overlay');
+        const visualFaseEl = document.getElementById('visual-fase');
+        const barraEl      = document.getElementById('visual-fase-barra');
+        const contadorEl   = document.getElementById('visual-fase-contador');
 
-      visualFaseEl.style.display   = '';
-      respostaFaseEl.style.display = 'none';
-      overlayEl.style.display      = '';
+        document.getElementById('aguardando-fase').style.display = 'none';
+        document.getElementById('resposta-fase').style.display   = 'none';
+        visualFaseEl.style.display = '';
+        overlayEl.style.display    = '';
 
-      const barraEl    = document.getElementById('visual-fase-barra');
-      const contadorEl = document.getElementById('visual-fase-contador');
-
-      barraEl.style.transition = 'none';
-      barraEl.style.transform  = 'scaleX(1)';
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-          barraEl.style.transition = `transform ${tempoMobile}ms linear`;
+        barraEl.style.transition = 'none';
+        barraEl.style.transform  = 'scaleX(1)';
+        requestAnimationFrame(() => requestAnimationFrame(() => {
+          barraEl.style.transition = `transform ${CONTAGEM_TV_MS}ms linear`;
           barraEl.style.transform  = 'scaleX(0)';
-        });
-      });
+        }));
 
-      clearInterval(visualFaseInterval);
-      let segsRestantes = Math.ceil(tempoMobile / 1000);
-      contadorEl.textContent = segsRestantes;
-      visualFaseInterval = setInterval(() => {
-        segsRestantes = Math.max(0, segsRestantes - 1);
-        contadorEl.textContent = segsRestantes;
-        if (segsRestantes <= 0) clearInterval(visualFaseInterval);
-      }, 1000);
-
-      setTimeout(() => {
         clearInterval(visualFaseInterval);
-        visualFaseEl.style.display   = 'none';
-        respostaFaseEl.style.display = '';
-      }, tempoMobile);
+        let segs = Math.ceil(CONTAGEM_TV_MS / 1000);
+        contadorEl.textContent = segs;
+        visualFaseInterval = setInterval(() => {
+          segs = Math.max(0, segs - 1);
+          contadorEl.textContent = segs;
+          if (segs <= 0) clearInterval(visualFaseInterval);
+        }, 1000);
+
+        setTimeout(() => {
+          clearInterval(visualFaseInterval);
+          visualFaseEl.style.display = 'none';
+          resolve();
+        }, CONTAGEM_TV_MS);
+      });
+    }
+
+    function mostrarAguardandoFase() {
+      document.getElementById('visual-fase').style.display     = 'none';
+      document.getElementById('resposta-fase').style.display   = 'none';
+      document.getElementById('aguardando-fase').style.display = '';
+      document.getElementById('charada-overlay').style.display = '';
+
+      // Failsafe: se a TV não sinalizar em 30s, exibe as respostas mesmo assim
+      clearTimeout(aguardandoTVTimeout);
+      aguardandoTVTimeout = setTimeout(() => mostrarRespostaFase(), 30_000);
+    }
+
+    function mostrarRespostaFase() {
+      clearTimeout(aguardandoTVTimeout);
+      document.getElementById('visual-fase').style.display     = 'none';
+      document.getElementById('aguardando-fase').style.display = 'none';
+      document.getElementById('resposta-fase').style.display   = '';
+      document.getElementById('charada-overlay').style.display = '';
     }
 
     document.querySelectorAll('.charada-alt').forEach((btn) => {
@@ -912,7 +954,7 @@
 
       const correta = letra === tentativaAtual.charada.resposta_correta;
       const agora = new Date();
-      const cooldownAt = correta ? null : new Date(agora.getTime() + 20_000);
+      const cooldownAt = correta ? null : new Date(agora.getTime() + 30_000);
 
       // Atualiza tentativa no banco
       await supabase.from('tesouro_tentativas').update({
@@ -1022,7 +1064,7 @@
       document.getElementById('btn-fechar-charada').style.display = '';
     }
 
-    // ── Realtime: atualiza animais encontrados por outros ──────────
+    // ── Realtime ───────────────────────────────────────────────────
     supabase
       .channel('tesouro-participante-live')
       .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'config' }, (payload) => {
@@ -1032,12 +1074,23 @@
       })
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'tesouro_participante_animais' }, (payload) => {
         const { animal_id, participante_id } = payload.new;
-        if (participante_id === participanteId) return; // meu próprio insert, já tratado localmente
+        if (participante_id === participanteId) return;
         if (animaisEncontrados.has(animal_id) || animaisDeOutros.has(animal_id)) return;
         animaisDeOutros.add(animal_id);
         renderizarGrade();
         const animal = animaisTodos.find((a) => a.id === animal_id);
         if (animal) mostrarToast(`😅 ${animal.nome} já foi encontrado por outro participante!`, 'aviso');
+      })
+      .on('postgres_changes', {
+        event: 'UPDATE',
+        schema: 'public',
+        table: 'tesouro_tentativas',
+        filter: `participante_id=eq.${participanteId}`,
+      }, (payload) => {
+        // TV sinalizou que o desafio visual terminou — hora de responder
+        if (payload.new.status === 'aguardando_resposta' && tentativaAtual?.id === payload.new.id) {
+          mostrarRespostaFase();
+        }
       })
       .subscribe();
 

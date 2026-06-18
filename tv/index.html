@@ -764,7 +764,7 @@
     let timeoutVisualTV   = null; // guarda o setTimeout da fase visual
 
     async function onTesouroTentativa(tentativa) {
-      if (tentativa.status === 'aguardando_resposta') {
+      if (tentativa.status === 'aguardando_tv') {
         try {
           const [{ data: participante }, { data: charada }] = await Promise.all([
             supabase.from('tesouro_participantes').select('id, nome, foto_url').eq('id', tentativa.participante_id).single(),
@@ -880,16 +880,24 @@
           });
         });
 
-        // Após o tempo, oculta visual e exibe pergunta
+        // Após o tempo: mostra pergunta na TV E sinaliza o celular
         timeoutVisualTV = setTimeout(() => {
           visualEl.style.display = 'none';
           corpoEl.style.display  = '';
+          supabase.from('tesouro_tentativas')
+            .update({ status: 'aguardando_resposta' })
+            .eq('id', tentativaId)
+            .then();
         }, tempoExibicao);
 
       } else {
-        // ── Charada tradicional: exibe corpo imediatamente ────────
+        // ── Charada sem visual: exibe corpo e sinaliza imediatamente ──
         visualEl.style.display = 'none';
         corpoEl.style.display  = '';
+        supabase.from('tesouro_tentativas')
+          .update({ status: 'aguardando_resposta' })
+          .eq('id', tentativaId)
+          .then();
       }
 
       tvTesouroCharada.style.display = '';

@@ -88,8 +88,8 @@ CREATE TABLE IF NOT EXISTS tesouro_tentativas (
   id              uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   participante_id uuid NOT NULL REFERENCES tesouro_participantes(id),
   charada_id      uuid NOT NULL REFERENCES tesouro_charadas(id),
-  status          text NOT NULL DEFAULT 'aguardando_resposta'
-                  CHECK (status IN ('aguardando_resposta','respondida','correta','incorreta','expirada')),
+  status          text NOT NULL DEFAULT 'aguardando_tv'
+                  CHECK (status IN ('aguardando_tv','aguardando_resposta','respondida','correta','incorreta','expirada')),
   resposta        text CHECK (resposta IN ('A','B','C','D')),
   correta         boolean,
   cooldown_until  timestamptz,

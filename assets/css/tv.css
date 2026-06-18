@@ -1445,21 +1445,22 @@ html {
 .tv-ct-header {
   display: flex;
   align-items: center;
-  gap: clamp(12px, 2vw, 28px);
-  padding: clamp(16px, 2.5vw, 36px) clamp(24px, 4vw, 64px);
+  flex-shrink: 0;
+  gap: clamp(10px, 1.6vw, 24px);
+  padding: clamp(10px, 1.4vw, 20px) clamp(24px, 4vw, 64px);
   border-bottom: 2px solid rgba(242,166,74,0.2);
   background: rgba(255,255,255,0.03);
 }
 
 .tv-ct-logo {
-  font-size: clamp(2.5rem, 6vw, 5rem);
+  font-size: clamp(1.8rem, 4vw, 3.5rem);
   line-height: 1;
   filter: drop-shadow(0 2px 12px rgba(242,166,74,0.4));
 }
 
 .tv-ct-titulo {
   font-family: var(--fonte-titulo);
-  font-size: clamp(1.8rem, 4vw, 3.5rem);
+  font-size: clamp(1.4rem, 3vw, 2.8rem);
   color: var(--cor-dourado);
   margin: 0;
   text-shadow: 0 2px 16px rgba(139,90,43,0.3);
@@ -1479,8 +1480,9 @@ html {
   display: flex;
   align-items: center;
   justify-content: center;
+  flex-shrink: 0;
   gap: 0;
-  padding: clamp(16px, 2.5vw, 36px) clamp(24px, 4vw, 64px);
+  padding: clamp(8px, 1.2vw, 18px) clamp(24px, 4vw, 64px);
   background: rgba(255,255,255,0.04);
   border-bottom: 2px solid rgba(242,166,74,0.12);
 }
@@ -1490,26 +1492,26 @@ html {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: clamp(4px, 0.6vw, 10px);
-  padding: clamp(8px, 1.2vw, 20px);
+  gap: clamp(2px, 0.4vw, 6px);
+  padding: clamp(6px, 0.8vw, 14px);
 }
 
 .tv-ct-stat-divisor {
   width: 2px;
-  height: clamp(50px, 8vw, 100px);
+  height: clamp(36px, 5vw, 70px);
   background: rgba(242,166,74,0.25);
   border-radius: 1px;
   flex-shrink: 0;
 }
 
 .tv-ct-stat-icon {
-  font-size: clamp(1.8rem, 3.5vw, 3rem);
+  font-size: clamp(1.4rem, 2.8vw, 2.4rem);
   line-height: 1;
 }
 
 .tv-ct-stat-num {
   font-family: var(--fonte-titulo);
-  font-size: clamp(2rem, 5vw, 4.5rem);
+  font-size: clamp(1.6rem, 3.8vw, 3.5rem);
   color: var(--cor-marrom);
   line-height: 1;
   font-weight: 800;
@@ -1543,16 +1545,18 @@ html {
 /* Grade de animais ---------------------------------------------- */
 .tv-ct-animais {
   flex: 1;
+  min-height: 0;           /* permite shrink abaixo da altura intrínseca dos cards */
   display: grid;
   grid-template-columns: repeat(5, 1fr);
   grid-template-rows: repeat(2, 1fr);
-  gap: clamp(8px, 1.5vw, 24px);
-  padding: clamp(16px, 2.5vw, 36px) clamp(24px, 5vw, 80px);
-  align-items: center;
+  gap: clamp(6px, 1.2vw, 20px);
+  padding: clamp(10px, 1.5vw, 24px) clamp(24px, 5vw, 80px);
+  align-items: stretch;
 }
 
 .tv-ct-animal {
-  aspect-ratio: 1;
+  min-height: 0;
+  min-width: 0;
   border-radius: var(--raio-lg);
   background: rgba(255,255,255,0.07);
   border: 2px solid rgba(139,90,43,0.15);
@@ -1608,10 +1612,11 @@ html {
 .tv-ct-cta {
   text-align: center;
   font-family: var(--fonte-titulo);
-  font-size: clamp(0.9rem, 2vw, 1.6rem);
+  font-size: clamp(0.75rem, 1.6vw, 1.3rem);
   color: var(--cor-marrom);
   opacity: 0.55;
-  padding: clamp(8px, 1.2vw, 20px) var(--espaco-xl);
+  flex-shrink: 0;
+  padding: clamp(6px, 0.8vw, 12px) var(--espaco-xl);
   border-top: 1px solid rgba(139,90,43,0.1);
   margin: 0;
   letter-spacing: 0.03em;
