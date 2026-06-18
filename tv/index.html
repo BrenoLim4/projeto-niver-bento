@@ -94,6 +94,43 @@
           <div class="tv-roleta-ponteiro"></div>
         </div>
       </div>
+      <!-- Caça ao Tesouro: modo de apresentação ambiente -->
+      <div class="tv-modo tv-caca-tesouro" data-modo="caca_tesouro" style="display: none;">
+        <div class="tv-ct-header">
+          <span class="tv-ct-logo">🗺️</span>
+          <div class="tv-ct-header-texto">
+            <h1 class="tv-ct-titulo">Caça ao Tesouro</h1>
+            <span class="tv-ct-subtitulo">Fazendinha do Bento</span>
+          </div>
+        </div>
+
+        <div class="tv-ct-stats">
+          <div class="tv-ct-stat">
+            <span class="tv-ct-stat-icon">👥</span>
+            <strong class="tv-ct-stat-num" id="ct-participantes">0</strong>
+            <span class="tv-ct-stat-label">Participantes</span>
+          </div>
+          <div class="tv-ct-stat-divisor"></div>
+          <div class="tv-ct-stat">
+            <span class="tv-ct-stat-icon">🐾</span>
+            <strong class="tv-ct-stat-num" id="ct-animais-contagem">0/10</strong>
+            <span class="tv-ct-stat-label">Animais encontrados</span>
+          </div>
+          <div class="tv-ct-stat-divisor"></div>
+          <div class="tv-ct-stat tv-ct-stat--tesouro" id="ct-tesouro-bloco">
+            <span class="tv-ct-stat-icon" id="ct-tesouro-icon">🔒</span>
+            <strong class="tv-ct-stat-num tv-ct-tesouro-num" id="ct-tesouro-status">Não encontrado</strong>
+            <span class="tv-ct-stat-label">Tesouro da Fazenda</span>
+          </div>
+        </div>
+
+        <div class="tv-ct-animais" id="ct-animais-grade">
+          <!-- Preenchido pelo JS -->
+        </div>
+
+        <p class="tv-ct-cta">🌾 Procure os animais perdidos pela fazenda!</p>
+      </div>
+
       <div class="tv-modo tv-stats" data-modo="estatisticas" style="display: none;">
         <header class="tv-stats-cabecalho">
           <img src="../assets/img/icons/grafico.svg" alt="" />
@@ -130,6 +167,15 @@
             </div>
           </div>
         </div>
+      </div>
+    </div>
+
+    <!-- Notificação flutuante: animal encontrado na Caça ao Tesouro -->
+    <div id="tv-ct-notificacao" class="tv-ct-notificacao" style="display:none;" aria-live="polite">
+      <span class="tv-ct-notif-emoji" id="tv-ct-notif-emoji">🐄</span>
+      <div class="tv-ct-notif-texto">
+        <strong id="tv-ct-notif-nome">Vaca Mimosa encontrada!</strong>
+        <span id="tv-ct-notif-contador">3 de 10 animais</span>
       </div>
     </div>
 
@@ -199,6 +245,60 @@
       </div>
     </div>
 
+    <!-- Caça ao Tesouro: overlay de charada/desafio visual sincronizado com celular -->
+    <div id="tv-tesouro-charada" class="tv-tesouro-charada" style="display:none;">
+      <div class="tv-tesouro-charada-inner">
+
+        <!-- Informações do participante (sempre visível) -->
+        <div class="tv-tesouro-participante-info">
+          <div class="tv-tesouro-foto-wrap">
+            <img id="tv-tesouro-charada-foto" class="tv-tesouro-foto" src="" alt="" />
+            <div class="tv-tesouro-foto-avatar" id="tv-tesouro-charada-avatar">🤠</div>
+          </div>
+          <div class="tv-tesouro-participante-texto">
+            <span class="tv-tesouro-desafio-label">🔑 Desafio Final do Tesouro!</span>
+            <strong id="tv-tesouro-charada-nome" class="tv-tesouro-participante-nome"></strong>
+          </div>
+        </div>
+
+        <!-- Área visual: exibida por X segundos antes da pergunta (só para tipos visuais) -->
+        <div id="tv-tesouro-visual" class="tv-tesouro-visual" style="display:none;">
+          <div id="tv-tesouro-visual-titulo" class="tv-tesouro-visual-titulo">👀 Memorize!</div>
+          <div id="tv-tesouro-visual-items" class="tv-tesouro-visual-items"></div>
+          <div class="tv-tesouro-visual-barra-wrap">
+            <div id="tv-tesouro-visual-barra" class="tv-tesouro-visual-barra"></div>
+          </div>
+        </div>
+
+        <!-- Pergunta + alternativas (exibido logo após a área visual sumir, ou imediatamente para 'pergunta') -->
+        <div id="tv-tesouro-corpo" class="tv-tesouro-corpo">
+          <p id="tv-tesouro-charada-pergunta" class="tv-tesouro-pergunta"></p>
+          <div class="tv-tesouro-alternativas">
+            <div class="tv-tesouro-alt" id="tv-tesouro-alt-a">
+              <span class="tv-tesouro-alt-letra">A</span>
+              <span id="tv-tesouro-alt-a-texto"></span>
+            </div>
+            <div class="tv-tesouro-alt" id="tv-tesouro-alt-b">
+              <span class="tv-tesouro-alt-letra">B</span>
+              <span id="tv-tesouro-alt-b-texto"></span>
+            </div>
+            <div class="tv-tesouro-alt" id="tv-tesouro-alt-c">
+              <span class="tv-tesouro-alt-letra">C</span>
+              <span id="tv-tesouro-alt-c-texto"></span>
+            </div>
+            <div class="tv-tesouro-alt" id="tv-tesouro-alt-d">
+              <span class="tv-tesouro-alt-letra">D</span>
+              <span id="tv-tesouro-alt-d-texto"></span>
+            </div>
+          </div>
+          <div id="tv-tesouro-charada-estado" class="tv-tesouro-estado">
+            ⏳ Aguardando resposta no celular...
+          </div>
+        </div>
+
+      </div>
+    </div>
+
     <!-- Estado Evento: Suspense → Baú → Revelação → Encerramento -->
     <div id="tv-evento" class="tv-evento" style="display: none;">
       <div id="etapa-suspense" class="etapa-evento">
@@ -242,7 +342,7 @@
 
   <script type="module">
     import { supabase } from '../js/supabaseClient.js';
-    import { subscribeNovosEventos, subscribeConfig, buscarConfigAtual, subscribeBroadcastEvento } from '../js/realtime.js';
+    import { subscribeNovosEventos, subscribeConfig, buscarConfigAtual, subscribeBroadcastEvento, subscribeTesouroTentativas } from '../js/realtime.js';
     import { configurarFila, carregarFilaInicial, adicionarEvento, ressincronizarFila } from '../js/fila-eventos.js';
     import { executarRevelacao } from '../js/animacoes.js';
     import { desbloquear } from '../js/sons.js';
@@ -251,7 +351,7 @@
     import { inicializarEstatisticas } from '../js/estatisticas.js';
     import { executarRoleta, desenharRoleta, ROTACAO_INICIAL } from '../js/roleta.js';
 
-    const MODOS = ['hall_da_fama', 'pescaria', 'corrida_animais', 'roleta_fazenda', 'estatisticas'];
+    const MODOS = ['hall_da_fama', 'pescaria', 'corrida_animais', 'roleta_fazenda', 'estatisticas', 'caca_tesouro'];
 
     const TV_PEIXES = [
       { codigo: 'QR-PEIXE-01', nome: 'Nemo',    emoji: '🐠', cor: '#E65100' },
@@ -270,6 +370,7 @@
     const tvEvento = document.getElementById('tv-evento');
     const tvCorrida = document.getElementById('tv-corrida');
     const tvRoleta = document.getElementById('tv-roleta');
+    const tvTesouroCharada = document.getElementById('tv-tesouro-charada');
     const btnIniciar = document.getElementById('btn-iniciar-tv');
     const tvConexao = document.getElementById('tv-conexao');
     const tvConexaoTexto = document.getElementById('tv-conexao-texto');
@@ -413,6 +514,283 @@
         .subscribe();
     }
 
+    // ── Caça ao Tesouro: modo de apresentação ambiente ───────────────
+    const ANIMAIS_CT = []; // preenchido em inicializarCacaTesouro
+    const animaisEncontradosCT = new Set(); // animal_id já encontrados
+    let notifTimeout = null;
+
+    async function inicializarCacaTesouro() {
+      try {
+        const [{ data: animais }, { data: encontrados }, { data: participantes }, { data: config }] =
+          await Promise.all([
+            supabase.from('tesouro_animais').select('id, codigo, nome, emoji').eq('ativo', true).order('ordem'),
+            supabase.from('tesouro_participante_animais').select('animal_id'),
+            supabase.from('tesouro_participantes').select('id', { count: 'exact', head: false }),
+            supabase.from('config').select('tesouro_status').eq('id', 1).single(),
+          ]);
+
+        ANIMAIS_CT.length = 0;
+        ANIMAIS_CT.push(...(animais ?? []));
+        (encontrados ?? []).forEach((r) => animaisEncontradosCT.add(r.animal_id));
+
+        renderizarGradeCT();
+        atualizarStatsCT({
+          totalParticipantes: (participantes ?? []).length,
+          totalAnimais: animaisEncontradosCT.size,
+          totalAnimaisMax: ANIMAIS_CT.length,
+          tesouroStatus: config?.tesouro_status ?? 'nao_encontrado',
+        });
+
+        // Realtime: novo animal encontrado
+        supabase
+          .channel('tv-caca-tesouro')
+          .on('postgres_changes',
+            { event: 'INSERT', schema: 'public', table: 'tesouro_participante_animais' },
+            async (payload) => {
+              const animalId = payload.new.animal_id;
+              if (animaisEncontradosCT.has(animalId)) return;
+              animaisEncontradosCT.add(animalId);
+
+              const animal = ANIMAIS_CT.find((a) => a.id === animalId);
+              const total  = animaisEncontradosCT.size;
+              const max    = ANIMAIS_CT.length;
+
+              renderizarGradeCT();
+              atualizarStatsCT({ totalAnimais: total, totalAnimaisMax: max });
+
+              if (animal) mostrarNotificacaoAnimal(animal, total, max);
+            })
+          .on('postgres_changes',
+            { event: 'INSERT', schema: 'public', table: 'tesouro_participantes' },
+            async () => {
+              const { count } = await supabase
+                .from('tesouro_participantes')
+                .select('id', { count: 'exact', head: true });
+              atualizarStatsCT({ totalParticipantes: count ?? 0 });
+            })
+          .subscribe();
+
+      } catch (err) {
+        console.error('Erro ao inicializar Caça ao Tesouro:', err);
+      }
+    }
+
+    // Cache dos valores atuais de stats (para atualizações parciais)
+    const statsCT = { totalParticipantes: 0, totalAnimais: 0, totalAnimaisMax: 10, tesouroStatus: 'nao_encontrado' };
+
+    function atualizarStatsCT(parcial = {}) {
+      Object.assign(statsCT, parcial);
+      const ptEl     = document.getElementById('ct-participantes');
+      const animEl   = document.getElementById('ct-animais-contagem');
+      const tIconEl  = document.getElementById('ct-tesouro-icon');
+      const tStatEl  = document.getElementById('ct-tesouro-status');
+      const tBlocoEl = document.getElementById('ct-tesouro-bloco');
+
+      if (ptEl)    ptEl.textContent = statsCT.totalParticipantes;
+      if (animEl)  animEl.textContent = `${statsCT.totalAnimais}/${statsCT.totalAnimaisMax}`;
+
+      if (tIconEl && tStatEl && tBlocoEl) {
+        const encontrado = statsCT.tesouroStatus === 'encontrado';
+        tIconEl.textContent = encontrado ? '🏆' : '🔒';
+        tStatEl.textContent = encontrado ? 'Encontrado!' : 'Não encontrado';
+        tBlocoEl.classList.toggle('tv-ct-stat--encontrado', encontrado);
+      }
+    }
+
+    function renderizarGradeCT() {
+      const grade = document.getElementById('ct-animais-grade');
+      if (!grade) return;
+      grade.innerHTML = '';
+      ANIMAIS_CT.forEach((animal) => {
+        const encontrado = animaisEncontradosCT.has(animal.id);
+        const card = document.createElement('div');
+        card.className = 'tv-ct-animal' + (encontrado ? ' tv-ct-animal--encontrado' : '');
+        card.innerHTML = `
+          <span class="tv-ct-animal-emoji">${animal.emoji || '❓'}</span>
+          ${encontrado ? '<span class="tv-ct-animal-check">✓</span>' : ''}
+        `;
+        grade.appendChild(card);
+      });
+    }
+
+    function mostrarNotificacaoAnimal(animal, totalEncontrados, totalMax) {
+      clearTimeout(notifTimeout);
+      const el      = document.getElementById('tv-ct-notificacao');
+      const emojiEl = document.getElementById('tv-ct-notif-emoji');
+      const nomeEl  = document.getElementById('tv-ct-notif-nome');
+      const contEl  = document.getElementById('tv-ct-notif-contador');
+
+      emojiEl.textContent = animal.emoji || '🐾';
+      nomeEl.textContent  = `${animal.nome} foi encontrado!`;
+      contEl.textContent  = `${totalEncontrados} de ${totalMax} animais`;
+
+      el.classList.remove('tv-ct-notif--saindo');
+      el.style.display = '';
+
+      notifTimeout = setTimeout(() => {
+        el.classList.add('tv-ct-notif--saindo');
+        setTimeout(() => { el.style.display = 'none'; el.classList.remove('tv-ct-notif--saindo'); }, 500);
+      }, 3500);
+    }
+
+    // Atualiza status do tesouro quando config muda (já ouvido pelo subscribeConfig)
+    // Chamado internamente por aplicarConfig abaixo — não precisa de subscribe extra.
+    function atualizarTesouroStatusCT(status) {
+      atualizarStatsCT({ tesouroStatus: status });
+    }
+
+    // ── Caça ao Tesouro: overlay de charada / desafio visual ────────
+    const TEMPO_EXIBICAO_DEFAULT = 3000; // ms — usado quando payload não especifica
+
+    const TITULOS_VISUAL = {
+      memoria_posicao:   '👀 Memorize a posição dos símbolos!',
+      memoria_sequencia: '👀 Memorize a ordem da sequência!',
+      identificacao:     '👀 Observe com atenção!',
+      contagem:          '🔢 Conte os símbolos!',
+      visual:            '👀 Memorize!',
+    };
+
+    let tentativaAtivaId  = null;
+    let timeoutVisualTV   = null; // guarda o setTimeout da fase visual
+
+    async function onTesouroTentativa(tentativa) {
+      if (tentativa.status === 'aguardando_resposta') {
+        try {
+          const [{ data: participante }, { data: charada }] = await Promise.all([
+            supabase.from('tesouro_participantes').select('id, nome, foto_url').eq('id', tentativa.participante_id).single(),
+            supabase.from('tesouro_charadas').select('*').eq('id', tentativa.charada_id).single(),
+          ]);
+          mostrarCharadaTV(tentativa.id, participante, charada);
+        } catch (_) { /* ignora falha pontual */ }
+
+      } else if (tentativa.id === tentativaAtivaId) {
+        // Cancela a transição visual se ainda estiver correndo
+        clearTimeout(timeoutVisualTV);
+        // Garante que o corpo (pergunta) está visível antes de mostrar o resultado
+        document.getElementById('tv-tesouro-visual').style.display = 'none';
+        document.getElementById('tv-tesouro-corpo').style.display  = '';
+
+        const estadoEl = document.getElementById('tv-tesouro-charada-estado');
+
+        if (tentativa.status === 'correta') {
+          estadoEl.textContent = '🎉 CORRETO! Tesouro da Fazenda encontrado!';
+          estadoEl.classList.add('tv-tesouro-estado--correto');
+          destacarAlternativa(tentativa.resposta, 'correta');
+          setTimeout(() => {
+            tvTesouroCharada.style.display = 'none';
+            tentativaAtivaId = null;
+          }, 3500);
+
+        } else if (tentativa.status === 'incorreta') {
+          estadoEl.textContent = '❌ Resposta errada! Tente novamente em breve.';
+          estadoEl.classList.add('tv-tesouro-estado--incorreto');
+          destacarAlternativa(tentativa.resposta, 'incorreta');
+          setTimeout(() => {
+            tvTesouroCharada.style.display = 'none';
+            tentativaAtivaId = null;
+          }, 4000);
+        }
+      }
+    }
+
+    function mostrarCharadaTV(tentativaId, participante, charada) {
+      tentativaAtivaId = tentativaId;
+      clearTimeout(timeoutVisualTV);
+
+      // ── Participante ──────────────────────────────────────────────
+      const fotoEl   = document.getElementById('tv-tesouro-charada-foto');
+      const avatarEl = document.getElementById('tv-tesouro-charada-avatar');
+      if (participante.foto_url) {
+        fotoEl.src = participante.foto_url;
+        fotoEl.style.display = '';
+        avatarEl.style.display = 'none';
+      } else {
+        fotoEl.style.display = 'none';
+        avatarEl.style.display = '';
+      }
+      document.getElementById('tv-tesouro-charada-nome').textContent = participante.nome;
+
+      // ── Pergunta + alternativas (pré-carrega, pode estar oculto) ──
+      document.getElementById('tv-tesouro-charada-pergunta').textContent = charada.pergunta;
+      document.getElementById('tv-tesouro-alt-a-texto').textContent = charada.alternativa_a;
+      document.getElementById('tv-tesouro-alt-b-texto').textContent = charada.alternativa_b;
+      document.getElementById('tv-tesouro-alt-c-texto').textContent = charada.alternativa_c;
+      document.getElementById('tv-tesouro-alt-d-texto').textContent = charada.alternativa_d;
+
+      const estadoEl = document.getElementById('tv-tesouro-charada-estado');
+      estadoEl.textContent = '⏳ Aguardando resposta no celular...';
+      estadoEl.className   = 'tv-tesouro-estado';
+      ['a','b','c','d'].forEach((l) => {
+        document.getElementById(`tv-tesouro-alt-${l}`).className = 'tv-tesouro-alt';
+      });
+
+      const visualEl = document.getElementById('tv-tesouro-visual');
+      const corpoEl  = document.getElementById('tv-tesouro-corpo');
+
+      const ehVisual = charada.tipo && charada.tipo !== 'pergunta' && charada.payload_json;
+
+      if (ehVisual) {
+        // ── Fase visual ───────────────────────────────────────────
+        const payload       = charada.payload_json;
+        const tempoExibicao = payload.tempo_exibicao ?? TEMPO_EXIBICAO_DEFAULT;
+
+        corpoEl.style.display  = 'none';
+        visualEl.style.display = '';
+
+        // Título descritivo baseado no tipo
+        document.getElementById('tv-tesouro-visual-titulo').textContent =
+          TITULOS_VISUAL[charada.tipo] ?? '👀 Observe!';
+
+        // Renderiza os itens visuais
+        const itemsEl  = document.getElementById('tv-tesouro-visual-items');
+        const usarSeta = charada.tipo === 'memoria_sequencia';
+        itemsEl.innerHTML = '';
+        (payload.itens ?? []).forEach((item, i) => {
+          const el = document.createElement('span');
+          el.className = 'tv-tesouro-visual-item';
+          el.textContent = item;
+          el.style.animationDelay = `${i * 100}ms`;
+          itemsEl.appendChild(el);
+          if (usarSeta && i < payload.itens.length - 1) {
+            const seta = document.createElement('span');
+            seta.className = 'tv-tesouro-visual-seta';
+            seta.textContent = '→';
+            itemsEl.appendChild(seta);
+          }
+        });
+
+        // Barra de contagem regressiva (CSS scaleX transition)
+        const barraEl = document.getElementById('tv-tesouro-visual-barra');
+        barraEl.style.transition = 'none';
+        barraEl.style.transform  = 'scaleX(1)';
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => {
+            barraEl.style.transition = `transform ${tempoExibicao}ms linear`;
+            barraEl.style.transform  = 'scaleX(0)';
+          });
+        });
+
+        // Após o tempo, oculta visual e exibe pergunta
+        timeoutVisualTV = setTimeout(() => {
+          visualEl.style.display = 'none';
+          corpoEl.style.display  = '';
+        }, tempoExibicao);
+
+      } else {
+        // ── Charada tradicional: exibe corpo imediatamente ────────
+        visualEl.style.display = 'none';
+        corpoEl.style.display  = '';
+      }
+
+      tvTesouroCharada.style.display = '';
+    }
+
+    function destacarAlternativa(letra, tipo) {
+      if (!letra) return;
+      document.getElementById(`tv-tesouro-alt-${letra.toLowerCase()}`)
+        ?.classList.add(`tv-tesouro-alt--${tipo}`);
+    }
+
     let modoAtual = 'hall_da_fama';
 
     // Indicador de conexão Realtime (FASE 8).
@@ -501,6 +879,8 @@
     function aplicarConfig(config) {
       mostrarModo(config.modo_apresentacao);
       atualizarTesouroStatus(config.tesouro_status);
+      // Mantém o painel da Caça ao Tesouro sincronizado quando o status muda
+      if (config.tesouro_status) atualizarTesouroStatusCT(config.tesouro_status);
     }
 
     async function iniciarTV() {
@@ -546,6 +926,14 @@
         await inicializarEstatisticas(elementosStats);
       } catch (err) {
         console.error('Erro ao inicializar estatísticas:', err);
+      }
+
+      subscribeTesouroTentativas(onTesouroTentativa);
+
+      try {
+        await inicializarCacaTesouro();
+      } catch (err) {
+        console.error('Erro ao inicializar Caça ao Tesouro:', err);
       }
     }
 

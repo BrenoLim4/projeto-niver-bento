@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>QR Codes — Fazendinha do Bento</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #f5e6c8;
+      min-height: 100vh;
+      padding: 24px 16px;
+      color: #4a3728;
+    }
+
+    .topo {
+      max-width: 980px;
+      margin: 0 auto 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .topo h1 { font-size: 1.4rem; color: #8b5a2b; }
+    .topo p  { font-size: 0.85rem; opacity: 0.7; margin-top: 2px; }
+
+    .botoes { display: flex; gap: 10px; flex-wrap: wrap; }
+    .btn {
+      padding: 10px 20px; border: none; border-radius: 8px;
+      font-size: 0.9rem; font-weight: 700; cursor: pointer; transition: opacity .15s;
+    }
+    .btn:hover    { opacity: .85; }
+    .btn:disabled { opacity: .5; cursor: not-allowed; }
+    .btn-pdf    { background: #f2a64a; color: #fff; }
+    .btn-print  { background: #6f8c52; color: #fff; }
+
+    .secao-titulo {
+      max-width: 980px;
+      margin: 20px auto 10px;
+      font-size: 1rem; font-weight: 700; color: #8b5a2b;
+      border-bottom: 2px solid rgba(139,90,43,.2);
+      padding-bottom: 6px;
+    }
+
+    .grade {
+      max-width: 980px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 10px;
+    }
+
+    /* ── Card ────────────────────────────────── */
+    .card {
+      background: #fff;
+      border: 1px solid rgba(139,90,43,.22);
+      border-radius: 12px;
+      padding: 10px 8px 8px;
+      display: flex; flex-direction: column; align-items: center; gap: 5px;
+      text-align: center;
+    }
+    .card--tesouro { background: #fffde7; border: 2px solid #f2a64a; }
+    .card--peixe   { border-color: rgba(30,90,180,.22); }
+
+    .animal-foto {
+      width: 72px; height: 72px;
+      border-radius: 50%; object-fit: cover;
+      border: 2.5px solid #f2a64a;
+      box-shadow: 0 2px 8px rgba(139,90,43,.2);
+    }
+    .animal-foto--peixe { border-color: #3b82f6; }
+    .animal-emoji {
+      font-size: 2.2rem; line-height: 1;
+      width: 72px; height: 72px;
+      display: flex; align-items: center; justify-content: center;
+      background: #f5e6c8; border-radius: 50%;
+      border: 2.5px solid #3b82f6;
+    }
+
+    .qr-img  { width: 110px; height: 110px; display: block; }
+
+    .card-nome   { font-weight: 700; font-size: 0.73rem; color: #8b5a2b; line-height: 1.2; }
+    .card-codigo { font-family: monospace; font-size: 0.62rem; color: #8b5a2b; opacity: .5; }
+    .card-badge  {
+      font-size: 0.6rem; font-weight: 700;
+      background: #f2a64a; color: #fff;
+      border-radius: 20px; padding: 1px 8px;
+    }
+
+    .loading {
+      max-width: 980px; margin: 0 auto;
+      text-align: center; padding: 40px;
+      color: #8b5a2b; font-size: 1rem;
+    }
+
+    @media (max-width: 700px) { .grade { grid-template-columns: repeat(3, 1fr); } }
+    @media (max-width: 420px) { .grade { grid-template-columns: repeat(2, 1fr); } }
+
+    @media print {
+      body { background: #fff; padding: 0; }
+      .topo, .secao-titulo { display: none !important; }
+      .grade {
+        max-width: none !important;
+        grid-template-columns: repeat(5, 1fr) !important;
+        gap: 5px !important; padding: 4mm;
+      }
+      .card { break-inside: avoid; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="topo">
+    <div>
+      <h1>🖨️ QR Codes — Fazendinha do Bento</h1>
+      <p>Caça ao Tesouro (11) + Pescaria (9) · folha A4</p>
+    </div>
+    <div class="botoes">
+      <button class="btn btn-pdf"   id="btn-pdf"   onclick="gerarPDF()" disabled>📄 Baixar PDF</button>
+      <button class="btn btn-print" id="btn-print" onclick="window.print()" disabled>🖨️ Imprimir</button>
+    </div>
+  </div>
+
+  <div class="loading" id="loading">Carregando imagens e QR codes…</div>
+
+  <div id="secao-tesouro"  style="display:none;">
+    <div class="secao-titulo">🗺️ Caça ao Tesouro — Animais + Tesouro</div>
+    <div class="grade" id="grade-tesouro"></div>
+  </div>
+  <div id="secao-pescaria" style="display:none;">
+    <div class="secao-titulo">🎣 Pescaria</div>
+    <div class="grade" id="grade-pescaria"></div>
+  </div>
+
+  <script>
+    const BASE_ANIMAIS = '../assets/img/animais/';
+
+    const TESOURO = [
+      { codigo:'ANIMAL-VACA',     nome:'Vaca Mimosa',         emoji:'🐄', img: BASE_ANIMAIS+'bento_vaca.png'      },
+      { codigo:'ANIMAL-CAVALO',   nome:'Cavalo Trovão',        emoji:'🐴', img: BASE_ANIMAIS+'bento_cavalo.png'    },
+      { codigo:'ANIMAL-PORCO',    nome:'Porquinho Baconzinho', emoji:'🐷', img: BASE_ANIMAIS+'bento_porquinho.png' },
+      { codigo:'ANIMAL-GALINHA',  nome:'Galinha Cocó',         emoji:'🐔', img: BASE_ANIMAIS+'bento_galinha.png'   },
+      { codigo:'ANIMAL-OVELHA',   nome:'Ovelha Floquinha',     emoji:'🐑', img: BASE_ANIMAIS+'bento_ovelha.png'    },
+      { codigo:'ANIMAL-CABRA',    nome:'Cabrita Estrelinha',   emoji:'🐐', img: BASE_ANIMAIS+'bento_cabra.png'     },
+      { codigo:'ANIMAL-PATO',     nome:'Patinho Pingo',        emoji:'🦆', img: BASE_ANIMAIS+'bento_pato.png'      },
+      { codigo:'ANIMAL-PINTINHO', nome:'Pintinho Amarelinho',  emoji:'🐣', img: BASE_ANIMAIS+'bento_pintinho.png'  },
+      { codigo:'ANIMAL-CACHORRO', nome:'Cachorrinho Rex',      emoji:'🐕', img: BASE_ANIMAIS+'bento_cachorro.png'  },
+      { codigo:'ANIMAL-GATO',     nome:'Gatinho Mingau',       emoji:'🐱', img: BASE_ANIMAIS+'bento_gato.png'      },
+      { codigo:'QR-TESOURO',      nome:'Tesouro da Fazenda',   emoji:'🔑', tesouro: true },
+    ];
+
+    const PESCARIA = [
+      { codigo:'QR-PEIXE-01', nome:'Nemo',    emoji:'🐠' },
+      { codigo:'QR-PEIXE-02', nome:'Bolinha', emoji:'🐡' },
+      { codigo:'QR-PEIXE-03', nome:'Bolhas',  emoji:'🐟' },
+      { codigo:'QR-PEIXE-04', nome:'Tubarão', emoji:'🦈' },
+      { codigo:'QR-PEIXE-05', nome:'Polvo',   emoji:'🐙' },
+      { codigo:'QR-PEIXE-06', nome:'Lula',    emoji:'🦑' },
+      { codigo:'QR-PEIXE-07', nome:'Lagosta', emoji:'🦞' },
+      { codigo:'QR-PEIXE-08', nome:'Camarão', emoji:'🦐' },
+      { codigo:'QR-PEIXE-09', nome:'Dourado', emoji:'🦀' },
+    ];
+
+    // ─── Helpers ────────────────────────────────────────────────────────────
+
+    function qrUrl(codigo) {
+      return `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(codigo)}&color=000000&bgcolor=ffffff&margin=4`;
+    }
+
+    function urlParaDataUrl(url, crossOrigin = true) {
+      return new Promise((resolve) => {
+        const img = new Image();
+        if (crossOrigin) img.crossOrigin = 'anonymous';
+        img.onload = () => {
+          const c = document.createElement('canvas');
+          c.width  = img.naturalWidth  || 300;
+          c.height = img.naturalHeight || 300;
+          c.getContext('2d').drawImage(img, 0, 0);
+          resolve(c.toDataURL('image/png'));
+        };
+        img.onerror = () => resolve(null);
+        img.src = url;
+      });
+    }
+
+    // Recorta centro quadrado e converte para círculo, retorna data URL
+    function cropCircleDataUrl(src, size = 200) {
+      return new Promise((resolve) => {
+        const img = new Image();
+        img.onload = () => {
+          const c   = document.createElement('canvas');
+          c.width   = size; c.height = size;
+          const ctx = c.getContext('2d');
+          ctx.beginPath();
+          ctx.arc(size / 2, size / 2, size / 2, 0, Math.PI * 2);
+          ctx.closePath();
+          ctx.clip();
+          const min = Math.min(img.naturalWidth, img.naturalHeight);
+          const ox  = (img.naturalWidth  - min) / 2;
+          const oy  = (img.naturalHeight - min) / 2;
+          ctx.drawImage(img, ox, oy, min, min, 0, 0, size, size);
+          resolve(c.toDataURL('image/png'));
+        };
+        img.onerror = () => resolve(null);
+        img.src = src;
+      });
+    }
+
+    const qrCache    = {};   // código → data URL do QR
+    const fotoCache  = {};   // src    → data URL circular (para PDF)
+
+    // ─── Init ────────────────────────────────────────────────────────────────
+
+    async function init() {
+      const loading = document.getElementById('loading');
+      try {
+        const todos = [...TESOURO, ...PESCARIA];
+
+        // Carrega QR codes e fotos locais em paralelo
+        await Promise.all([
+          ...todos.map(async (item) => {
+            qrCache[item.codigo] = await urlParaDataUrl(qrUrl(item.codigo));
+          }),
+          ...TESOURO.filter(i => i.img).map(async (item) => {
+            fotoCache[item.img] = await cropCircleDataUrl(item.img);
+          }),
+        ]);
+
+        // Renderiza seção Caça ao Tesouro
+        const gradeT = document.getElementById('grade-tesouro');
+        TESOURO.forEach(item => {
+          const card = document.createElement('div');
+          card.className = 'card' + (item.tesouro ? ' card--tesouro' : '');
+
+          const fotoHtml = item.img
+            ? `<img class="animal-foto" src="${item.img}" alt="${item.nome}" />`
+            : `<span class="animal-foto" style="display:flex;align-items:center;justify-content:center;font-size:2.2rem;background:#fffde7;border:2.5px solid #f2a64a;">${item.emoji}</span>`;
+
+          card.innerHTML = `
+            ${fotoHtml}
+            <img class="qr-img" src="${qrCache[item.codigo]}" alt="${item.codigo}" />
+            <div class="card-nome">${item.nome}</div>
+            <div class="card-codigo">${item.codigo}</div>
+            ${item.tesouro ? '<span class="card-badge">TESOURO</span>' : ''}
+          `;
+          gradeT.appendChild(card);
+        });
+
+        // Renderiza seção Pescaria
+        const gradeP = document.getElementById('grade-pescaria');
+        PESCARIA.forEach(item => {
+          const card = document.createElement('div');
+          card.className = 'card card--peixe';
+          card.innerHTML = `
+            <span class="animal-emoji">${item.emoji}</span>
+            <img class="qr-img" src="${qrCache[item.codigo]}" alt="${item.codigo}" />
+            <div class="card-nome">${item.nome}</div>
+            <div class="card-codigo">${item.codigo}</div>
+          `;
+          gradeP.appendChild(card);
+        });
+
+        loading.style.display = 'none';
+        document.getElementById('secao-tesouro').style.display  = '';
+        document.getElementById('secao-pescaria').style.display = '';
+        document.getElementById('btn-pdf').disabled   = false;
+        document.getElementById('btn-print').disabled = false;
+
+      } catch (err) {
+        loading.innerHTML = `<span style="color:#b63e3e;">❌ ${err.message}</span>`;
+        console.error(err);
+      }
+    }
+
+    // ─── PDF ─────────────────────────────────────────────────────────────────
+
+    async function gerarPDF() {
+      const btn = document.getElementById('btn-pdf');
+      btn.disabled = true;
+      btn.textContent = 'Gerando…';
+
+      try {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+
+        const PAGE_W = 210, PAGE_H = 297;
+        const MARGIN = 8;
+        const COLS   = 5;
+        const GAP_X  = 3.5;
+        const GAP_Y  = 4;
+
+        const cardW  = (PAGE_W - 2 * MARGIN - (COLS - 1) * GAP_X) / COLS; // ≈ 35mm
+        const fotoSz = 10;    // mm — foto circular
+        const qrSz   = 20;    // mm — QR code
+        const cardH  = fotoSz + qrSz + 12; // foto + qr + labels
+
+        // ── Cabeçalho ────────────────────────────────────────────────────────
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(10);
+        doc.setTextColor(139, 90, 43);
+        doc.text('Fazendinha do Bento — QR Codes', PAGE_W / 2, 6, { align: 'center' });
+
+        // ── Função que desenha uma seção ──────────────────────────────────────
+        async function desenharSecao(itens, startY, titulo, rgb) {
+          doc.setFont('helvetica', 'bold');
+          doc.setFontSize(7);
+          doc.setTextColor(...rgb);
+          doc.text(titulo, MARGIN, startY + 3);
+          doc.setDrawColor(...rgb);
+          doc.setLineWidth(0.25);
+          doc.line(MARGIN + doc.getTextWidth(titulo) + 2, startY + 2.5, PAGE_W - MARGIN, startY + 2.5);
+
+          const rowY0 = startY + 6;
+
+          for (let i = 0; i < itens.length; i++) {
+            const item = itens[i];
+            const col  = i % COLS;
+            const row  = Math.floor(i / COLS);
+            const x    = MARGIN + col * (cardW + GAP_X);
+            const y    = rowY0  + row * (cardH  + GAP_Y);
+
+            // Fundo e borda
+            if (item.tesouro) {
+              doc.setFillColor(255, 253, 231);
+              doc.roundedRect(x, y, cardW, cardH, 1.5, 1.5, 'F');
+              doc.setDrawColor(242, 166, 74);
+              doc.setLineWidth(0.55);
+            } else {
+              doc.setDrawColor(...rgb);
+              doc.setLineWidth(0.2);
+            }
+            doc.roundedRect(x, y, cardW, cardH, 1.5, 1.5, 'S');
+
+            // Foto circular (animais do tesouro) ou círculo de emoji (pescaria)
+            const fotoX = x + (cardW - fotoSz) / 2;
+            const fotoY = y + 1.5;
+
+            if (item.img && fotoCache[item.img]) {
+              // Círculo com borda dourada
+              doc.setDrawColor(242, 166, 74);
+              doc.setLineWidth(0.4);
+              doc.circle(fotoX + fotoSz / 2, fotoY + fotoSz / 2, fotoSz / 2, 'S');
+              doc.addImage(fotoCache[item.img], 'PNG', fotoX, fotoY, fotoSz, fotoSz);
+            } else if (item.tesouro) {
+              // Card tesouro: círculo dourado com emoji
+              doc.setFillColor(255, 248, 200);
+              doc.setDrawColor(242, 166, 74);
+              doc.setLineWidth(0.4);
+              doc.circle(fotoX + fotoSz / 2, fotoY + fotoSz / 2, fotoSz / 2, 'FD');
+              doc.setFontSize(9);
+              doc.text('🔑', fotoX + fotoSz / 2, fotoY + fotoSz / 2 + 3, { align: 'center' });
+            } else {
+              // Pescaria: círculo azul com emoji
+              doc.setFillColor(235, 244, 255);
+              doc.setDrawColor(...rgb);
+              doc.setLineWidth(0.3);
+              doc.circle(fotoX + fotoSz / 2, fotoY + fotoSz / 2, fotoSz / 2, 'FD');
+              doc.setFontSize(8);
+              doc.text(item.emoji, fotoX + fotoSz / 2, fotoY + fotoSz / 2 + 2.5, { align: 'center' });
+            }
+
+            // QR code
+            const qrDataUrl = qrCache[item.codigo];
+            if (qrDataUrl) {
+              const qrX = x + (cardW - qrSz) / 2;
+              const qrY = fotoY + fotoSz + 1.5;
+              doc.addImage(qrDataUrl, 'PNG', qrX, qrY, qrSz, qrSz);
+            }
+
+            // Nome
+            const lblY = y + fotoSz + qrSz + 5;
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(5.5);
+            doc.setTextColor(item.tesouro ? 160 : 80, item.tesouro ? 90 : 60, 30);
+            doc.text(item.nome, x + cardW / 2, lblY, { align: 'center', maxWidth: cardW - 1 });
+
+            // Código
+            doc.setFont('courier', 'normal');
+            doc.setFontSize(4.5);
+            doc.setTextColor(140, 100, 60);
+            doc.text(item.codigo, x + cardW / 2, lblY + 4, { align: 'center' });
+
+            // Badge TESOURO
+            if (item.tesouro) {
+              doc.setFillColor(242, 166, 74);
+              doc.roundedRect(x + cardW / 2 - 9, lblY + 5, 18, 3.5, 1, 1, 'F');
+              doc.setFont('helvetica', 'bold');
+              doc.setFontSize(4);
+              doc.setTextColor(255, 255, 255);
+              doc.text('TESOURO', x + cardW / 2, lblY + 7.8, { align: 'center' });
+            }
+
+            doc.setTextColor(0, 0, 0);
+          }
+
+          const rows = Math.ceil(itens.length / COLS);
+          return rowY0 + rows * (cardH + GAP_Y);
+        }
+
+        const fimTesouro = await desenharSecao(TESOURO,  10, '🗺️  Caça ao Tesouro', [139, 90, 43]);
+        await desenharSecao(PESCARIA, fimTesouro + 3, '🎣  Pescaria', [30, 80, 160]);
+
+        // Rodapé
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(5.5);
+        doc.setTextColor(180, 150, 110);
+        doc.text('Fazendinha do Bento · 1 aninho do Bento', PAGE_W / 2, PAGE_H - 4, { align: 'center' });
+
+        doc.save('qrcodes-fazendinha-bento.pdf');
+
+      } catch (err) {
+        alert('Erro ao gerar PDF: ' + err.message);
+        console.error(err);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = '📄 Baixar PDF';
+      }
+    }
+
+    window.addEventListener('load', init);
+  </script>
+</body>
+</html>

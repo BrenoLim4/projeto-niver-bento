@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Caça ao Tesouro — Cadastro</title>
+  <link rel="stylesheet" href="../../assets/css/variables.css" />
+  <link rel="stylesheet" href="../../assets/css/base.css" />
+  <link rel="stylesheet" href="../../assets/css/components.css" />
+  <style>
+    .caca-header {
+      text-align: center;
+      padding: var(--espaco-lg) var(--espaco-md) var(--espaco-md);
+    }
+    .caca-header .emoji-grande {
+      font-size: 3.5rem;
+      display: block;
+      margin-bottom: var(--espaco-sm);
+    }
+    .caca-header h1 {
+      font-size: 1.6rem;
+      color: var(--cor-marrom);
+    }
+    .caca-header p {
+      color: var(--cor-marrom);
+      opacity: 0.8;
+      margin: 0;
+    }
+
+    .foto-preview-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: var(--espaco-sm);
+      margin: var(--espaco-md) 0;
+    }
+    .foto-preview {
+      width: 100px;
+      height: 100px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 3px solid var(--cor-dourado);
+      box-shadow: var(--sombra-suave);
+      display: none;
+    }
+    .foto-placeholder {
+      width: 100px;
+      height: 100px;
+      border-radius: 50%;
+      background: var(--cor-bege);
+      border: 3px dashed var(--cor-dourado);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2.5rem;
+      cursor: pointer;
+    }
+    .foto-label {
+      font-size: 0.85rem;
+      color: var(--cor-marrom);
+      opacity: 0.7;
+    }
+    #input-foto { display: none; }
+
+    .mensagem {
+      text-align: center;
+      padding: var(--espaco-sm) var(--espaco-md);
+      border-radius: var(--raio-md);
+      font-weight: 600;
+      margin-top: var(--espaco-md);
+      display: none;
+    }
+    .mensagem--erro { background: #fde8e8; color: var(--cor-vermelho); }
+    .mensagem--ok   { background: #e8f5e9; color: var(--cor-verde); }
+  </style>
+</head>
+<body>
+  <div class="container" style="max-width: 480px;">
+    <div class="caca-header">
+      <span class="emoji-grande">🗺️</span>
+      <h1>Caça ao Tesouro da Fazendinha!</h1>
+      <p>Encontre os animais perdidos e descubra o tesouro secreto do Bento.</p>
+    </div>
+
+    <div class="card" style="margin: 0 var(--espaco-md);">
+      <h2 style="margin-bottom: var(--espaco-md);">Quem é você?</h2>
+
+      <div class="campo">
+        <label for="input-nome">Seu nome *</label>
+        <input type="text" id="input-nome" placeholder="Como você se chama?" autocomplete="given-name" />
+      </div>
+
+      <div class="foto-preview-wrap">
+        <div class="foto-placeholder" id="foto-placeholder" role="button" tabindex="0" aria-label="Adicionar foto">📷</div>
+        <img id="foto-preview" class="foto-preview" src="" alt="Prévia da foto" />
+        <span class="foto-label">Foto opcional — toque para adicionar</span>
+        <input type="file" id="input-foto" accept="image/*" capture="environment" />
+      </div>
+
+      <button class="botao botao-primario botao-bloco" id="btn-cadastrar">
+        🏁 Entrar na Brincadeira!
+      </button>
+
+      <p id="msg-erro" class="mensagem mensagem--erro"></p>
+      <p id="msg-ok"   class="mensagem mensagem--ok"></p>
+    </div>
+
+    <p style="text-align:center; margin-top: var(--espaco-lg); font-size:0.85rem; color: var(--cor-marrom); opacity:0.6;">
+      Fazendinha do Bento 🐄
+    </p>
+  </div>
+
+  <script type="module">
+    import { supabase } from '../../js/supabaseClient.js';
+
+    const inputNome      = document.getElementById('input-nome');
+    const inputFoto      = document.getElementById('input-foto');
+    const fotoPlaceholder = document.getElementById('foto-placeholder');
+    const fotoPreview    = document.getElementById('foto-preview');
+    const btnCadastrar   = document.getElementById('btn-cadastrar');
+    const msgErro        = document.getElementById('msg-erro');
+    const msgOk          = document.getElementById('msg-ok');
+
+    let arquivoFoto = null;
+
+    // Redireciona se já cadastrado neste dispositivo
+    const idSalvo = localStorage.getItem('tesouro_participante_id');
+    if (idSalvo) {
+      window.location.replace('/jogos/tesouro/index.html');
+    }
+
+    // Clique no placeholder abre o input de arquivo
+    fotoPlaceholder.addEventListener('click', () => inputFoto.click());
+    fotoPlaceholder.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') inputFoto.click();
+    });
+
+    inputFoto.addEventListener('change', () => {
+      const arquivo = inputFoto.files[0];
+      if (!arquivo) return;
+      arquivoFoto = arquivo;
+
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        fotoPreview.src = e.target.result;
+        fotoPreview.style.display = 'block';
+        fotoPlaceholder.style.display = 'none';
+      };
+      reader.readAsDataURL(arquivo);
+    });
+
+    function mostrarErro(msg) {
+      msgErro.textContent = msg;
+      msgErro.style.display = '';
+      msgOk.style.display = 'none';
+    }
+
+    function mostrarOk(msg) {
+      msgOk.textContent = msg;
+      msgOk.style.display = '';
+      msgErro.style.display = 'none';
+    }
+
+    // Comprime imagem no canvas (máx 1280px, JPEG 0.8)
+    async function comprimirImagem(arquivo) {
+      return new Promise((resolve) => {
+        const img = new Image();
+        const url = URL.createObjectURL(arquivo);
+        img.onload = () => {
+          URL.revokeObjectURL(url);
+          const MAX = 1280;
+          let { width, height } = img;
+          if (width > MAX || height > MAX) {
+            if (width > height) { height = Math.round(height * MAX / width); width = MAX; }
+            else                { width = Math.round(width * MAX / height); height = MAX; }
+          }
+          const canvas = document.createElement('canvas');
+          canvas.width = width; canvas.height = height;
+          canvas.getContext('2d').drawImage(img, 0, 0, width, height);
+          canvas.toBlob(resolve, 'image/jpeg', 0.8);
+        };
+        img.src = url;
+      });
+    }
+
+    btnCadastrar.addEventListener('click', async () => {
+      const nome = inputNome.value.trim();
+      if (!nome) { mostrarErro('Por favor, informe seu nome.'); return; }
+
+      btnCadastrar.disabled = true;
+      btnCadastrar.textContent = 'Verificando...';
+      msgErro.style.display = 'none';
+
+      try {
+        // 1. Verifica se já existe participante com esse nome (case-insensitive)
+        const { data: existentes } = await supabase
+          .from('tesouro_participantes')
+          .select('id, foto_url')
+          .ilike('nome', nome)
+          .limit(1);
+
+        let participanteId;
+        const jaExistia = existentes && existentes.length > 0;
+
+        if (jaExistia) {
+          participanteId = existentes[0].id;
+        } else {
+          const { data: novo, error: errParticipante } = await supabase
+            .from('tesouro_participantes')
+            .insert({ nome })
+            .select('id')
+            .single();
+
+          if (errParticipante) throw errParticipante;
+          participanteId = novo.id;
+        }
+
+        // 2. Faz upload da foto se fornecida (atualiza mesmo em reaproveitamento)
+        if (arquivoFoto) {
+          mostrarOk('Enviando foto...');
+          const blob = await comprimirImagem(arquivoFoto);
+          const nomeArquivo = `participante-${participanteId}.jpg`;
+          const { error: errUpload } = await supabase.storage
+            .from('tesouro-participantes')
+            .upload(nomeArquivo, blob, { contentType: 'image/jpeg', upsert: true });
+
+          if (!errUpload) {
+            const { data: urlData } = supabase.storage
+              .from('tesouro-participantes')
+              .getPublicUrl(nomeArquivo);
+            await supabase
+              .from('tesouro_participantes')
+              .update({ foto_url: urlData.publicUrl })
+              .eq('id', participanteId);
+          }
+        }
+
+        // 3. Salva no localStorage e redireciona
+        localStorage.setItem('tesouro_participante_id', participanteId);
+        mostrarOk(jaExistia ? `Bem-vindo de volta, ${nome}! 🤠` : 'Pronto! Entrando na brincadeira...');
+
+        setTimeout(() => {
+          window.location.replace('/jogos/tesouro/index.html');
+        }, 800);
+
+      } catch (err) {
+        mostrarErro('Erro ao cadastrar: ' + (err.message ?? 'Tente novamente.'));
+        btnCadastrar.disabled = false;
+        btnCadastrar.textContent = '🏁 Entrar na Brincadeira!';
+      }
+    });
+
+    inputNome.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') btnCadastrar.click();
+    });
+  </script>
+</body>
+</html>

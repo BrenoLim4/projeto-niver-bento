@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Caça ao Tesouro — Dashboard</title>
+  <link rel="stylesheet" href="../assets/css/variables.css" />
+  <link rel="stylesheet" href="../assets/css/base.css" />
+  <link rel="stylesheet" href="../assets/css/components.css" />
+  <style>
+    .secao {
+      background: var(--cor-superficie);
+      border-radius: var(--raio-lg);
+      padding: var(--espaco-md);
+      box-shadow: var(--sombra-suave);
+      margin-bottom: var(--espaco-md);
+    }
+    .secao h2 {
+      font-size: 1rem;
+      margin-bottom: var(--espaco-sm);
+      display: flex;
+      align-items: center;
+      gap: var(--espaco-xs);
+    }
+
+    /* Estatísticas resumo */
+    .stats-grade {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: var(--espaco-sm);
+    }
+    .stat-card {
+      text-align: center;
+      padding: var(--espaco-sm);
+      background: var(--cor-bege);
+      border-radius: var(--raio-md);
+    }
+    .stat-numero {
+      font-family: var(--fonte-titulo);
+      font-size: 1.8rem;
+      color: var(--cor-dourado);
+      display: block;
+    }
+    .stat-rotulo { font-size: 0.7rem; color: var(--cor-marrom); opacity: 0.7; }
+
+    /* Status do tesouro */
+    .tesouro-status-banner {
+      display: flex;
+      align-items: center;
+      gap: var(--espaco-sm);
+      padding: var(--espaco-sm) var(--espaco-md);
+      border-radius: var(--raio-md);
+      font-weight: 700;
+    }
+    .tesouro-status-banner--nao-encontrado { background: #fde8e8; color: #c0392b; }
+    .tesouro-status-banner--encontrado     { background: #e8f5e9; color: #2e7d32; }
+
+    /* Configurações */
+    .config-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: var(--espaco-md);
+      flex-wrap: wrap;
+    }
+    .config-row label { font-weight: 700; color: var(--cor-marrom); }
+    .config-row input[type="number"] { width: 80px; text-align: center; }
+
+    /* Tabela de participantes */
+    .tabela-participantes { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+    .tabela-participantes th,
+    .tabela-participantes td {
+      text-align: left;
+      padding: var(--espaco-xs) var(--espaco-sm);
+      border-bottom: 1px solid rgba(139,90,43,.1);
+    }
+    .tabela-participantes th { color: var(--cor-marrom); opacity: 0.6; font-weight: 700; font-size: 0.75rem; }
+
+    .foto-mini {
+      width: 32px; height: 32px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 2px solid var(--cor-dourado);
+      vertical-align: middle;
+    }
+    .avatar-mini {
+      width: 32px; height: 32px;
+      border-radius: 50%;
+      background: var(--cor-bege);
+      border: 2px solid var(--cor-dourado);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1rem;
+      vertical-align: middle;
+    }
+
+    .badge-desbloqueado { background: #fff8e1; color: #b7810a; padding: 2px 6px; border-radius: 4px; font-size: 0.75rem; font-weight: 700; }
+    .badge-bloqueado    { background: #fde8e8; color: #c0392b; padding: 2px 6px; border-radius: 4px; font-size: 0.75rem; font-weight: 700; }
+
+    /* Foto do animal no card QR */
+    .animal-foto-qr {
+      width: 54px; height: 54px;
+      border-radius: 50%; object-fit: cover;
+      border: 2px solid var(--cor-dourado);
+      box-shadow: 0 2px 6px rgba(139,90,43,.15);
+    }
+    /* Foto mini na tabela de participantes */
+    .animal-foto-mini {
+      width: 26px; height: 26px;
+      border-radius: 50%; object-fit: cover;
+      border: 1.5px solid var(--cor-dourado);
+      vertical-align: middle;
+    }
+
+    /* Animais encontrados (por participante) */
+    .animais-chips { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; }
+
+    /* Tentativas */
+    .badge-status { padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: 700; }
+    .badge-status--correta   { background: #e8f5e9; color: #2e7d32; }
+    .badge-status--incorreta { background: #fde8e8; color: #c0392b; }
+    .badge-status--aguardando { background: #fff8e1; color: #b7810a; }
+
+    .badge-tipo { padding: 2px 6px; border-radius: 4px; font-size: 0.72rem; font-weight: 700; }
+    .badge-tipo--visual   { background: #e3f2fd; color: #1565c0; }
+    .badge-tipo--pergunta { background: #f3e5f5; color: #6a1b9a; }
+
+    /* QR Codes */
+    .qr-grade {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+      gap: var(--espaco-md);
+    }
+    .qr-card {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      background: #fff;
+      border: 1px solid rgba(139,90,43,.2);
+      border-radius: var(--raio-md);
+      padding: var(--espaco-sm);
+      text-align: center;
+    }
+    .qr-card--tesouro {
+      background: #fff8e1;
+      border: 2px solid var(--cor-dourado);
+    }
+    .qr-img { width: 140px; height: 140px; display: block; }
+    .qr-card-emoji { font-size: 1.3rem; line-height: 1; }
+    .qr-card-nome  { font-weight: 700; font-size: 0.8rem; color: var(--cor-marrom); }
+    .qr-card-codigo { font-family: monospace; font-size: 0.7rem; color: var(--cor-marrom); opacity: 0.6; }
+
+    @media print {
+      .container > *:not(#secao-qrcodes) { display: none !important; }
+      .btn-imprimir { display: none !important; }
+      .qr-grade { grid-template-columns: repeat(4, 1fr) !important; gap: 10px !important; }
+      .qr-card { break-inside: avoid; }
+    }
+
+    .mensagem {
+      text-align: center;
+      padding: var(--espaco-sm);
+      border-radius: var(--raio-md);
+      font-size: 0.85rem;
+      display: none;
+    }
+    .mensagem--ok  { background: #e8f5e9; color: #2e7d32; }
+    .mensagem--err { background: #fde8e8; color: #c0392b; }
+
+    .realtime-dot {
+      display: inline-block;
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: var(--cor-verde);
+      margin-right: 4px;
+      animation: piscar 2s infinite;
+    }
+    @keyframes piscar { 0%,100%{opacity:1} 50%{opacity:.3} }
+  </style>
+</head>
+<body>
+  <div class="container" style="padding-bottom: var(--espaco-xl);">
+    <div class="texto-centro" style="padding: var(--espaco-md) 0;">
+      <h1>🗺️ Caça ao Tesouro</h1>
+      <p style="opacity:.7; margin:0;">Painel administrativo da brincadeira</p>
+    </div>
+
+    <!-- Status geral + Estatísticas -->
+    <div class="secao">
+      <h2>📊 Situação Geral <span class="realtime-dot"></span></h2>
+      <div class="tesouro-status-banner tesouro-status-banner--nao-encontrado" id="banner-tesouro">
+        🔒 Tesouro ainda não encontrado
+      </div>
+      <div id="vencedor-info" style="display:none; margin-top: var(--espaco-sm); font-size:0.9rem; color:var(--cor-marrom);">
+        🏆 Vencedor: <strong id="vencedor-nome"></strong>
+      </div>
+      <div class="stats-grade" style="margin-top: var(--espaco-md);">
+        <div class="stat-card">
+          <span class="stat-numero" id="stat-participantes">0</span>
+          <span class="stat-rotulo">Participantes</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-numero" id="stat-animais">0</span>
+          <span class="stat-rotulo">Animais encontrados</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-numero" id="stat-desbloqueados">0</span>
+          <span class="stat-rotulo">Com tesouro liberado</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Configurações -->
+    <div class="secao">
+      <h2>⚙️ Configurações</h2>
+      <div class="config-row">
+        <label for="input-min-animais">Mínimo de animais para desbloquear:</label>
+        <div style="display:flex; gap: var(--espaco-sm); align-items:center;">
+          <input type="number" id="input-min-animais" min="1" max="10" value="3" class="campo" />
+          <button class="botao botao-primario" id="btn-salvar-config">Salvar</button>
+        </div>
+      </div>
+      <p id="msg-config" class="mensagem"></p>
+    </div>
+
+    <!-- Reset da brincadeira -->
+    <div class="secao">
+      <h2>🔄 Reset da Brincadeira</h2>
+      <p style="font-size:0.85rem; color:var(--cor-marrom); opacity:.7; margin-bottom: var(--espaco-sm);">
+        Remove todos os participantes, animais encontrados, tentativas e redefine o status do Tesouro.
+        Use apenas se quiser reiniciar completamente a brincadeira.
+      </p>
+      <button class="botao botao-secundario" id="btn-reset" style="color: var(--cor-vermelho); border-color: var(--cor-vermelho);">
+        ⚠️ Resetar Brincadeira
+      </button>
+      <p id="msg-reset" class="mensagem"></p>
+    </div>
+
+    <!-- Participantes e progresso -->
+    <div class="secao">
+      <h2>👥 Participantes</h2>
+      <div id="tabela-participantes-wrap" style="overflow-x:auto;">
+        <table class="tabela-participantes">
+          <thead>
+            <tr>
+              <th>Participante</th>
+              <th>Animais</th>
+              <th>Tesouro</th>
+              <th>Encontrados</th>
+            </tr>
+          </thead>
+          <tbody id="tbody-participantes">
+            <tr><td colspan="4" style="text-align:center; opacity:.5;">Carregando...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Tentativas -->
+    <div class="secao">
+      <h2>⚔️ Tentativas de Desafio</h2>
+      <div id="tabela-tentativas-wrap" style="overflow-x:auto;">
+        <table class="tabela-participantes">
+          <thead>
+            <tr>
+              <th>Participante</th>
+              <th>Tipo</th>
+              <th>Hora</th>
+              <th>Resposta</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody id="tbody-tentativas">
+            <tr><td colspan="4" style="text-align:center; opacity:.5;">Carregando...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- QR Codes da brincadeira (para impressão) -->
+    <div class="secao" id="secao-qrcodes">
+      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:var(--espaco-sm); margin-bottom:var(--espaco-md);">
+        <h2 style="margin:0;">🖨️ Códigos QR da Brincadeira</h2>
+        <button class="botao botao-primario btn-imprimir" onclick="window.print()">🖨️ Imprimir</button>
+      </div>
+      <div class="qr-grade" id="lista-qr-codes"></div>
+    </div>
+
+    <p class="texto-centro">
+      <a href="/dashboard/index.html">← Voltar ao Dashboard</a>
+    </p>
+  </div>
+
+  <script type="module">
+    import { supabase } from '../js/supabaseClient.js';
+
+    const ANIMAL_IMG = {
+      'ANIMAL-VACA':     '../assets/img/animais/bento_vaca.png',
+      'ANIMAL-CAVALO':   '../assets/img/animais/bento_cavalo.png',
+      'ANIMAL-PORCO':    '../assets/img/animais/bento_porquinho.png',
+      'ANIMAL-GALINHA':  '../assets/img/animais/bento_galinha.png',
+      'ANIMAL-OVELHA':   '../assets/img/animais/bento_ovelha.png',
+      'ANIMAL-CABRA':    '../assets/img/animais/bento_cabra.png',
+      'ANIMAL-PATO':     '../assets/img/animais/bento_pato.png',
+      'ANIMAL-PINTINHO': '../assets/img/animais/bento_pintinho.png',
+      'ANIMAL-CACHORRO': '../assets/img/animais/bento_cachorro.png',
+      'ANIMAL-GATO':     '../assets/img/animais/bento_gato.png',
+    };
+
+    // ── Guard de PIN ────────────────────────────────────────────────
+    if (sessionStorage.getItem('fazendinha_pin_ok') !== '1') {
+      window.location.replace('/dashboard/index.html');
+    }
+
+    // ── Referências DOM ─────────────────────────────────────────────
+    const bannerTesouro      = document.getElementById('banner-tesouro');
+    const vencedorInfo       = document.getElementById('vencedor-info');
+    const vencedorNomeEl     = document.getElementById('vencedor-nome');
+    const statParticipantes  = document.getElementById('stat-participantes');
+    const statAnimais        = document.getElementById('stat-animais');
+    const statDesbloqueados  = document.getElementById('stat-desbloqueados');
+    const inputMinAnimais    = document.getElementById('input-min-animais');
+    const btnSalvarConfig    = document.getElementById('btn-salvar-config');
+    const msgConfig          = document.getElementById('msg-config');
+    const btnReset           = document.getElementById('btn-reset');
+    const msgReset           = document.getElementById('msg-reset');
+    const tbodyParticipantes = document.getElementById('tbody-participantes');
+    const tbodyTentativas    = document.getElementById('tbody-tentativas');
+    const listaQrCodes       = document.getElementById('lista-qr-codes');
+
+    // ── Dados em memória ────────────────────────────────────────────
+    let animaisTodos = [];
+    let participantesTodos = [];
+    let encontradosTodos = [];
+
+    // ── Carregamento ────────────────────────────────────────────────
+    async function carregar() {
+      await Promise.all([
+        carregarEstatisticas(),
+        carregarConfig(),
+        carregarParticipantes(),
+        carregarTentativas(),
+        carregarAnimais(),
+      ]);
+    }
+
+    async function carregarEstatisticas() {
+      const { data } = await supabase.from('vw_tesouro_estatisticas').select('*').single();
+      if (!data) return;
+
+      statParticipantes.textContent  = data.total_participantes ?? 0;
+      statAnimais.textContent        = data.total_animais_encontrados ?? 0;
+      statDesbloqueados.textContent  = data.total_desbloqueados ?? 0;
+
+      if (data.tesouro_status === 'encontrado') {
+        bannerTesouro.className = 'tesouro-status-banner tesouro-status-banner--encontrado';
+        bannerTesouro.textContent = '🏆 Tesouro encontrado!';
+        if (data.tesouro_vencedor) {
+          vencedorNomeEl.textContent = data.tesouro_vencedor;
+          vencedorInfo.style.display = '';
+        }
+      } else {
+        bannerTesouro.className = 'tesouro-status-banner tesouro-status-banner--nao-encontrado';
+        bannerTesouro.textContent = '🔒 Tesouro ainda não encontrado';
+        vencedorInfo.style.display = 'none';
+      }
+    }
+
+    async function carregarConfig() {
+      const { data } = await supabase.from('config').select('tesouro_min_animais').eq('id', 1).single();
+      if (data) inputMinAnimais.value = data.tesouro_min_animais ?? 3;
+    }
+
+    async function carregarAnimais() {
+      const { data } = await supabase.from('tesouro_animais').select('*').eq('ativo', true).order('ordem');
+      animaisTodos = data ?? [];
+
+      listaQrCodes.innerHTML = '';
+
+      const itens = [
+        ...animaisTodos.map((a) => ({ codigo: a.codigo, emoji: a.emoji || '🐾', nome: a.nome, img: ANIMAL_IMG[a.codigo] ?? null, tesouro: false })),
+        { codigo: 'QR-TESOURO', emoji: '🔑', nome: 'Tesouro da Fazenda', img: null, tesouro: true },
+      ];
+
+      for (const item of itens) {
+        const card = document.createElement('div');
+        card.className = 'qr-card' + (item.tesouro ? ' qr-card--tesouro' : '');
+
+        const qrSrc = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(item.codigo)}&margin=4`;
+
+        const fotoHtml = item.img
+          ? `<img class="animal-foto-qr" src="${item.img}" alt="${item.nome}" />`
+          : `<span class="qr-card-emoji">${item.emoji}</span>`;
+
+        card.innerHTML = `
+          ${fotoHtml}
+          <img src="${qrSrc}" alt="${item.codigo}" class="qr-img" />
+          <div class="qr-card-nome">${item.nome}</div>
+          <div class="qr-card-codigo">${item.codigo}</div>
+        `;
+        listaQrCodes.appendChild(card);
+      }
+    }
+
+    async function carregarParticipantes() {
+      const [{ data: participantes }, { data: encontrados }] = await Promise.all([
+        supabase.from('tesouro_participantes').select('*').order('created_at'),
+        supabase.from('tesouro_participante_animais').select('participante_id, animal_id, created_at'),
+      ]);
+
+      participantesTodos = participantes ?? [];
+      encontradosTodos   = encontrados ?? [];
+
+      const { data: config } = await supabase
+        .from('config')
+        .select('tesouro_min_animais, tesouro_vencedor_participante_id')
+        .eq('id', 1)
+        .single();
+      const minAnim = config?.tesouro_min_animais ?? 3;
+      const vencedorId = config?.tesouro_vencedor_participante_id;
+
+      // Mapeia animais encontrados por participante
+      const mapaEncontrados = {};
+      encontradosTodos.forEach((e) => {
+        if (!mapaEncontrados[e.participante_id]) mapaEncontrados[e.participante_id] = [];
+        mapaEncontrados[e.participante_id].push(e.animal_id);
+      });
+
+      // Mapeia animais pelo id para emoji
+      const mapaAnimais = {};
+      animaisTodos.forEach((a) => { mapaAnimais[a.id] = a; });
+
+      tbodyParticipantes.innerHTML = '';
+      if (participantesTodos.length === 0) {
+        tbodyParticipantes.innerHTML = '<tr><td colspan="4" style="text-align:center; opacity:.5;">Nenhum participante ainda.</td></tr>';
+        return;
+      }
+
+      participantesTodos.forEach((p) => {
+        const ids = mapaEncontrados[p.id] ?? [];
+        const desbloqueado = ids.length >= minAnim;
+        const vencedor = p.id === vencedorId;
+
+        const tr = document.createElement('tr');
+        if (vencedor) tr.style.background = '#fff8e1';
+
+        const fotoHtml = p.foto_url
+          ? `<img class="foto-mini" src="${p.foto_url}" alt="" />`
+          : `<span class="avatar-mini">🤠</span>`;
+
+        const animaisHtml = ids.length
+          ? ids.map((id) => {
+              const a = mapaAnimais[id];
+              const imgSrc = a ? ANIMAL_IMG[a.codigo] : null;
+              return imgSrc
+                ? `<img class="animal-foto-mini" src="${imgSrc}" title="${a.nome}" alt="${a.nome}" />`
+                : `<span title="${a?.nome ?? ''}" style="font-size:1.1rem;">${a?.emoji ?? '❓'}</span>`;
+            }).join('')
+          : '<span style="opacity:.4; font-size:0.8rem;">nenhum</span>';
+
+        tr.innerHTML = `
+          <td>${fotoHtml} <strong style="margin-left:4px;">${p.nome}</strong>${vencedor ? ' 🏆' : ''}</td>
+          <td><strong>${ids.length}</strong>/${minAnim}</td>
+          <td>
+            <span class="${desbloqueado ? 'badge-desbloqueado' : 'badge-bloqueado'}">
+              ${desbloqueado ? '🔓 Sim' : '🔒 Não'}
+            </span>
+          </td>
+          <td><div class="animais-chips">${animaisHtml}</div></td>
+        `;
+        tbodyParticipantes.appendChild(tr);
+      });
+    }
+
+    const TIPO_LABEL = {
+      pergunta:          { label: '📝 Pergunta', cls: 'pergunta' },
+      memoria_posicao:   { label: '👀 Visual',   cls: 'visual'  },
+      memoria_sequencia: { label: '👀 Visual',   cls: 'visual'  },
+      identificacao:     { label: '👀 Visual',   cls: 'visual'  },
+      contagem:          { label: '🔢 Contagem', cls: 'visual'  },
+      visual:            { label: '👀 Visual',   cls: 'visual'  },
+    };
+
+    async function carregarTentativas() {
+      const { data: tentativas } = await supabase
+        .from('tesouro_tentativas')
+        .select(`
+          id, status, resposta, correta, created_at, answered_at,
+          tesouro_participantes(nome),
+          tesouro_charadas(pergunta, resposta_correta, tipo)
+        `)
+        .order('created_at', { ascending: false })
+        .limit(30);
+
+      tbodyTentativas.innerHTML = '';
+      if (!tentativas || tentativas.length === 0) {
+        tbodyTentativas.innerHTML = '<tr><td colspan="5" style="text-align:center; opacity:.5;">Nenhuma tentativa ainda.</td></tr>';
+        return;
+      }
+
+      tentativas.forEach((t) => {
+        const hora = new Date(t.created_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+        const statusMap = {
+          aguardando_resposta: { label: '⏳ Aguardando', cls: 'aguardando' },
+          correta:             { label: '✅ Correta',    cls: 'correta'   },
+          incorreta:           { label: '❌ Errada',     cls: 'incorreta' },
+          respondida:          { label: '⌛ Respondida', cls: 'aguardando' },
+          expirada:            { label: '⏰ Expirada',   cls: 'incorreta' },
+        };
+        const s = statusMap[t.status] ?? { label: t.status, cls: 'aguardando' };
+        const tipo = t.tesouro_charadas?.tipo ?? 'pergunta';
+        const tp   = TIPO_LABEL[tipo] ?? { label: tipo, cls: 'pergunta' };
+
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td><strong>${t.tesouro_participantes?.nome ?? '?'}</strong></td>
+          <td><span class="badge-tipo badge-tipo--${tp.cls}">${tp.label}</span></td>
+          <td>${hora}</td>
+          <td>${t.resposta ?? '—'} <span style="opacity:.5; font-size:0.75rem;">(correta: ${t.tesouro_charadas?.resposta_correta ?? '?'})</span></td>
+          <td><span class="badge-status badge-status--${s.cls}">${s.label}</span></td>
+        `;
+        tbodyTentativas.appendChild(tr);
+      });
+    }
+
+    // ── Salvar config ───────────────────────────────────────────────
+    btnSalvarConfig.addEventListener('click', async () => {
+      const valor = parseInt(inputMinAnimais.value, 10);
+      if (isNaN(valor) || valor < 1 || valor > 10) {
+        mostrarMsg(msgConfig, 'Valor inválido (1 a 10).', 'err');
+        return;
+      }
+      btnSalvarConfig.disabled = true;
+      const { error } = await supabase.from('config').update({ tesouro_min_animais: valor }).eq('id', 1);
+      btnSalvarConfig.disabled = false;
+      mostrarMsg(msgConfig, error ? 'Erro ao salvar.' : '✅ Salvo!', error ? 'err' : 'ok');
+    });
+
+    // ── Reset ───────────────────────────────────────────────────────
+    btnReset.addEventListener('click', async () => {
+      if (!confirm('Tem certeza? Isso apagará TODOS os participantes e reiniciará a brincadeira!')) return;
+      if (!confirm('Segunda confirmação: isso não pode ser desfeito. Continuar?')) return;
+
+      btnReset.disabled = true;
+      try {
+        await supabase.from('tesouro_tentativas').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+        await supabase.from('tesouro_participante_animais').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+        await supabase.from('tesouro_participantes').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+        await supabase.from('config').update({
+          tesouro_status: 'nao_encontrado',
+          tesouro_vencedor_participante_id: null,
+        }).eq('id', 1);
+
+        mostrarMsg(msgReset, '✅ Brincadeira resetada com sucesso!', 'ok');
+        await carregar();
+      } catch (err) {
+        mostrarMsg(msgReset, 'Erro ao resetar: ' + err.message, 'err');
+      } finally {
+        btnReset.disabled = false;
+      }
+    });
+
+    // ── Helper ──────────────────────────────────────────────────────
+    function mostrarMsg(el, texto, tipo) {
+      el.textContent = texto;
+      el.className = `mensagem mensagem--${tipo}`;
+      el.style.display = '';
+      setTimeout(() => { el.style.display = 'none'; }, 4000);
+    }
+
+    // ── Realtime ────────────────────────────────────────────────────
+    supabase
+      .channel('dashboard-tesouro-live')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'tesouro_participante_animais' }, () => carregar())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'tesouro_tentativas' }, () => carregarTentativas())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'tesouro_participantes' }, () => carregarParticipantes())
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'config' }, () => {
+        carregarEstatisticas();
+        carregarParticipantes();
+      })
+      .subscribe();
+
+    // ── Init ────────────────────────────────────────────────────────
+    carregar();
+  </script>
+</body>
+</html>

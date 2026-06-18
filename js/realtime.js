@@ -134,6 +134,21 @@ export function subscribeEstatisticas(callback) {
     .subscribe();
 }
 
+// Notifica `callback(tentativa)` sempre que uma tentativa da Caça ao Tesouro
+// for inserida (aguardando_resposta) ou atualizada (correta/incorreta).
+// Usado pela TV para exibir o overlay de charada em tempo real.
+export function subscribeTesouroTentativas(callback) {
+  return supabase
+    .channel('tv-tesouro-tentativas')
+    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'tesouro_tentativas' }, (payload) => {
+      callback(payload.new);
+    })
+    .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'tesouro_tentativas' }, (payload) => {
+      callback(payload.new);
+    })
+    .subscribe();
+}
+
 // Busca a configuração atual (linha única, id = 1).
 export async function buscarConfigAtual() {
   const { data, error } = await supabase.from('config').select('*').eq('id', 1).single();

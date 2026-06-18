@@ -1,0 +1,1014 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Caça ao Tesouro — Fazendinha do Bento</title>
+  <link rel="stylesheet" href="../../assets/css/variables.css" />
+  <link rel="stylesheet" href="../../assets/css/base.css" />
+  <link rel="stylesheet" href="../../assets/css/components.css" />
+  <script src="../../js/vendor/jsQR.js"></script>
+  <style>
+    /* Perfil do participante */
+    .perfil {
+      display: flex;
+      align-items: center;
+      gap: var(--espaco-md);
+      background: var(--cor-superficie);
+      border-radius: var(--raio-lg);
+      padding: var(--espaco-md);
+      box-shadow: var(--sombra-suave);
+      margin-bottom: var(--espaco-md);
+    }
+    .perfil-foto {
+      width: 64px;
+      height: 64px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 3px solid var(--cor-dourado);
+      flex-shrink: 0;
+    }
+    .perfil-avatar {
+      width: 64px;
+      height: 64px;
+      border-radius: 50%;
+      background: var(--cor-bege);
+      border: 3px solid var(--cor-dourado);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2rem;
+      flex-shrink: 0;
+    }
+    .perfil-info { flex: 1; min-width: 0; }
+    .perfil-nome {
+      font-family: var(--fonte-titulo);
+      font-size: 1.2rem;
+      color: var(--cor-marrom);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .perfil-progresso-texto {
+      font-size: 0.85rem;
+      color: var(--cor-marrom);
+      opacity: 0.7;
+    }
+
+    /* Barra de progresso */
+    .barra-progresso-wrap {
+      margin-bottom: var(--espaco-md);
+    }
+    .barra-progresso-label {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: var(--cor-marrom);
+      margin-bottom: var(--espaco-xs);
+    }
+    .barra-progresso {
+      height: 14px;
+      background: var(--cor-bege);
+      border-radius: 999px;
+      border: 1px solid rgba(139,90,43,.2);
+      overflow: hidden;
+    }
+    .barra-progresso-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--cor-verde), var(--cor-dourado));
+      border-radius: 999px;
+      transition: width 0.5s ease;
+    }
+
+    /* Status do tesouro */
+    .status-tesouro {
+      display: flex;
+      align-items: center;
+      gap: var(--espaco-sm);
+      padding: var(--espaco-sm) var(--espaco-md);
+      border-radius: var(--raio-md);
+      font-weight: 700;
+      font-size: 0.9rem;
+      margin-bottom: var(--espaco-md);
+    }
+    .status-tesouro--bloqueado {
+      background: #fde8e8;
+      color: #c0392b;
+      border: 1px solid #f5c6c6;
+    }
+    .status-tesouro--desbloqueado {
+      background: #fff8e1;
+      color: #b7810a;
+      border: 1px solid #ffe082;
+    }
+    .status-tesouro--encontrado {
+      background: #e8f5e9;
+      color: #2e7d32;
+      border: 1px solid #a5d6a7;
+    }
+
+    /* Grade de animais */
+    .animais-titulo {
+      font-family: var(--fonte-titulo);
+      font-size: 1rem;
+      color: var(--cor-marrom);
+      margin-bottom: var(--espaco-sm);
+    }
+    .animais-grade {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: var(--espaco-sm);
+      margin-bottom: var(--espaco-md);
+    }
+    .animal-chip {
+      aspect-ratio: 1;
+      border-radius: var(--raio-sm);
+      background: var(--cor-bege);
+      border: 2px solid rgba(139,90,43,.2);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+      padding: 4px;
+    }
+    .animal-chip img {
+      width: 100%; height: 100%;
+      object-fit: contain;
+      border-radius: 4px;
+      filter: grayscale(1) opacity(0.45);
+      transition: filter 0.4s ease;
+    }
+    .animal-chip--encontrado {
+      background: linear-gradient(135deg, #e8f5e9, #c8e6c9);
+      border-color: var(--cor-verde);
+      box-shadow: 0 2px 8px rgba(111,140,82,.35);
+    }
+    .animal-chip--encontrado img {
+      filter: none;
+    }
+    .animal-chip--encontrado::after {
+      content: '✓';
+      position: absolute;
+      bottom: 2px;
+      right: 4px;
+      font-size: 0.65rem;
+      color: var(--cor-verde);
+      font-weight: 900;
+      text-shadow: 0 0 3px #fff;
+    }
+
+    /* Scanner QR */
+    .scanner-section {
+      background: var(--cor-superficie);
+      border-radius: var(--raio-lg);
+      padding: var(--espaco-md);
+      box-shadow: var(--sombra-suave);
+      margin-bottom: var(--espaco-md);
+    }
+    .scanner-titulo {
+      font-family: var(--fonte-titulo);
+      font-size: 1rem;
+      color: var(--cor-marrom);
+      margin-bottom: var(--espaco-sm);
+      text-align: center;
+    }
+    .scanner-video-wrap {
+      position: relative;
+      width: 100%;
+      max-width: 320px;
+      aspect-ratio: 4 / 3;
+      background: #000;
+      border-radius: var(--raio-md);
+      overflow: hidden;
+      margin: 0 auto var(--espaco-sm);
+    }
+    .scanner-video { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .scanner-canvas { display: none; }
+    .scanner-mira {
+      position: absolute;
+      inset: 20%;
+      border: 2px solid var(--cor-dourado);
+      border-radius: var(--raio-sm);
+      pointer-events: none;
+    }
+    .scanner-erro { color: var(--cor-vermelho); font-size: 0.85rem; text-align: center; }
+
+    .scanner-manual {
+      display: flex;
+      gap: var(--espaco-sm);
+      margin-top: var(--espaco-sm);
+    }
+    .scanner-manual input { flex: 1; }
+
+    /* Feedback toast */
+    .toast {
+      position: fixed;
+      bottom: var(--espaco-lg);
+      left: 50%;
+      transform: translateX(-50%) translateY(0);
+      background: var(--cor-marrom);
+      color: var(--cor-branco);
+      padding: var(--espaco-sm) var(--espaco-lg);
+      border-radius: 999px;
+      font-weight: 700;
+      font-size: 0.95rem;
+      box-shadow: var(--sombra-forte);
+      z-index: 100;
+      opacity: 0;
+      transition: opacity 0.3s, transform 0.3s;
+      pointer-events: none;
+      white-space: nowrap;
+      max-width: 90vw;
+      text-align: center;
+    }
+    .toast--visivel {
+      opacity: 1;
+      transform: translateX(-50%) translateY(-8px);
+    }
+    .toast--sucesso { background: var(--cor-verde); }
+    .toast--erro    { background: var(--cor-vermelho); }
+    .toast--aviso   { background: var(--cor-dourado); color: var(--cor-marrom); }
+
+    /* Overlay de charada (quando participante escaneia QR-TESOURO e está habilitado) */
+    .charada-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(139,90,43,.92);
+      z-index: 200;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: var(--espaco-lg) var(--espaco-md);
+      gap: var(--espaco-md);
+      overflow-y: auto;
+    }
+
+    /* Fase visual: tela exibida enquanto a TV mostra a sequência */
+    .visual-fase {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: var(--espaco-md);
+      text-align: center;
+      width: 100%;
+      max-width: 380px;
+    }
+    .visual-fase-emoji { font-size: 3.5rem; line-height: 1; }
+    .visual-fase-titulo {
+      font-family: var(--fonte-titulo);
+      color: var(--cor-dourado);
+      font-size: 1.7rem;
+      font-weight: 800;
+    }
+    .visual-fase-instrucao {
+      color: var(--cor-branco);
+      font-size: 0.95rem;
+      line-height: 1.6;
+      opacity: 0.88;
+    }
+    .visual-fase-barra-wrap {
+      width: 100%;
+      max-width: 260px;
+      height: 8px;
+      background: rgba(255,255,255,0.2);
+      border-radius: 999px;
+      overflow: hidden;
+    }
+    .visual-fase-barra {
+      height: 100%;
+      background: linear-gradient(90deg, var(--cor-dourado), #fff8c0);
+      border-radius: 999px;
+      transform-origin: left center;
+    }
+    .visual-fase-contador {
+      font-family: var(--fonte-titulo);
+      font-size: 3rem;
+      color: var(--cor-dourado);
+      font-weight: 900;
+      line-height: 1;
+      min-width: 2em;
+    }
+    .charada-titulo {
+      font-family: var(--fonte-titulo);
+      color: var(--cor-dourado);
+      font-size: 1.2rem;
+      text-align: center;
+    }
+    .charada-pergunta {
+      background: var(--cor-superficie);
+      border-radius: var(--raio-lg);
+      padding: var(--espaco-md);
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--cor-marrom);
+      text-align: center;
+      width: 100%;
+      max-width: 480px;
+    }
+    .charada-alternativas {
+      display: grid;
+      gap: var(--espaco-sm);
+      width: 100%;
+      max-width: 480px;
+    }
+    .charada-alt {
+      display: flex;
+      align-items: center;
+      gap: var(--espaco-md);
+      background: var(--cor-superficie);
+      border: 2px solid transparent;
+      border-radius: var(--raio-md);
+      padding: var(--espaco-sm) var(--espaco-md);
+      cursor: pointer;
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--cor-marrom);
+      transition: all 0.2s;
+      user-select: none;
+    }
+    .charada-alt:active { transform: scale(0.97); }
+    .charada-alt:disabled { opacity: 0.5; cursor: default; }
+    .charada-alt--selecionada { border-color: var(--cor-dourado); background: #fff8e1; }
+    .charada-alt--correta     { border-color: var(--cor-verde);   background: #e8f5e9; color: var(--cor-verde); }
+    .charada-alt--incorreta   { border-color: var(--cor-vermelho); background: #fde8e8; color: var(--cor-vermelho); }
+    .charada-letra {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: var(--cor-bege);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 900;
+      font-size: 0.9rem;
+      flex-shrink: 0;
+    }
+    .charada-feedback {
+      text-align: center;
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--cor-branco);
+      min-height: 1.5em;
+    }
+    .charada-cooldown {
+      text-align: center;
+      color: var(--cor-bege);
+      font-size: 0.9rem;
+    }
+    .charada-btn-fechar {
+      margin-top: var(--espaco-sm);
+    }
+  </style>
+</head>
+<body>
+  <div class="container" style="max-width: 520px; padding-bottom: var(--espaco-xl);">
+
+    <!-- Cabeçalho da brincadeira -->
+    <div style="text-align:center; padding: var(--espaco-md) 0 var(--espaco-sm);">
+      <span style="font-size:2.5rem">🗺️</span>
+      <h1 style="font-size:1.4rem; margin-top: var(--espaco-xs);">Caça ao Tesouro</h1>
+    </div>
+
+    <!-- Perfil -->
+    <div class="perfil" id="secao-perfil">
+      <div class="perfil-avatar" id="avatar-emoji">🤠</div>
+      <img id="perfil-foto" class="perfil-foto" src="" alt="" style="display:none;" />
+      <div class="perfil-info">
+        <div class="perfil-nome" id="perfil-nome">Carregando...</div>
+        <div class="perfil-progresso-texto" id="perfil-progresso-txt">0 animais encontrados</div>
+      </div>
+    </div>
+
+    <!-- Progresso -->
+    <div class="barra-progresso-wrap">
+      <div class="barra-progresso-label">
+        <span>Animais encontrados</span>
+        <span id="progresso-contador">0/3</span>
+      </div>
+      <div class="barra-progresso">
+        <div class="barra-progresso-fill" id="progresso-fill" style="width:0%"></div>
+      </div>
+    </div>
+
+    <!-- Status do Tesouro -->
+    <div class="status-tesouro status-tesouro--bloqueado" id="status-tesouro">
+      🔒 Tesouro bloqueado — encontre mais animais
+    </div>
+
+    <!-- Grade de animais -->
+    <div class="animais-titulo">🐾 Animais da fazenda</div>
+    <div class="animais-grade" id="animais-grade"></div>
+
+    <!-- Scanner QR -->
+    <div class="scanner-section">
+      <div class="scanner-titulo">📷 Escaneie o QR Code</div>
+      <div class="scanner-video-wrap">
+        <video id="scanner-video" class="scanner-video" playsinline muted></video>
+        <canvas id="scanner-canvas" class="scanner-canvas"></canvas>
+        <div class="scanner-mira"></div>
+      </div>
+      <p id="scanner-erro" class="scanner-erro" style="display:none;"></p>
+
+      <details style="margin-top: var(--espaco-sm);">
+        <summary style="cursor:pointer; font-size:0.85rem; color:var(--cor-marrom); opacity:0.7;">
+          Digitar código manualmente
+        </summary>
+        <div class="scanner-manual" style="margin-top: var(--espaco-sm);">
+          <input type="text" id="input-codigo" placeholder="Ex: ANIMAL-VACA" style="text-transform:uppercase;" />
+          <button class="botao botao-primario" id="btn-manual">OK</button>
+        </div>
+      </details>
+    </div>
+
+    <p style="text-align:center; margin-top: var(--espaco-md);">
+      <a href="/jogos/tesouro/cadastro.html" onclick="sair(event)">← Sair / Trocar de participante</a>
+    </p>
+  </div>
+
+  <!-- Toast de feedback -->
+  <div id="toast" class="toast"></div>
+
+  <!-- Overlay de charada / desafio visual -->
+  <div id="charada-overlay" class="charada-overlay" style="display:none;">
+
+    <!-- Fase visual: exibida enquanto a TV mostra a sequência -->
+    <div id="visual-fase" class="visual-fase" style="display:none;">
+      <div class="visual-fase-emoji">👀</div>
+      <div class="visual-fase-titulo">Olhe para a TV!</div>
+      <div class="visual-fase-instrucao">
+        Uma sequência está aparecendo na tela grande.<br>
+        Memorize bem — ela vai sumir!
+      </div>
+      <div class="visual-fase-barra-wrap">
+        <div id="visual-fase-barra" class="visual-fase-barra"></div>
+      </div>
+      <div id="visual-fase-contador" class="visual-fase-contador">3</div>
+    </div>
+
+    <!-- Fase de resposta (pergunta + alternativas) -->
+    <div id="resposta-fase">
+      <div class="charada-titulo">🔑 Desafio Final do Tesouro!</div>
+      <div class="charada-pergunta" id="charada-pergunta">...</div>
+      <div class="charada-alternativas" id="charada-alternativas">
+        <button class="charada-alt" data-letra="A">
+          <span class="charada-letra">A</span>
+          <span id="charada-alt-a"></span>
+        </button>
+        <button class="charada-alt" data-letra="B">
+          <span class="charada-letra">B</span>
+          <span id="charada-alt-b"></span>
+        </button>
+        <button class="charada-alt" data-letra="C">
+          <span class="charada-letra">C</span>
+          <span id="charada-alt-c"></span>
+        </button>
+        <button class="charada-alt" data-letra="D">
+          <span class="charada-letra">D</span>
+          <span id="charada-alt-d"></span>
+        </button>
+      </div>
+      <div class="charada-feedback" id="charada-feedback"></div>
+      <div class="charada-cooldown" id="charada-cooldown"></div>
+      <button class="botao charada-btn-fechar" id="btn-fechar-charada" style="display:none;">
+        Fechar
+      </button>
+    </div>
+
+  </div>
+
+  <script type="module">
+    import { supabase } from '../../js/supabaseClient.js';
+    import { iniciarScanner, pararScanner } from '../../js/qrscanner.js';
+
+    const ANIMAL_IMG = {
+      'ANIMAL-VACA':     '../../assets/img/animais/bento_vaca.png',
+      'ANIMAL-CAVALO':   '../../assets/img/animais/bento_cavalo.png',
+      'ANIMAL-PORCO':    '../../assets/img/animais/bento_porquinho.png',
+      'ANIMAL-GALINHA':  '../../assets/img/animais/bento_galinha.png',
+      'ANIMAL-OVELHA':   '../../assets/img/animais/bento_ovelha.png',
+      'ANIMAL-CABRA':    '../../assets/img/animais/bento_cabra.png',
+      'ANIMAL-PATO':     '../../assets/img/animais/bento_pato.png',
+      'ANIMAL-PINTINHO': '../../assets/img/animais/bento_pintinho.png',
+      'ANIMAL-CACHORRO': '../../assets/img/animais/bento_cachorro.png',
+      'ANIMAL-GATO':     '../../assets/img/animais/bento_gato.png',
+    };
+
+    // ── Estado global ──────────────────────────────────────────────
+    let participante = null;
+    let animaisTodos = [];
+    let animaisEncontrados = new Set(); // animal_id
+    let minAnimais = 3;
+    let tesouroStatus = 'nao_encontrado';
+    let scannerAtivo = false;
+    let tentativaAtual = null;
+    let cooldownInterval = null;
+
+    const videoEl  = document.getElementById('scanner-video');
+    const canvasEl = document.getElementById('scanner-canvas');
+    const inputCodigo = document.getElementById('input-codigo');
+
+    // ── Redireciona se não cadastrado ──────────────────────────────
+    const participanteId = localStorage.getItem('tesouro_participante_id');
+    if (!participanteId) {
+      window.location.replace('/jogos/tesouro/cadastro.html');
+    }
+
+    function sair(e) {
+      e.preventDefault();
+      if (confirm('Sair da caça ao tesouro? Seu progresso será mantido se você usar o mesmo dispositivo.')) {
+        localStorage.removeItem('tesouro_participante_id');
+        window.location.href = '/jogos/tesouro/cadastro.html';
+      }
+    }
+    window.sair = sair;
+
+    // ── Toast ──────────────────────────────────────────────────────
+    let toastTimeout = null;
+    function mostrarToast(msg, tipo = '') {
+      const toast = document.getElementById('toast');
+      clearTimeout(toastTimeout);
+      toast.textContent = msg;
+      toast.className = 'toast' + (tipo ? ` toast--${tipo}` : '');
+      requestAnimationFrame(() => toast.classList.add('toast--visivel'));
+      toastTimeout = setTimeout(() => toast.classList.remove('toast--visivel'), 3000);
+    }
+
+    // ── Renderização ───────────────────────────────────────────────
+    function renderizarGrade() {
+      const grade = document.getElementById('animais-grade');
+      grade.innerHTML = '';
+      animaisTodos.forEach((animal) => {
+        const chip = document.createElement('div');
+        const encontrado = animaisEncontrados.has(animal.id);
+        chip.className = 'animal-chip' + (encontrado ? ' animal-chip--encontrado' : '');
+        chip.title = animal.nome;
+
+        const imgSrc = ANIMAL_IMG[animal.codigo];
+        chip.innerHTML = imgSrc
+          ? `<img src="${imgSrc}" alt="${animal.nome}" />`
+          : `<span>${animal.emoji || '❓'}</span>`;
+
+        grade.appendChild(chip);
+      });
+    }
+
+    function atualizarProgresso() {
+      const total = animaisEncontrados.size;
+      const pct = minAnimais > 0 ? Math.min(100, Math.round(total / minAnimais * 100)) : 0;
+
+      document.getElementById('progresso-contador').textContent = `${total}/${minAnimais}`;
+      document.getElementById('progresso-fill').style.width = `${pct}%`;
+      document.getElementById('perfil-progresso-txt').textContent =
+        `${total} animal${total !== 1 ? 'is' : ''} encontrado${total !== 1 ? 's' : ''}`;
+
+      const desbloqueado = total >= minAnimais;
+      const statusEl = document.getElementById('status-tesouro');
+      if (tesouroStatus === 'encontrado') {
+        statusEl.className = 'status-tesouro status-tesouro--encontrado';
+        statusEl.textContent = '🏆 Tesouro já foi encontrado!';
+      } else if (desbloqueado) {
+        statusEl.className = 'status-tesouro status-tesouro--desbloqueado';
+        statusEl.textContent = '🔓 Tesouro desbloqueado! Procure o baú da fazenda!';
+      } else {
+        const faltam = minAnimais - total;
+        statusEl.className = 'status-tesouro status-tesouro--bloqueado';
+        statusEl.textContent = `🔒 Encontre mais ${faltam} animal${faltam !== 1 ? 'is' : ''} para desbloquear`;
+      }
+    }
+
+    function renderizarPerfil() {
+      document.getElementById('perfil-nome').textContent = participante.nome;
+      if (participante.foto_url) {
+        const foto = document.getElementById('perfil-foto');
+        foto.src = participante.foto_url;
+        foto.style.display = '';
+        document.getElementById('avatar-emoji').style.display = 'none';
+      }
+    }
+
+    // ── Carregamento inicial ───────────────────────────────────────
+    async function carregar() {
+      try {
+        const [
+          { data: p },
+          { data: animais },
+          { data: encontrados },
+          { data: config },
+        ] = await Promise.all([
+          supabase.from('tesouro_participantes').select('*').eq('id', participanteId).single(),
+          supabase.from('tesouro_animais').select('*').eq('ativo', true).order('ordem'),
+          supabase.from('tesouro_participante_animais').select('animal_id').eq('participante_id', participanteId),
+          supabase.from('config').select('tesouro_min_animais, tesouro_status').eq('id', 1).single(),
+        ]);
+
+        if (!p) { localStorage.removeItem('tesouro_participante_id'); window.location.replace('/jogos/tesouro/cadastro.html'); return; }
+
+        participante = p;
+        animaisTodos = animais ?? [];
+        (encontrados ?? []).forEach((r) => animaisEncontrados.add(r.animal_id));
+        minAnimais = config?.tesouro_min_animais ?? 3;
+        tesouroStatus = config?.tesouro_status ?? 'nao_encontrado';
+
+        renderizarPerfil();
+        renderizarGrade();
+        atualizarProgresso();
+        iniciarScannerLoop();
+      } catch (err) {
+        mostrarToast('Erro ao carregar. Verifique sua conexão.', 'erro');
+      }
+    }
+
+    // ── Scanner QR ─────────────────────────────────────────────────
+    function iniciarScannerLoop() {
+      if (scannerAtivo) return;
+      scannerAtivo = true;
+      iniciarScanner(videoEl, canvasEl, {
+        onLeitura: (codigo) => { scannerAtivo = false; processarCodigo(codigo.toUpperCase()); },
+        onErro: (msg) => {
+          scannerAtivo = false;
+          const erroEl = document.getElementById('scanner-erro');
+          erroEl.textContent = msg;
+          erroEl.style.display = '';
+        },
+      });
+    }
+
+    function reativarScanner(delay = 2000) {
+      setTimeout(() => {
+        if (!document.getElementById('charada-overlay').style.display ||
+            document.getElementById('charada-overlay').style.display === 'none') {
+          iniciarScannerLoop();
+        }
+      }, delay);
+    }
+
+    document.getElementById('btn-manual').addEventListener('click', () => {
+      const codigo = inputCodigo.value.trim().toUpperCase();
+      if (!codigo) return;
+      inputCodigo.value = '';
+      pararScanner(videoEl);
+      scannerAtivo = false;
+      processarCodigo(codigo);
+    });
+    inputCodigo.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') document.getElementById('btn-manual').click();
+    });
+
+    // ── Processamento de QR Code ───────────────────────────────────
+    async function processarCodigo(codigo) {
+      if (codigo === 'QR-TESOURO') {
+        await processarTesouro();
+      } else if (codigo.startsWith('ANIMAL-')) {
+        await processarAnimal(codigo);
+      } else {
+        mostrarToast('❓ QR Code não reconhecido.', 'aviso');
+        reativarScanner();
+      }
+    }
+
+    async function processarAnimal(codigo) {
+      // Busca o animal pelo código
+      const { data: animal, error } = await supabase
+        .from('tesouro_animais')
+        .select('*')
+        .eq('codigo', codigo)
+        .eq('ativo', true)
+        .single();
+
+      if (error || !animal) {
+        mostrarToast('❓ Animal não encontrado.', 'aviso');
+        reativarScanner();
+        return;
+      }
+
+      // Verifica se o participante já encontrou esse animal
+      if (animaisEncontrados.has(animal.id)) {
+        mostrarToast(`Você já encontrou ${animal.nome}!`, 'aviso');
+        reativarScanner();
+        return;
+      }
+
+      // Verifica se outro participante já encontrou esse animal
+      const { data: jaEncontrado } = await supabase
+        .from('tesouro_participante_animais')
+        .select('id')
+        .eq('animal_id', animal.id)
+        .limit(1);
+
+      if (jaEncontrado && jaEncontrado.length > 0) {
+        mostrarToast(`${animal.emoji} ${animal.nome} já foi encontrado por outro participante!`, 'aviso');
+        reativarScanner();
+        return;
+      }
+
+      // Registra o animal encontrado
+      const { error: errInsert } = await supabase
+        .from('tesouro_participante_animais')
+        .insert({ participante_id: participanteId, animal_id: animal.id });
+
+      if (errInsert) {
+        // Pode ser que outro participante encontrou ao mesmo tempo
+        mostrarToast(`${animal.emoji} ${animal.nome} já foi encontrado!`, 'aviso');
+        reativarScanner();
+        return;
+      }
+
+      animaisEncontrados.add(animal.id);
+      renderizarGrade();
+      atualizarProgresso();
+      mostrarToast(`🎉 ${animal.emoji} ${animal.nome} encontrado!`, 'sucesso');
+      reativarScanner();
+    }
+
+    async function processarTesouro() {
+      // Recarrega config atualizado
+      const { data: config } = await supabase
+        .from('config')
+        .select('tesouro_min_animais, tesouro_status, tesouro_vencedor_participante_id')
+        .eq('id', 1)
+        .single();
+
+      tesouroStatus = config?.tesouro_status ?? tesouroStatus;
+      minAnimais = config?.tesouro_min_animais ?? minAnimais;
+
+      if (tesouroStatus === 'encontrado') {
+        mostrarToast('🏆 O Tesouro da Fazenda já foi encontrado!', 'aviso');
+        atualizarProgresso();
+        reativarScanner();
+        return;
+      }
+
+      const total = animaisEncontrados.size;
+      if (total < minAnimais) {
+        const faltam = minAnimais - total;
+        mostrarToast(`🔒 Faltam ${faltam} animal${faltam !== 1 ? 'is'  : ''} para desbloquear!`, 'aviso');
+        reativarScanner();
+        return;
+      }
+
+      // Verifica cooldown da última tentativa incorreta
+      const { data: ultimaTentativa } = await supabase
+        .from('tesouro_tentativas')
+        .select('cooldown_until, status')
+        .eq('participante_id', participanteId)
+        .eq('status', 'incorreta')
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (ultimaTentativa?.cooldown_until) {
+        const agora = new Date();
+        const cooldownFim = new Date(ultimaTentativa.cooldown_until);
+        if (agora < cooldownFim) {
+          const segundos = Math.ceil((cooldownFim - agora) / 1000);
+          mostrarToast(`⏳ Aguarde ${segundos}s antes de tentar novamente.`, 'aviso');
+          reativarScanner(segundos * 1000 + 500);
+          return;
+        }
+      }
+
+      // Sorteia uma charada ativa
+      const { data: charadas } = await supabase
+        .from('tesouro_charadas')
+        .select('*')
+        .eq('ativo', true);
+
+      if (!charadas || charadas.length === 0) {
+        mostrarToast('Nenhuma charada disponível. Peça ajuda ao organizador.', 'erro');
+        reativarScanner();
+        return;
+      }
+
+      const charada = charadas[Math.floor(Math.random() * charadas.length)];
+
+      // Cria a tentativa no banco
+      const { data: tentativa, error: errTentativa } = await supabase
+        .from('tesouro_tentativas')
+        .insert({
+          participante_id: participanteId,
+          charada_id: charada.id,
+          status: 'aguardando_resposta',
+        })
+        .select('id')
+        .single();
+
+      if (errTentativa) {
+        mostrarToast('Erro ao iniciar o desafio. Tente novamente.', 'erro');
+        reativarScanner();
+        return;
+      }
+
+      tentativaAtual = { id: tentativa.id, charada, respondida: false };
+      mostrarCharada(charada);
+    }
+
+    // ── Charada / Desafio visual ───────────────────────────────────
+    let visualFaseInterval = null; // intervalo do contador regressivo
+
+    function mostrarCharada(charada) {
+      pararScanner(videoEl);
+      scannerAtivo = false;
+
+      // Pré-carrega pergunta e alternativas (pode estar oculto durante fase visual)
+      document.getElementById('charada-pergunta').textContent = charada.pergunta;
+      document.getElementById('charada-alt-a').textContent = charada.alternativa_a;
+      document.getElementById('charada-alt-b').textContent = charada.alternativa_b;
+      document.getElementById('charada-alt-c').textContent = charada.alternativa_c;
+      document.getElementById('charada-alt-d').textContent = charada.alternativa_d;
+      document.getElementById('charada-feedback').textContent = '';
+      document.getElementById('charada-cooldown').textContent = '';
+      document.getElementById('btn-fechar-charada').style.display = 'none';
+
+      document.querySelectorAll('.charada-alt').forEach((btn) => {
+        btn.disabled = false;
+        btn.className = 'charada-alt';
+      });
+
+      const visualFaseEl  = document.getElementById('visual-fase');
+      const respostaFaseEl = document.getElementById('resposta-fase');
+      const overlayEl     = document.getElementById('charada-overlay');
+
+      // +500 ms de buffer para latência Realtime (TV recebe ~200-400 ms depois)
+      const tempoExibicao = (charada.payload_json?.tempo_exibicao ?? 3000);
+      const tempoMobile   = tempoExibicao + 500;
+
+      visualFaseEl.style.display   = '';
+      respostaFaseEl.style.display = 'none';
+      overlayEl.style.display      = '';
+
+      const barraEl    = document.getElementById('visual-fase-barra');
+      const contadorEl = document.getElementById('visual-fase-contador');
+
+      barraEl.style.transition = 'none';
+      barraEl.style.transform  = 'scaleX(1)';
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          barraEl.style.transition = `transform ${tempoMobile}ms linear`;
+          barraEl.style.transform  = 'scaleX(0)';
+        });
+      });
+
+      clearInterval(visualFaseInterval);
+      let segsRestantes = Math.ceil(tempoMobile / 1000);
+      contadorEl.textContent = segsRestantes;
+      visualFaseInterval = setInterval(() => {
+        segsRestantes = Math.max(0, segsRestantes - 1);
+        contadorEl.textContent = segsRestantes;
+        if (segsRestantes <= 0) clearInterval(visualFaseInterval);
+      }, 1000);
+
+      setTimeout(() => {
+        clearInterval(visualFaseInterval);
+        visualFaseEl.style.display   = 'none';
+        respostaFaseEl.style.display = '';
+      }, tempoMobile);
+    }
+
+    document.querySelectorAll('.charada-alt').forEach((btn) => {
+      btn.addEventListener('click', () => responderCharada(btn.dataset.letra));
+    });
+
+    async function responderCharada(letra) {
+      if (!tentativaAtual || tentativaAtual.respondida) return;
+      tentativaAtual.respondida = true;
+
+      // Desabilita todos os botões
+      document.querySelectorAll('.charada-alt').forEach((b) => { b.disabled = true; });
+
+      // Destaca a selecionada
+      const btnSelecionado = document.querySelector(`.charada-alt[data-letra="${letra}"]`);
+      btnSelecionado?.classList.add('charada-alt--selecionada');
+
+      const correta = letra === tentativaAtual.charada.resposta_correta;
+      const agora = new Date();
+      const cooldownAt = correta ? null : new Date(agora.getTime() + 20_000);
+
+      // Atualiza tentativa no banco
+      await supabase.from('tesouro_tentativas').update({
+        resposta: letra,
+        correta,
+        status: correta ? 'correta' : 'incorreta',
+        cooldown_until: cooldownAt?.toISOString() ?? null,
+        answered_at: agora.toISOString(),
+      }).eq('id', tentativaAtual.id);
+
+      if (correta) {
+        await ganhouTesouro();
+      } else {
+        document.querySelector(`.charada-alt[data-letra="${letra}"]`)
+          ?.classList.replace('charada-alt--selecionada', 'charada-alt--incorreta');
+        document.querySelector(`.charada-alt[data-letra="${tentativaAtual.charada.resposta_correta}"]`)
+          ?.classList.add('charada-alt--correta');
+
+        document.getElementById('charada-feedback').textContent = '❌ Resposta errada! Tente novamente em breve.';
+        iniciarCooldownUI(cooldownAt);
+      }
+    }
+
+    function iniciarCooldownUI(cooldownFim) {
+      const cooldownEl = document.getElementById('charada-cooldown');
+      const fecharBtn  = document.getElementById('btn-fechar-charada');
+      clearInterval(cooldownInterval);
+
+      const atualizar = () => {
+        const restante = Math.max(0, Math.ceil((cooldownFim - new Date()) / 1000));
+        cooldownEl.textContent = restante > 0 ? `Aguarde ${restante}s...` : '';
+        if (restante <= 0) {
+          clearInterval(cooldownInterval);
+          fecharBtn.style.display = '';
+        }
+      };
+      atualizar();
+      cooldownInterval = setInterval(atualizar, 1000);
+    }
+
+    document.getElementById('btn-fechar-charada').addEventListener('click', () => {
+      document.getElementById('charada-overlay').style.display = 'none';
+      tentativaAtual = null;
+      reativarScanner(500);
+    });
+
+    async function ganhouTesouro() {
+      // Verifica se o tesouro ainda está disponível (corrida)
+      const { data: config } = await supabase
+        .from('config')
+        .select('tesouro_status')
+        .eq('id', 1)
+        .single();
+
+      if (config?.tesouro_status === 'encontrado') {
+        document.getElementById('charada-feedback').textContent = '🏆 O Tesouro já foi encontrado por outro participante!';
+        document.getElementById('btn-fechar-charada').style.display = '';
+        return;
+      }
+
+      // Marca o tesouro como encontrado
+      await supabase.from('config').update({
+        tesouro_status: 'encontrado',
+        tesouro_vencedor_participante_id: participanteId,
+      }).eq('id', 1);
+
+      // Busca o prêmio Tesouro da Fazenda
+      const { data: premioTesouro } = await supabase
+        .from('premios')
+        .select('*')
+        .eq('is_tesouro', true)
+        .single();
+
+      // Cria evento especial do Tesouro (segue o fluxo normal de premiação)
+      if (premioTesouro) {
+        await supabase.from('eventos').insert({
+          tipo: 'livre',
+          premio_id: premioTesouro.id,
+          premio_codigo: premioTesouro.codigo,
+          premio_nome: premioTesouro.nome,
+          premio_imagem_url: premioTesouro.imagem_url,
+          premio_categoria: premioTesouro.categoria,
+          vencedor: participante.nome,
+          status: 'pending',
+          metadata: {
+            is_tesouro: true,
+            brincadeira: 'Caça ao Tesouro',
+            participante_id: participanteId,
+            foto_url: participante.foto_url,
+          },
+        });
+
+        // Reserva o prêmio
+        await supabase.from('premios').update({ status: 'reservado' }).eq('id', premioTesouro.id);
+      }
+
+      tesouroStatus = 'encontrado';
+      atualizarProgresso();
+
+      document.querySelector(`.charada-alt[data-letra="${tentativaAtual.charada.resposta_correta}"]`)
+        ?.classList.add('charada-alt--correta');
+      document.getElementById('charada-feedback').textContent =
+        '🎉 PARABÉNS! Você encontrou o Tesouro da Fazenda!';
+      document.getElementById('charada-cooldown').textContent =
+        'Procure o organizador para receber seu prêmio especial!';
+      document.getElementById('btn-fechar-charada').textContent = 'Fechar';
+      document.getElementById('btn-fechar-charada').style.display = '';
+    }
+
+    // ── Realtime: atualiza animais encontrados por outros ──────────
+    supabase
+      .channel('tesouro-participante-live')
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'config' }, (payload) => {
+        tesouroStatus = payload.new.tesouro_status ?? tesouroStatus;
+        minAnimais = payload.new.tesouro_min_animais ?? minAnimais;
+        atualizarProgresso();
+      })
+      .subscribe();
+
+    // ── Init ───────────────────────────────────────────────────────
+    carregar();
+  </script>
+</body>
+</html>
