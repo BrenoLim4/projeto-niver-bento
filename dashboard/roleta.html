@@ -7,12 +7,248 @@
   <link rel="stylesheet" href="../assets/css/variables.css" />
   <link rel="stylesheet" href="../assets/css/base.css" />
   <link rel="stylesheet" href="../assets/css/components.css" />
+  <style>
+    .grade-animais {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: var(--espaco-sm);
+      margin-bottom: var(--espaco-md);
+    }
+
+    .animal-card {
+      background: var(--cor-superficie);
+      border-radius: var(--raio-md);
+      box-shadow: var(--sombra-suave);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .animal-card-cabecalho {
+      padding: 8px var(--espaco-sm);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .animal-card-emoji { font-size: 1.5rem; flex-shrink: 0; }
+
+    .animal-card-nome {
+      font-family: var(--fonte-titulo);
+      font-weight: 700;
+      font-size: 0.72rem;
+      color: #fff;
+      text-shadow: 0 1px 4px rgba(0,0,0,0.35);
+    }
+
+    .animal-card input {
+      width: 100%;
+      padding: 8px 10px;
+      border: none;
+      border-top: 1px solid var(--cor-bege);
+      font-family: var(--fonte-texto);
+      font-size: 0.88rem;
+      background: var(--cor-branco);
+      color: var(--cor-texto);
+      box-sizing: border-box;
+    }
+
+    .animal-card input:focus {
+      outline: none;
+      background: #fffbf3;
+    }
+
+    .msg-erro {
+      color: var(--cor-vermelho);
+      font-weight: 600;
+      font-size: 0.9rem;
+      margin: var(--espaco-sm) 0 0;
+      display: none;
+      text-align: center;
+    }
+
+    .toast-sucesso {
+      position: fixed;
+      bottom: var(--espaco-xl);
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--cor-verde);
+      color: #fff;
+      font-weight: 700;
+      font-size: 1rem;
+      padding: var(--espaco-sm) var(--espaco-xl);
+      border-radius: var(--raio-lg);
+      box-shadow: var(--sombra-forte);
+      z-index: 100;
+      white-space: nowrap;
+      animation: toast-subir 0.3s ease-out;
+    }
+
+    @keyframes toast-subir {
+      from { opacity: 0; transform: translateX(-50%) translateY(12px); }
+      to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+    }
+  </style>
 </head>
 <body>
-  <div class="container texto-centro">
-    <h1>🎡 Roleta da Fazenda</h1>
-    <p>Em construção — implementação prevista para a FASE 12.</p>
-    <p><a href="/dashboard/">← Voltar ao Dashboard</a></p>
+  <div class="container">
+    <div class="texto-centro">
+      <h1>🎡 Roleta da Fazenda</h1>
+      <p><a href="/dashboard/">← Voltar ao Dashboard</a></p>
+    </div>
+
+    <p style="font-size:0.85rem; opacity:0.75; margin-bottom: var(--espaco-md);">
+      Insira o nome do participante em cada animal. Pelo menos 2 são necessários.
+    </p>
+
+    <div class="grade-animais" id="grade-animais"></div>
+
+    <p id="erro-roleta" class="msg-erro"></p>
+
+    <button id="btn-girar" class="botao botao-primario botao-bloco">
+      🎡 Girar Roleta!
+    </button>
   </div>
+
+  <script type="module">
+    import { supabase } from '../js/supabaseClient.js';
+    import { sortearPremio, reservarPremio } from '../js/sorteio.js';
+    import { criarCanalBroadcast } from '../js/realtime.js';
+    import { ANIMAIS, calcularAngulo } from '../js/roleta.js';
+
+    const grade      = document.getElementById('grade-animais');
+    const erroRoleta = document.getElementById('erro-roleta');
+    const btnGirar   = document.getElementById('btn-girar');
+
+    let processando  = false;
+    let toastTimeout = null;
+    const canalBroadcast = criarCanalBroadcast();
+
+    // ── Renderiza cards dos animais ──────────────────────────────
+    ANIMAIS.forEach((animal) => {
+      const card = document.createElement('div');
+      card.className = 'animal-card';
+      card.innerHTML = `
+        <div class="animal-card-cabecalho" style="background: ${animal.cor};">
+          <span class="animal-card-emoji">${animal.emoji}</span>
+          <span class="animal-card-nome">${animal.nome}</span>
+        </div>
+        <input
+          id="nome-${animal.key}"
+          type="text"
+          placeholder="Nome do participante"
+          autocomplete="off"
+        />
+      `;
+      grade.appendChild(card);
+    });
+
+    // ── Girar Roleta ─────────────────────────────────────────────
+    btnGirar.addEventListener('click', async () => {
+      esconderErro();
+
+      // Coleta participantes (apenas animais com nome preenchido)
+      const participantes = {};
+      const comNome = [];
+      for (const a of ANIMAIS) {
+        const nome = document.getElementById(`nome-${a.key}`)?.value.trim() || null;
+        participantes[a.key] = nome;
+        if (nome) comNome.push(a.key);
+      }
+
+      if (comNome.length < 2) {
+        mostrarErro('Insira o nome de pelo menos 2 participantes.');
+        return;
+      }
+      if (processando) return;
+
+      processando = true;
+      btnGirar.disabled    = true;
+      btnGirar.textContent = '⏳ Sorteando...';
+
+      // Sorteia o animal vencedor entre os que têm participante
+      const animalVencedor = comNome[Math.floor(Math.random() * comNome.length)];
+      const anguloFinal    = calcularAngulo(animalVencedor);
+
+      try {
+        const premio = await sortearPremio('roleta');
+        if (!premio) {
+          mostrarErro('Nenhum prêmio disponível para roleta. Verifique o cadastro de prêmios.');
+          return;
+        }
+
+        const { data: evento, error } = await supabase
+          .from('eventos')
+          .insert({
+            tipo: 'roleta',
+            premio_id:        premio.id,
+            premio_codigo:    premio.codigo,
+            premio_nome:      premio.nome,
+            premio_imagem_url: premio.imagem_url,
+            premio_categoria: premio.categoria,
+            vencedor:         participantes[animalVencedor],
+            status:           'pending',
+            metadata: {
+              is_tesouro:      false,
+              tipo:            'roleta_fazenda',
+              animal_vencedor: animalVencedor,
+              angulo_final:    anguloFinal,
+              participantes,
+            },
+          })
+          .select()
+          .single();
+
+        if (error) throw error;
+
+        await reservarPremio(premio.id);
+
+        await canalBroadcast.aguardarPronto();
+        const result = await canalBroadcast.send({
+          type:    'broadcast',
+          event:   'novo_evento',
+          payload: evento,
+        });
+
+        limparFormulario();
+        mostrarToast(result === 'ok'
+          ? '🎡 Roleta iniciada na TV!'
+          : `⚠️ Broadcast: ${result ?? 'sem resposta'}`);
+      } catch (err) {
+        mostrarErro(err.message);
+      } finally {
+        processando           = false;
+        btnGirar.disabled     = false;
+        btnGirar.textContent  = '🎡 Girar Roleta!';
+      }
+    });
+
+    // ── Helpers ──────────────────────────────────────────────────
+    function limparFormulario() {
+      ANIMAIS.forEach((a) => {
+        const el = document.getElementById(`nome-${a.key}`);
+        if (el) el.value = '';
+      });
+    }
+
+    function mostrarErro(msg) {
+      erroRoleta.textContent = msg;
+      erroRoleta.style.display = '';
+    }
+
+    function esconderErro() {
+      erroRoleta.style.display = 'none';
+    }
+
+    function mostrarToast(msg) {
+      clearTimeout(toastTimeout);
+      document.querySelector('.toast-sucesso')?.remove();
+      const toast = document.createElement('div');
+      toast.className  = 'toast-sucesso';
+      toast.textContent = msg;
+      document.body.appendChild(toast);
+      toastTimeout = setTimeout(() => toast.remove(), 3500);
+    }
+  </script>
 </body>
 </html>

@@ -5,10 +5,13 @@
 // efeitos pré-carregados a partir do início.
 
 const ARQUIVOS = {
-  suspense: '../assets/audio/suspense.mp3',
-  bau: '../assets/audio/bau.mp3',
-  vitoria: '../assets/audio/vitoria.mp3',
-  tesouro: '../assets/audio/tesouro.mp3',
+  suspense:      '../assets/audio/suspense.mp3',
+  bau:           '../assets/audio/bau.mp3',
+  vitoria:       '../assets/audio/vitoria.mp3',
+  tesouro:       '../assets/audio/tesouro.mp3',
+  roleta_giro:   '../assets/audio/roleta-girando.mp3',
+  roleta_clique: '../assets/audio/roleta-clique.mp3',
+  roleta_fim:    '../assets/audio/roleta-vencedor.mp3',
 };
 
 const audios = Object.fromEntries(
@@ -31,4 +34,20 @@ export function tocar(nome) {
   if (!audio) return;
   audio.currentTime = 0;
   audio.play().catch(() => {});
+}
+
+export function tocarLoop(nome) {
+  const audio = audios[nome];
+  if (!audio) return;
+  audio.loop = true;
+  audio.currentTime = 0;
+  audio.play().catch(() => {});
+}
+
+export function pararSom(nome) {
+  const audio = audios[nome];
+  if (!audio) return;
+  audio.pause();
+  audio.currentTime = 0;
+  audio.loop = false;
 }

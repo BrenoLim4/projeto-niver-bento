@@ -677,7 +677,7 @@ re-sincronizar buscando `eventos` com `status IN ('pending','processing')` e est
 - **Entregáveis**: `dashboard/premiacao-livre.html`.
 
 ### FASE 12 — Roleta da Fazenda
-- seguir prompt do arquivo @FASE 13.md
+- seguir prompt do arquivo @FASE 12.md
 
 ### FASE 13 — Corrida dos Animais + Tesouro da Fazenda
 - **Objetivo**: corrida como modo da TV + disparo no dashboard; animação exclusiva do
@@ -861,7 +861,23 @@ Inclui seção "Tesouro da Fazenda" com modal de confirmação que busca o prêm
 valida seu status, cria evento com `metadata.is_tesouro=true` e dispara a animação exclusiva na
 TV (implementada na Fase 5). Operador não escolhe o prêmio em nenhum momento.
 
-⏭️ **FASE 12 pulada** — Roleta da Fazenda não foi priorizada.
+✅ **FASE 12 concluída** — `dashboard/roleta.html`: grade 2×2 com 8 animais (cards coloridos com
+emoji + nome + input de participante), botão "Girar Roleta!" exige ≥2 participantes, sorteia animal
+vencedor aleatoriamente entre os preenchidos, chama `sortearPremio('roleta')` e cria evento
+(`tipo='roleta'`, `pending`) com `metadata.tipo='roleta_fazenda'`, `metadata.animal_vencedor`,
+`metadata.angulo_final` e `metadata.participantes`. `js/roleta.js`: `ANIMAIS` (8 entradas com key,
+emoji, nome, cor), `ROTACAO_INICIAL = -SLICE/2` (setor 0 centralizado no ponteiro), `calcularAngulo`
+(resultado determinístico em 6 rotações completas), `desenharRoleta` (Canvas 2D: setores coloridos,
+emojis em r×0.65, aro marrom, hub dourado), `executarRoleta` (fade-in overlay, ease-out quartic
+5500ms, click throttled 80ms por setor, stop + som vencedor, card de resultado 3500ms, fade-out).
+`js/sons.js`: entradas `roleta_giro`, `roleta_clique`, `roleta_fim` + exports `tocarLoop` e
+`pararSom`. `tv/index.html`: modo `roleta_fazenda` substituído por canvas ambiente (gira via CSS
+`roleta-girar-lento 25s linear infinite`) + ponteiro fixo; overlay `#tv-roleta` adicionado após
+`#tv-corrida`; `elementosRoleta` definido; `iniciarTV` desenha canvas ambiente inicial; `mostrarEvento`
+detecta `tipo='roleta'` e executa `executarRoleta` antes de `executarRevelacao`; import de
+`executarRoleta`, `desenharRoleta`, `ROTACAO_INICIAL`. `assets/css/tv.css`: estilos do modo
+ambiente (canvas rotativo + ponteiro), overlay de giro (`tv-roleta`, `--ativa`, `--saindo`),
+resultado lateral com card semitransparente.
 
 ✅ **FASE 13 concluída** — `dashboard/corrida.html`: grade 2×2 com 4 tratores (Vermelho, Azul,
 Verde, Amarelo; Branco excluído), campo de nome por trator, botão "Iniciar Corrida!" sorteia
@@ -875,4 +891,18 @@ decorativo com parallax CSS de 3 camadas (céu, cenário, pista); overlay `#tv-c
 `mostrarEvento` detecta `tipo='corrida'` e executa `executarCorrida` antes de `executarRevelacao`;
 animação do Tesouro já ativa via Fase 5. `assets/css/tv.css`: estilos completos da corrida.
 
-▶️ Próximo passo: **FASE 14** (Estatísticas) ou **FASE 15** (Controle da TV).
+✅ **FASE 14 concluída** — `js/estatisticas.js` (`buscarEstatisticas`, `renderizarEstatisticas`,
+`inicializarEstatisticas`); `subscribeEstatisticas` adicionado a `js/realtime.js` (canal
+`stats-eventos`, INSERT+UPDATE em `eventos`); modo `estatisticas` em `tv/index.html`
+reestruturado com layout fullscreen (número principal xl + linha de pendentes + grade de
+categorias com badges) e inicialização automática em `iniciarTV()`; `dashboard/estatisticas.html`
+completo com indicador de realtime e todos os contadores da `vw_estatisticas`; animação `stat-pulso`
+(CSS) ao atualizar qualquer número em tempo real; estilos em `assets/css/tv.css`.
+
+✅ **FASE 15 concluída** — `dashboard/controle-tv.html` completo: troca de `config.modo_apresentacao`
+(já existia), status do Tesouro da Fazenda com card visual (borda dourada → verde ao encontrado),
+botão "Liberar Tesouro da Fazenda" (oculto após o tesouro ser encontrado) + modal com validação
+(status `entregue`/`reservado`) e broadcast para a TV; `subscribeConfig` mantém modo e status
+do tesouro sincronizados em tempo real sem reload.
+
+▶️ Próximo passo: **FASE 16** (Testes Gerais e Polimento).

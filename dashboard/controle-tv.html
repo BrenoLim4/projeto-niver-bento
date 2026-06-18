@@ -49,78 +49,70 @@
       color: #fff;
     }
 
-    /* ── Seção corrida ───────────────────────────────────── */
+    /* ── Secao titulo ────────────────────────────────────── */
     .secao-titulo {
       font-family: var(--fonte-titulo);
       font-size: 1.1rem;
       font-weight: 700;
       color: var(--cor-texto);
-      margin: var(--espaco-lg) 0 var(--espaco-sm);
+      margin: var(--espaco-xl) 0 var(--espaco-sm);
       padding-bottom: var(--espaco-xs);
       border-bottom: 2px solid var(--cor-bege);
     }
 
-    .grade-tratores {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: var(--espaco-sm);
+    /* ── Tesouro status ──────────────────────────────────── */
+    .tesouro-bloco {
+      display: flex;
+      align-items: center;
+      gap: var(--espaco-md);
+      background: var(--cor-superficie);
+      border: 2px solid var(--cor-dourado);
+      border-radius: var(--raio-lg);
+      padding: var(--espaco-md);
+      box-shadow: var(--sombra-suave);
       margin-bottom: var(--espaco-md);
     }
 
-    .trator-card {
-      background: var(--cor-superficie);
-      border-radius: var(--raio-md);
-      box-shadow: var(--sombra-suave);
-      overflow: hidden;
-      display: flex;
-      flex-direction: column;
+    .tesouro-bloco--encontrado {
+      border-color: var(--cor-verde);
+      box-shadow: var(--sombra-forte), 0 0 20px rgba(111, 140, 82, 0.3);
     }
 
-    .trator-card-cabecalho {
-      padding: 6px var(--espaco-sm);
-      display: flex;
-      align-items: center;
-      gap: 6px;
+    .tesouro-icone {
+      font-size: 2.4rem;
+      flex-shrink: 0;
     }
 
-    .trator-card-cabecalho img {
-      height: 36px;
-      width: auto;
-      object-fit: contain;
+    .tesouro-info {
+      flex: 1;
     }
 
-    .trator-card-cabecalho span {
+    .tesouro-info strong {
+      display: block;
       font-family: var(--fonte-titulo);
+      font-size: 1rem;
+      margin-bottom: 2px;
+    }
+
+    .tesouro-status-texto {
+      font-size: 0.9rem;
+    }
+
+    .tesouro-status-texto--encontrado {
+      color: var(--cor-verde);
       font-weight: 700;
-      font-size: 0.78rem;
-      color: #fff;
-      text-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
     }
 
-    .trator-card input {
-      width: 100%;
-      padding: 8px 10px;
-      border: none;
-      border-top: 1px solid var(--cor-bege);
-      font-family: var(--fonte-texto);
-      font-size: 0.88rem;
-      background: var(--cor-branco);
-      color: var(--cor-texto);
-      box-sizing: border-box;
+    .tesouro-status-texto--nao-encontrado {
+      color: var(--cor-texto-secundario);
     }
 
-    .trator-card input:focus {
-      outline: none;
-      background: #fffbf3;
-    }
-
-    /* ── Status / erro ───────────────────────────────────── */
+    /* ── Erro / Toast ────────────────────────────────────── */
     .msg-erro {
       color: var(--cor-vermelho);
       font-weight: 600;
       font-size: 0.9rem;
       margin: var(--espaco-sm) 0 0;
-      display: none;
     }
 
     .toast-sucesso {
@@ -164,54 +156,74 @@
       <button class="btn-modo" data-modo="estatisticas" style="grid-column: span 2;">📊 Estatísticas</button>
     </div>
 
-    <!-- ── Disparar corrida ────────────────────────────────── -->
-    <p class="secao-titulo">🚜 Iniciar Corrida dos Tratores</p>
+    <!-- ── Tesouro da Fazenda ─────────────────────────────── -->
+    <p class="secao-titulo">🏆 Tesouro da Fazenda</p>
 
-    <p style="font-size:0.85rem; opacity:0.75; margin-bottom: var(--espaco-md);">
-      Insira o nome do participante de cada trator. Pelo menos 2 são necessários.
-    </p>
+    <div class="tesouro-bloco" id="tesouro-bloco">
+      <span class="tesouro-icone">🏆</span>
+      <div class="tesouro-info">
+        <strong>Tesouro da Fazenda</strong>
+        <span class="tesouro-status-texto" id="tesouro-status-texto">carregando…</span>
+      </div>
+    </div>
 
-    <div class="grade-tratores" id="grade-tratores"></div>
-
-    <p id="erro-corrida" class="msg-erro texto-centro"></p>
-
-    <button id="btn-iniciar" class="botao botao-primario botao-bloco">
-      🏁 Iniciar Corrida!
+    <button id="btn-liberar-tesouro" class="botao botao-primario botao-bloco" style="display: none;">
+      🔓 Liberar Tesouro da Fazenda
     </button>
+  </div>
+
+  <!-- Modal: Confirmar Tesouro -->
+  <div id="modal-tesouro" class="modal-fundo" style="display: none;">
+    <div class="modal">
+      <h3 class="modal-titulo">🏆 Liberar Tesouro da Fazenda</h3>
+      <p>Quem encontrou o Tesouro da Fazenda?</p>
+      <div class="campo">
+        <label for="input-vencedor-tesouro">Nome do ganhador *</label>
+        <input id="input-vencedor-tesouro" type="text" placeholder="Ex: Ana" autocomplete="off" />
+      </div>
+      <p id="erro-tesouro" class="msg-erro" style="display: none;"></p>
+      <div class="flex gap-sm" style="margin-top: var(--espaco-md);">
+        <button id="btn-cancelar-tesouro" class="botao botao-secundario botao-bloco">Cancelar</button>
+        <button id="btn-confirmar-tesouro" class="botao botao-sucesso botao-bloco">Confirmar 🎉</button>
+      </div>
+    </div>
   </div>
 
   <script type="module">
     import { supabase } from '../js/supabaseClient.js';
-    import { buscarConfigAtual } from '../js/realtime.js';
-    import { sortearPremio, reservarPremio } from '../js/sorteio.js';
-    import { criarCanalBroadcast } from '../js/realtime.js';
-    import { TRATORES } from '../js/corrida.js';
+    import { buscarConfigAtual, subscribeConfig, criarCanalBroadcast } from '../js/realtime.js';
 
-    // ── Labels legíveis para cada modo ──────────────────────
     const LABELS_MODO = {
-      hall_da_fama:     'Hall da Fama',
-      corrida_animais:  'Corrida dos Tratores',
-      pescaria:         'Pescaria',
-      roleta_fazenda:   'Roleta da Fazenda',
-      estatisticas:     'Estatísticas',
+      hall_da_fama:    'Hall da Fama',
+      corrida_animais: 'Corrida dos Tratores',
+      pescaria:        'Pescaria',
+      roleta_fazenda:  'Roleta da Fazenda',
+      estatisticas:    'Estatísticas',
     };
 
-    const labelModoAtual = document.getElementById('label-modo-atual');
-    const btnsModo       = document.querySelectorAll('.btn-modo');
-    const erroCorrida    = document.getElementById('erro-corrida');
-    const btnIniciar     = document.getElementById('btn-iniciar');
-    const grade          = document.getElementById('grade-tratores');
-    const canalBroadcast = criarCanalBroadcast();
+    const labelModoAtual       = document.getElementById('label-modo-atual');
+    const btnsModo             = document.querySelectorAll('.btn-modo');
+    const tesouroBloco         = document.getElementById('tesouro-bloco');
+    const tesouroStatusTexto   = document.getElementById('tesouro-status-texto');
+    const btnLiberarTesouro    = document.getElementById('btn-liberar-tesouro');
+    const modalTesouro         = document.getElementById('modal-tesouro');
+    const inputVencedorTesouro = document.getElementById('input-vencedor-tesouro');
+    const erroTesouro          = document.getElementById('erro-tesouro');
+    const btnCancelarTesouro   = document.getElementById('btn-cancelar-tesouro');
+    const btnConfirmarTesouro  = document.getElementById('btn-confirmar-tesouro');
 
     let modoAtual    = null;
     let processando  = false;
     let toastTimeout = null;
+    const canalBroadcast = criarCanalBroadcast();
 
-    // ── Modo atual ───────────────────────────────────────────
-    async function carregarModoAtual() {
+    // ── Config: modo + tesouro ───────────────────────────────────
+
+    async function carregarConfig() {
       try {
         const config = await buscarConfigAtual();
         aplicarModoUI(config.modo_apresentacao);
+        aplicarTesouroUI(config.tesouro_status);
       } catch {
         labelModoAtual.textContent = 'erro ao carregar';
       }
@@ -225,7 +237,17 @@
       });
     }
 
-    // ── Trocar modo da TV ────────────────────────────────────
+    function aplicarTesouroUI(status) {
+      const encontrado = status === 'encontrado';
+      tesouroBloco.classList.toggle('tesouro-bloco--encontrado', encontrado);
+      tesouroStatusTexto.textContent = encontrado ? '✅ Encontrado!' : 'Ainda não encontrado';
+      tesouroStatusTexto.className = 'tesouro-status-texto ' +
+        (encontrado ? 'tesouro-status-texto--encontrado' : 'tesouro-status-texto--nao-encontrado');
+      btnLiberarTesouro.style.display = encontrado ? 'none' : '';
+    }
+
+    // ── Trocar modo da TV ────────────────────────────────────────
+
     btnsModo.forEach((btn) => {
       btn.addEventListener('click', async () => {
         const modo = btn.dataset.modo;
@@ -249,115 +271,98 @@
       });
     });
 
-    // ── Renderiza cards dos tratores ─────────────────────────
-    TRATORES.forEach((trator) => {
-      const card = document.createElement('div');
-      card.className = 'trator-card';
-      card.innerHTML = `
-        <div class="trator-card-cabecalho" style="background: ${trator.corHex};">
-          <img src="${trator.imagem}" alt="${trator.label}" />
-          <span>${trator.label}</span>
-        </div>
-        <input
-          id="nome-${trator.cor}"
-          type="text"
-          placeholder="Nome do participante"
-          autocomplete="off"
-        />
-      `;
-      grade.appendChild(card);
+    // ── Tesouro: abre modal ──────────────────────────────────────
+
+    btnLiberarTesouro.addEventListener('click', () => {
+      inputVencedorTesouro.value = '';
+      erroTesouro.style.display = 'none';
+      modalTesouro.style.display = 'flex';
+      setTimeout(() => inputVencedorTesouro.focus(), 50);
     });
 
-    // ── Iniciar corrida ──────────────────────────────────────
-    btnIniciar.addEventListener('click', async () => {
-      esconderErro();
+    btnCancelarTesouro.addEventListener('click', () => {
+      modalTesouro.style.display = 'none';
+    });
 
-      const participantes = {};
-      const comNome = [];
-      for (const t of TRATORES) {
-        const nome = document.getElementById(`nome-${t.cor}`)?.value.trim() || null;
-        participantes[t.cor] = nome;
-        if (nome) comNome.push(t.cor);
-      }
+    inputVencedorTesouro.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') btnConfirmarTesouro.click();
+    });
 
-      if (comNome.length < 2) {
-        mostrarErro('Insira o nome de pelo menos 2 participantes.');
-        return;
-      }
+    // ── Tesouro: confirma e envia para a TV ──────────────────────
+
+    btnConfirmarTesouro.addEventListener('click', async () => {
+      const nome = inputVencedorTesouro.value.trim();
+      if (!nome) { mostrarErro('Digite o nome do ganhador.'); return; }
       if (processando) return;
 
       processando = true;
-      btnIniciar.disabled = true;
-      btnIniciar.textContent = '⏳ Preparando…';
-
-      const vencedorCor = comNome[Math.floor(Math.random() * comNome.length)];
+      btnConfirmarTesouro.disabled = true;
+      btnConfirmarTesouro.textContent = '⏳ Processando...';
+      erroTesouro.style.display = 'none';
 
       try {
-        const premio = await sortearPremio('corrida');
-        if (!premio) {
-          mostrarErro('Nenhum prêmio disponível para corrida.');
-          return;
-        }
+        const { data: tesouro, error: tErr } = await supabase
+          .from('premios')
+          .select('*')
+          .eq('is_tesouro', true)
+          .single();
 
-        const { data: evento, error } = await supabase
+        if (tErr || !tesouro) throw new Error('Tesouro da Fazenda não encontrado no banco de dados.');
+        if (tesouro.status === 'entregue')  throw new Error('O Tesouro da Fazenda já foi entregue!');
+        if (tesouro.status === 'reservado') throw new Error('O Tesouro da Fazenda já está reservado para outro ganhador.');
+
+        const { data: evento, error: evErr } = await supabase
           .from('eventos')
           .insert({
-            tipo: 'corrida',
-            premio_id: premio.id,
-            premio_codigo: premio.codigo,
-            premio_nome: premio.nome,
-            premio_imagem_url: premio.imagem_url,
-            premio_categoria: premio.categoria,
-            vencedor: participantes[vencedorCor],
+            tipo: 'livre',
+            premio_id: tesouro.id,
+            premio_codigo: tesouro.codigo,
+            premio_nome: tesouro.nome,
+            premio_imagem_url: tesouro.imagem_url,
+            premio_categoria: tesouro.categoria,
+            vencedor: nome,
             status: 'pending',
-            metadata: {
-              is_tesouro: false,
-              tipo: 'corrida_tratores',
-              trator_vencedor: vencedorCor,
-              participantes,
-            },
+            metadata: { is_tesouro: true },
           })
           .select()
           .single();
 
-        if (error) throw error;
+        if (evErr) throw evErr;
 
-        await reservarPremio(premio.id);
+        await supabase.from('premios').update({ status: 'reservado' }).eq('id', tesouro.id);
 
         await canalBroadcast.aguardarPronto();
-        const result = await canalBroadcast.send({
+        const resultado = await canalBroadcast.send({
           type: 'broadcast',
           event: 'novo_evento',
           payload: evento,
         });
 
-        limparFormulario();
-        mostrarToast(result === 'ok'
-          ? '🏁 Corrida iniciada na TV!'
-          : `⚠️ Broadcast: ${result ?? 'sem resposta'}`);
+        modalTesouro.style.display = 'none';
+        mostrarToast(resultado === 'ok'
+          ? '🏆 Tesouro enviado para a TV!'
+          : `⚠️ Broadcast: ${resultado ?? 'sem resposta'}`);
       } catch (err) {
         mostrarErro(err.message);
       } finally {
         processando = false;
-        btnIniciar.disabled = false;
-        btnIniciar.textContent = '🏁 Iniciar Corrida!';
+        btnConfirmarTesouro.disabled = false;
+        btnConfirmarTesouro.textContent = 'Confirmar 🎉';
       }
     });
 
-    function limparFormulario() {
-      TRATORES.forEach((t) => {
-        const el = document.getElementById(`nome-${t.cor}`);
-        if (el) el.value = '';
-      });
-    }
+    // ── Realtime: mantém status do tesouro sincronizado ─────────
+
+    subscribeConfig((config) => {
+      if (config.modo_apresentacao) aplicarModoUI(config.modo_apresentacao);
+      if (config.tesouro_status)    aplicarTesouroUI(config.tesouro_status);
+    });
+
+    // ── Helpers ──────────────────────────────────────────────────
 
     function mostrarErro(msg) {
-      erroCorrida.textContent = msg;
-      erroCorrida.style.display = '';
-    }
-
-    function esconderErro() {
-      erroCorrida.style.display = 'none';
+      erroTesouro.textContent = msg;
+      erroTesouro.style.display = '';
     }
 
     function mostrarToast(msg) {
@@ -370,7 +375,7 @@
       toastTimeout = setTimeout(() => toast.remove(), 3500);
     }
 
-    carregarModoAtual();
+    carregarConfig();
   </script>
 </body>
 </html>

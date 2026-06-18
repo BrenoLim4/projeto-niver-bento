@@ -87,15 +87,49 @@
           </div>
         </div>
       </div>
-      <div class="tv-modo" data-modo="roleta_fazenda" style="display: none;">
-        <img src="../assets/img/icons/roleta.svg" alt="" />
-        <h1>🎡 Roleta da Fazenda</h1>
-        <p>Em construção — implementação prevista para a FASE 12.</p>
+      <div class="tv-modo tv-roleta-ambiente" data-modo="roleta_fazenda" style="display: none;">
+        <h2 class="tv-roleta-ambiente-titulo">🎡 Roleta da Fazenda</h2>
+        <div class="tv-roleta-ambiente-wrapper">
+          <canvas id="tv-roleta-canvas-ambiente" width="900" height="900"></canvas>
+          <div class="tv-roleta-ponteiro"></div>
+        </div>
       </div>
-      <div class="tv-modo" data-modo="estatisticas" style="display: none;">
-        <img src="../assets/img/icons/grafico.svg" alt="" />
-        <h1>📊 Estatísticas</h1>
-        <p>Em construção — implementação prevista para a FASE 14.</p>
+      <div class="tv-modo tv-stats" data-modo="estatisticas" style="display: none;">
+        <header class="tv-stats-cabecalho">
+          <img src="../assets/img/icons/grafico.svg" alt="" />
+          <h1>📊 Estatísticas</h1>
+        </header>
+        <div class="tv-stats-corpo">
+          <div class="tv-stats-principal">
+            <span class="tv-stats-numero tv-stats-numero--xl" id="tv-stats-entregues">0</span>
+            <span class="tv-stats-rotulo">Prêmios Entregues</span>
+          </div>
+          <div class="tv-stats-linha">
+            <div class="tv-stats-item">
+              <span class="tv-stats-numero tv-stats-numero--md" id="tv-stats-aguardando">0</span>
+              <span class="tv-stats-rotulo">Aguardando Entrega</span>
+            </div>
+            <div class="tv-stats-separador"></div>
+            <div class="tv-stats-item">
+              <span class="tv-stats-numero tv-stats-numero--md" id="tv-stats-andamento">0</span>
+              <span class="tv-stats-rotulo">Em Andamento</span>
+            </div>
+          </div>
+          <div class="tv-stats-categorias">
+            <div class="tv-stats-categoria">
+              <span class="badge badge-comum">Comum</span>
+              <strong class="tv-stats-numero tv-stats-numero--sm" id="tv-stats-comuns">0</strong>
+            </div>
+            <div class="tv-stats-categoria">
+              <span class="badge badge-raro">Raro</span>
+              <strong class="tv-stats-numero tv-stats-numero--sm" id="tv-stats-raros">0</strong>
+            </div>
+            <div class="tv-stats-categoria">
+              <span class="badge badge-lendario">Lendário</span>
+              <strong class="tv-stats-numero tv-stats-numero--sm" id="tv-stats-lendarios">0</strong>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -149,6 +183,22 @@
       <div id="tv-corrida-resultado" class="tv-corrida-resultado" style="display:none;"></div>
     </div>
 
+    <!-- Roleta da Fazenda: overlay de giro (eventos tipo='roleta') -->
+    <div id="tv-roleta" class="tv-roleta" style="display:none;">
+      <div class="tv-roleta-conteudo">
+        <div class="tv-roleta-wrapper">
+          <canvas id="tv-roleta-canvas" width="900" height="900"></canvas>
+          <div class="tv-roleta-ponteiro"></div>
+        </div>
+        <div id="tv-roleta-resultado" class="tv-roleta-resultado" style="display:none;">
+          <div class="tv-roleta-resultado-card">
+            <span id="tv-roleta-animal" class="tv-roleta-animal"></span>
+            <strong id="tv-roleta-vencedor" class="tv-roleta-vencedor"></strong>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- Estado Evento: Suspense → Baú → Revelação → Encerramento -->
     <div id="tv-evento" class="tv-evento" style="display: none;">
       <div id="etapa-suspense" class="etapa-evento">
@@ -198,6 +248,8 @@
     import { desbloquear } from '../js/sons.js';
     import { inicializarHallDaFama, atualizarTesouroStatus } from '../js/halldafama.js';
     import { executarCorrida } from '../js/corrida.js';
+    import { inicializarEstatisticas } from '../js/estatisticas.js';
+    import { executarRoleta, desenharRoleta, ROTACAO_INICIAL } from '../js/roleta.js';
 
     const MODOS = ['hall_da_fama', 'pescaria', 'corrida_animais', 'roleta_fazenda', 'estatisticas'];
 
@@ -217,6 +269,7 @@
     const tvNormal = document.getElementById('tv-normal');
     const tvEvento = document.getElementById('tv-evento');
     const tvCorrida = document.getElementById('tv-corrida');
+    const tvRoleta = document.getElementById('tv-roleta');
     const btnIniciar = document.getElementById('btn-iniciar-tv');
     const tvConexao = document.getElementById('tv-conexao');
     const tvConexaoTexto = document.getElementById('tv-conexao-texto');
@@ -262,6 +315,23 @@
       totalLendarios: document.getElementById('hall-lendarios'),
       tesouroContainer: document.getElementById('hall-tesouro'),
       tesouroStatus: document.getElementById('hall-tesouro-status'),
+    };
+
+    const elementosRoleta = {
+      overlay:           tvRoleta,
+      canvas:            document.getElementById('tv-roleta-canvas'),
+      resultado:         document.getElementById('tv-roleta-resultado'),
+      resultadoAnimal:   document.getElementById('tv-roleta-animal'),
+      resultadoVencedor: document.getElementById('tv-roleta-vencedor'),
+    };
+
+    const elementosStats = {
+      totalEntregues:  document.getElementById('tv-stats-entregues'),
+      totalAguardando: document.getElementById('tv-stats-aguardando'),
+      totalAndamento:  document.getElementById('tv-stats-andamento'),
+      totalComuns:     document.getElementById('tv-stats-comuns'),
+      totalRaros:      document.getElementById('tv-stats-raros'),
+      totalLendarios:  document.getElementById('tv-stats-lendarios'),
     };
 
     const tvGradePeixes = document.getElementById('tv-grade-peixes');
@@ -414,6 +484,11 @@
         await executarCorrida(evento, elementosCorrida);
       }
 
+      // Roleta da Fazenda: gira a roleta antes da revelação do prêmio.
+      if (evento.tipo === 'roleta') {
+        await executarRoleta(evento, elementosRoleta);
+      }
+
       tvEvento.style.display = '';
       await executarRevelacao(evento, elementosEvento);
 
@@ -441,6 +516,12 @@
       inicializarHallDaFama(elementosHall, config, { getModo: () => modoAtual });
       aplicarConfig(config);
 
+      // Desenha a roleta estática no modo ambiente (CSS gira o canvas).
+      try {
+        const canvasAmbiente = document.getElementById('tv-roleta-canvas-ambiente');
+        if (canvasAmbiente) desenharRoleta(canvasAmbiente, ROTACAO_INICIAL);
+      } catch (_) { /* áudio/canvas indisponível */ }
+
       configurarFila({ onProcessarEvento: mostrarEvento });
       subscribeNovosEventos(adicionarEvento, {
         onStatus: atualizarStatusConexao,
@@ -459,6 +540,12 @@
         await inicializarPescaria();
       } catch (err) {
         console.error('Erro ao inicializar pescaria:', err);
+      }
+
+      try {
+        await inicializarEstatisticas(elementosStats);
+      } catch (err) {
+        console.error('Erro ao inicializar estatísticas:', err);
       }
     }
 

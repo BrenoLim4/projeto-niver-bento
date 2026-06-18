@@ -954,3 +954,259 @@ html {
   .tv-corrida-trator-img { max-height: clamp(90px, 11vh, 160px); }
   .tv-corrida-resultado-img { height: clamp(160px, 22vh, 300px); }
 }
+
+/* ================================================================
+   ESTATÍSTICAS — modo TV (Fase 14)
+   ================================================================ */
+.tv-stats {
+  width: 100%;
+  height: 100%;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: var(--espaco-xl);
+  padding: var(--espaco-xl);
+}
+
+.tv-stats-cabecalho {
+  display: flex;
+  align-items: center;
+  gap: var(--espaco-md);
+}
+
+.tv-stats-cabecalho img {
+  width: 3rem;
+  height: 3rem;
+}
+
+.tv-stats-cabecalho h1 { margin: 0; }
+
+.tv-stats-corpo {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--espaco-xl);
+  width: 100%;
+}
+
+.tv-stats-principal {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--espaco-xs);
+}
+
+.tv-stats-numero--xl {
+  font-family: var(--fonte-titulo);
+  font-size: clamp(5rem, 14vw, 10rem);
+  font-weight: 800;
+  color: var(--cor-dourado);
+  line-height: 1;
+}
+
+.tv-stats-rotulo {
+  font-family: var(--fonte-titulo);
+  font-size: clamp(0.9rem, 2vw, 1.6rem);
+  color: var(--cor-marrom);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.tv-stats-linha {
+  display: flex;
+  align-items: center;
+  gap: var(--espaco-xl);
+}
+
+.tv-stats-separador {
+  width: 2px;
+  height: 60px;
+  background: var(--cor-bege);
+  border-radius: 1px;
+}
+
+.tv-stats-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--espaco-xs);
+}
+
+.tv-stats-numero--md {
+  font-family: var(--fonte-titulo);
+  font-size: clamp(2.5rem, 6vw, 5rem);
+  font-weight: 700;
+  color: var(--cor-marrom);
+  line-height: 1;
+}
+
+.tv-stats-categorias {
+  display: flex;
+  gap: var(--espaco-xl);
+}
+
+.tv-stats-categoria {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--espaco-sm);
+  background: var(--cor-superficie);
+  border-radius: var(--raio-lg);
+  padding: var(--espaco-md) var(--espaco-xl);
+  box-shadow: var(--sombra-suave);
+  min-width: 140px;
+}
+
+.tv-stats-numero--sm {
+  font-family: var(--fonte-titulo);
+  font-size: clamp(2rem, 5vw, 4rem);
+  font-weight: 700;
+  color: var(--cor-marrom);
+  line-height: 1;
+}
+
+/* Pulso quando um número é atualizado em tempo real */
+@keyframes stat-pulso {
+  0%   { transform: scale(1); }
+  40%  { transform: scale(1.18); color: var(--cor-dourado); }
+  100% { transform: scale(1); }
+}
+
+.stat-atualizado { animation: stat-pulso 0.5s ease-out; }
+
+/* ─── Roleta da Fazenda ─────────────────────────────────────────── */
+
+/* Modo ambiente: roleta girando lentamente em loop */
+.tv-roleta-ambiente {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--espaco-lg);
+}
+
+.tv-roleta-ambiente-titulo {
+  font-family: var(--fonte-titulo);
+  font-size: clamp(2rem, 4vw, 3.5rem);
+  color: var(--cor-dourado);
+  text-shadow: 0 2px 12px rgba(0,0,0,0.5);
+  letter-spacing: 0.04em;
+}
+
+.tv-roleta-ambiente-wrapper,
+.tv-roleta-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.tv-roleta-ambiente-wrapper canvas {
+  width: clamp(320px, 55vh, 640px);
+  height: clamp(320px, 55vh, 640px);
+  border-radius: 50%;
+  box-shadow: 0 0 40px rgba(242,166,74,0.4), 0 8px 32px rgba(0,0,0,0.5);
+  animation: roleta-girar-lento 25s linear infinite;
+}
+
+@keyframes roleta-girar-lento {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+/* Ponteiro triangular fixo no topo */
+.tv-roleta-ponteiro {
+  position: absolute;
+  top: -18px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+  border-left: 16px solid transparent;
+  border-right: 16px solid transparent;
+  border-top: 36px solid #8B5A2B;
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));
+  z-index: 2;
+}
+
+/* Overlay de giro (evento ativo) */
+.tv-roleta {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  background: radial-gradient(ellipse at center, #1a0d00 0%, #000 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+
+.tv-roleta--ativa {
+  opacity: 1;
+}
+
+.tv-roleta--saindo {
+  opacity: 0;
+}
+
+.tv-roleta-conteudo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(var(--espaco-lg), 5vw, 80px);
+  width: 100%;
+  height: 100%;
+  padding: var(--espaco-xl);
+  box-sizing: border-box;
+}
+
+.tv-roleta-wrapper canvas {
+  width: clamp(360px, 70vh, 760px);
+  height: clamp(360px, 70vh, 760px);
+  border-radius: 50%;
+  box-shadow: 0 0 60px rgba(242,166,74,0.5), 0 12px 48px rgba(0,0,0,0.7);
+}
+
+/* Resultado lateral */
+.tv-roleta-resultado {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.tv-roleta-resultado-card {
+  background: rgba(255,248,239,0.12);
+  border: 3px solid var(--cor-dourado);
+  border-radius: var(--raio-xl);
+  padding: var(--espaco-xl) calc(var(--espaco-xl) * 1.5);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--espaco-md);
+  backdrop-filter: blur(6px);
+  animation: roleta-resultado-entrar 0.5s var(--easing-out) both;
+}
+
+@keyframes roleta-resultado-entrar {
+  from { opacity: 0; transform: scale(0.8) translateY(20px); }
+  to   { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+.tv-roleta-animal {
+  font-size: clamp(2rem, 5vw, 4rem);
+  text-align: center;
+  line-height: 1.2;
+}
+
+.tv-roleta-vencedor {
+  font-family: var(--fonte-titulo);
+  font-size: clamp(1.8rem, 4vw, 3.5rem);
+  color: var(--cor-dourado);
+  text-shadow: 0 2px 16px rgba(0,0,0,0.6);
+  text-align: center;
+  max-width: 360px;
+  word-break: break-word;
+}

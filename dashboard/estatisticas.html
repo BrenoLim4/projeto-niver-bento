@@ -7,12 +7,183 @@
   <link rel="stylesheet" href="../assets/css/variables.css" />
   <link rel="stylesheet" href="../assets/css/base.css" />
   <link rel="stylesheet" href="../assets/css/components.css" />
+  <style>
+    .stat-bloco {
+      background: var(--cor-superficie);
+      border-radius: var(--raio-lg);
+      box-shadow: var(--sombra-suave);
+      padding: var(--espaco-md) var(--espaco-lg);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: var(--espaco-xs);
+      text-align: center;
+    }
+
+    .stat-bloco--destaque {
+      border: 2px solid var(--cor-dourado);
+    }
+
+    .stat-numero {
+      font-family: var(--fonte-titulo);
+      font-size: 3rem;
+      font-weight: 800;
+      color: var(--cor-dourado);
+      line-height: 1;
+    }
+
+    .stat-numero--md {
+      font-size: 2.2rem;
+      color: var(--cor-marrom);
+    }
+
+    .stat-numero--sm {
+      font-size: 1.8rem;
+      color: var(--cor-marrom);
+    }
+
+    .stat-rotulo {
+      font-size: 0.85rem;
+      color: var(--cor-texto-secundario);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .grade-stats-principal {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: var(--espaco-md);
+      margin-bottom: var(--espaco-lg);
+    }
+
+    .grade-stats-secundaria {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: var(--espaco-sm);
+      margin-bottom: var(--espaco-lg);
+    }
+
+    .grade-stats-categorias {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: var(--espaco-sm);
+      margin-bottom: var(--espaco-lg);
+    }
+
+    .secao-titulo {
+      font-family: var(--fonte-titulo);
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--cor-texto);
+      margin: var(--espaco-lg) 0 var(--espaco-sm);
+      padding-bottom: var(--espaco-xs);
+      border-bottom: 2px solid var(--cor-bege);
+    }
+
+    .indicador-realtime {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: var(--espaco-xs);
+      font-size: 0.8rem;
+      color: var(--cor-texto-secundario);
+      margin-bottom: var(--espaco-md);
+    }
+
+    .indicador-realtime::before {
+      content: '';
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--cor-verde);
+      animation: piscar-verde 2s ease-in-out infinite;
+    }
+
+    @keyframes piscar-verde {
+      0%, 100% { opacity: 1; }
+      50%       { opacity: 0.3; }
+    }
+
+    @keyframes stat-pulso {
+      0%   { transform: scale(1); }
+      40%  { transform: scale(1.15); color: var(--cor-dourado); }
+      100% { transform: scale(1); }
+    }
+
+    .stat-atualizado { animation: stat-pulso 0.5s ease-out; }
+  </style>
 </head>
 <body>
-  <div class="container texto-centro">
-    <h1>📊 Estatísticas</h1>
-    <p>Em construção — implementação prevista para a FASE 14.</p>
-    <p><a href="/dashboard/">← Voltar ao Dashboard</a></p>
+  <div class="container">
+    <div class="texto-centro">
+      <h1>📊 Estatísticas</h1>
+      <p><a href="/dashboard/">← Voltar ao Dashboard</a></p>
+    </div>
+
+    <p class="indicador-realtime">Atualizando em tempo real</p>
+
+    <!-- Entregues (destaque) -->
+    <div class="grade-stats-principal">
+      <div class="stat-bloco stat-bloco--destaque">
+        <span class="stat-numero" id="stat-entregues">…</span>
+        <span class="stat-rotulo">Prêmios Entregues</span>
+      </div>
+    </div>
+
+    <!-- Aguardando + Em andamento -->
+    <p class="secao-titulo">🕐 Pendentes</p>
+    <div class="grade-stats-secundaria">
+      <div class="stat-bloco">
+        <span class="stat-numero stat-numero--md" id="stat-aguardando">…</span>
+        <span class="stat-rotulo">Aguardando Entrega</span>
+      </div>
+      <div class="stat-bloco">
+        <span class="stat-numero stat-numero--md" id="stat-andamento">…</span>
+        <span class="stat-rotulo">Em Andamento</span>
+      </div>
+    </div>
+
+    <!-- Categorias -->
+    <p class="secao-titulo">🏷️ Por Categoria (entregues)</p>
+    <div class="grade-stats-categorias">
+      <div class="stat-bloco">
+        <span class="badge badge-comum">Comum</span>
+        <strong class="stat-numero stat-numero--sm" id="stat-comuns">…</strong>
+      </div>
+      <div class="stat-bloco">
+        <span class="badge badge-raro">Raro</span>
+        <strong class="stat-numero stat-numero--sm" id="stat-raros">…</strong>
+      </div>
+      <div class="stat-bloco">
+        <span class="badge badge-lendario">Lendário</span>
+        <strong class="stat-numero stat-numero--sm" id="stat-lendarios">…</strong>
+      </div>
+    </div>
+
+    <!-- Total geral -->
+    <p class="secao-titulo">📋 Geral</p>
+    <div class="grade-stats-principal">
+      <div class="stat-bloco">
+        <span class="stat-numero stat-numero--md" id="stat-total-eventos">…</span>
+        <span class="stat-rotulo">Total de Premiações</span>
+      </div>
+    </div>
   </div>
+
+  <script type="module">
+    import { inicializarEstatisticas } from '../js/estatisticas.js';
+
+    const els = {
+      totalEventos:    document.getElementById('stat-total-eventos'),
+      totalEntregues:  document.getElementById('stat-entregues'),
+      totalAguardando: document.getElementById('stat-aguardando'),
+      totalAndamento:  document.getElementById('stat-andamento'),
+      totalComuns:     document.getElementById('stat-comuns'),
+      totalRaros:      document.getElementById('stat-raros'),
+      totalLendarios:  document.getElementById('stat-lendarios'),
+    };
+
+    inicializarEstatisticas(els);
+  </script>
 </body>
 </html>

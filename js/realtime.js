@@ -124,6 +124,16 @@ export function subscribeEntregasPendentes(callback) {
     .subscribe();
 }
 
+// Notifica `callback()` sempre que qualquer evento for inserido ou atualizado,
+// para manter as telas de estatísticas sincronizadas em tempo real.
+export function subscribeEstatisticas(callback) {
+  return supabase
+    .channel('stats-eventos')
+    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'eventos' }, callback)
+    .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'eventos' }, callback)
+    .subscribe();
+}
+
 // Busca a configuração atual (linha única, id = 1).
 export async function buscarConfigAtual() {
   const { data, error } = await supabase.from('config').select('*').eq('id', 1).single();
