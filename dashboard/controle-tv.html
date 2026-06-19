@@ -60,6 +60,50 @@
       border-bottom: 2px solid var(--cor-bege);
     }
 
+    /* ── Desafios Visuais ────────────────────────────────── */
+    .desafio-rapido-grid {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: var(--espaco-sm);
+      margin-bottom: var(--espaco-sm);
+    }
+
+    .grade-respostas {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: var(--espaco-xs);
+      margin-top: var(--espaco-sm);
+    }
+
+    .btn-resposta {
+      padding: var(--espaco-sm);
+      border: 2px solid var(--cor-bege);
+      border-radius: var(--raio-md);
+      background: var(--cor-superficie);
+      color: var(--cor-texto);
+      font-family: var(--fonte-texto);
+      font-size: 0.88rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: border-color 0.15s, background 0.15s;
+      text-align: left;
+    }
+
+    .btn-resposta:hover:not(:disabled) {
+      border-color: var(--cor-dourado);
+      background: #FFFBF0;
+    }
+
+    .btn-resposta:disabled { opacity: 0.5; cursor: default; }
+    .btn-resposta--correta   { border-color: var(--cor-verde)!important;   background: #E8F5E9!important; }
+    .btn-resposta--incorreto { border-color: var(--cor-vermelho)!important; background: #FDECEA!important; }
+
+    .desafio-status-bloco {
+      font-size: 0.85rem;
+      color: var(--cor-texto-secundario);
+      margin-bottom: var(--espaco-xs);
+    }
+
     /* ── Tesouro status ──────────────────────────────────── */
     .tesouro-bloco {
       display: flex;
@@ -157,6 +201,30 @@
       <button class="btn-modo" data-modo="caca_tesouro">🗺️ Caça ao Tesouro</button>
     </div>
 
+    <!-- ── Desafios Visuais ──────────────────────────────────── -->
+    <p class="secao-titulo">🎯 Desafios Visuais</p>
+
+    <div class="desafio-rapido-grid">
+      <input id="input-desafio-participante" type="text" class="campo-inline"
+             placeholder="Nome do participante" autocomplete="off"
+             style="padding: var(--espaco-sm) var(--espaco-md); border: 2px solid var(--cor-bege); border-radius: var(--raio-md); font-family: var(--fonte-texto); font-size: 0.9rem; background: var(--cor-superficie);" />
+      <button id="btn-lancar-desafio" class="botao botao-primario">🎯 Lançar</button>
+    </div>
+
+    <div id="desafio-painel" style="display: none; margin-bottom: var(--espaco-md);">
+      <div id="desafio-status-bloco" class="desafio-status-bloco"></div>
+      <div id="grade-respostas" class="grade-respostas" style="display: none;">
+        <button class="btn-resposta" data-letra="A" id="ctrl-alt-a"><strong>A</strong> — <span id="ctrl-texto-a"></span></button>
+        <button class="btn-resposta" data-letra="B" id="ctrl-alt-b"><strong>B</strong> — <span id="ctrl-texto-b"></span></button>
+        <button class="btn-resposta" data-letra="C" id="ctrl-alt-c"><strong>C</strong> — <span id="ctrl-texto-c"></span></button>
+        <button class="btn-resposta" data-letra="D" id="ctrl-alt-d"><strong>D</strong> — <span id="ctrl-texto-d"></span></button>
+      </div>
+    </div>
+
+    <p style="font-size: 0.82rem; color: var(--cor-texto-secundario); margin-bottom: var(--espaco-lg);">
+      <a href="/dashboard/desafios.html">📋 Ver histórico completo →</a>
+    </p>
+
     <!-- ── Tesouro da Fazenda ─────────────────────────────── -->
     <p class="secao-titulo">🏆 Tesouro da Fazenda</p>
 
@@ -192,7 +260,7 @@
 
   <script type="module">
     import { supabase } from '../js/supabaseClient.js';
-    import { buscarConfigAtual, subscribeConfig, criarCanalBroadcast } from '../js/realtime.js';
+    import { buscarConfigAtual, subscribeConfig, criarCanalBroadcast, subscribeDesafiosTentativas } from '../js/realtime.js';
 
     const LABELS_MODO = {
       hall_da_fama:    'Painel dos Campeões',
@@ -218,6 +286,17 @@
     let processando  = false;
     let toastTimeout = null;
     const canalBroadcast = criarCanalBroadcast();
+
+    // ── Desafios Visuais ─────────────────────────────────────────
+    let desafioAtivo    = null;
+    let charadaAtiva    = null;
+    let desafioProcessando = false;
+
+    const inputDesafioParticipante = document.getElementById('input-desafio-participante');
+    const btnLancarDesafio         = document.getElementById('btn-lancar-desafio');
+    const desafioPainel            = document.getElementById('desafio-painel');
+    const desafioStatusBloco       = document.getElementById('desafio-status-bloco');
+    const gradeRespostas           = document.getElementById('grade-respostas');
 
     // ── Config: modo + tesouro ───────────────────────────────────
 
@@ -376,6 +455,124 @@
       document.body.appendChild(toast);
       toastTimeout = setTimeout(() => toast.remove(), 3500);
     }
+
+    // ── Lançar desafio rápido ─────────────────────────────────────
+
+    btnLancarDesafio.addEventListener('click', async () => {
+      const nome = inputDesafioParticipante.value.trim();
+      if (!nome) { mostrarToast('⚠️ Digite o nome do participante.'); return; }
+      if (desafioProcessando) return;
+
+      desafioProcessando          = true;
+      btnLancarDesafio.disabled   = true;
+      btnLancarDesafio.textContent = '⏳';
+
+      try {
+        const { data: charadas, error: cErr } = await supabase
+          .from('tesouro_charadas')
+          .select('*')
+          .eq('ativo', true)
+          .neq('tipo', 'pergunta');
+
+        if (cErr || !charadas?.length) throw new Error('Nenhum desafio disponível.');
+
+        const charada = charadas[Math.floor(Math.random() * charadas.length)];
+        charadaAtiva  = charada;
+
+        const { data: tentativa, error: tErr } = await supabase
+          .from('desafios_tentativas')
+          .insert({ charada_id: charada.id, participante_nome: nome, status: 'aguardando_tv' })
+          .select()
+          .single();
+
+        if (tErr) throw tErr;
+        desafioAtivo = tentativa;
+
+        // Preenche textos das alternativas
+        document.getElementById('ctrl-texto-a').textContent = charada.alternativa_a;
+        document.getElementById('ctrl-texto-b').textContent = charada.alternativa_b;
+        document.getElementById('ctrl-texto-c').textContent = charada.alternativa_c;
+        document.getElementById('ctrl-texto-d').textContent = charada.alternativa_d;
+
+        atualizarPainelDesafio(tentativa);
+        inputDesafioParticipante.value = '';
+        mostrarToast('🎯 Desafio enviado para a TV!');
+
+      } catch (err) {
+        mostrarToast(`⚠️ ${err.message}`);
+      } finally {
+        desafioProcessando           = false;
+        btnLancarDesafio.disabled    = false;
+        btnLancarDesafio.textContent = '🎯 Lançar';
+      }
+    });
+
+    function atualizarPainelDesafio(tentativa) {
+      desafioPainel.style.display = '';
+
+      if (tentativa.status === 'aguardando_tv') {
+        desafioStatusBloco.textContent    = `⏳ ${tentativa.participante_nome} — aguardando a TV...`;
+        gradeRespostas.style.display      = 'none';
+
+      } else if (tentativa.status === 'aguardando_resposta') {
+        desafioStatusBloco.textContent = `👉 ${tentativa.participante_nome} — selecione a resposta:`;
+        gradeRespostas.style.display   = '';
+        habilitarRespostas(true);
+        ['a','b','c','d'].forEach((l) => {
+          document.getElementById(`ctrl-alt-${l}`)?.classList.remove('btn-resposta--correta','btn-resposta--incorreto');
+        });
+
+      } else if (tentativa.status === 'respondida') {
+        desafioStatusBloco.textContent = tentativa.correta
+          ? `🎉 ${tentativa.participante_nome} acertou!`
+          : `❌ ${tentativa.participante_nome} errou.`;
+        gradeRespostas.style.display = '';
+        habilitarRespostas(false);
+        if (tentativa.resposta) {
+          const btn = document.getElementById(`ctrl-alt-${tentativa.resposta.toLowerCase()}`);
+          btn?.classList.add(tentativa.correta ? 'btn-resposta--correta' : 'btn-resposta--incorreto');
+        }
+        setTimeout(() => {
+          desafioPainel.style.display = 'none';
+          desafioAtivo  = null;
+          charadaAtiva  = null;
+        }, 4000);
+      }
+    }
+
+    function habilitarRespostas(habilitar) {
+      ['a','b','c','d'].forEach((l) => {
+        const btn = document.getElementById(`ctrl-alt-${l}`);
+        if (btn) btn.disabled = !habilitar;
+      });
+    }
+
+    document.querySelectorAll('.btn-resposta').forEach((btn) => {
+      btn.addEventListener('click', async () => {
+        if (!desafioAtivo || desafioAtivo.status !== 'aguardando_resposta') return;
+        const letra  = btn.dataset.letra;
+        const correta = letra === charadaAtiva?.resposta_correta;
+        habilitarRespostas(false);
+
+        const { error } = await supabase
+          .from('desafios_tentativas')
+          .update({ status: 'respondida', resposta: letra, correta })
+          .eq('id', desafioAtivo.id);
+
+        if (error) {
+          habilitarRespostas(true);
+          mostrarToast(`⚠️ ${error.message}`);
+        }
+      });
+    });
+
+    subscribeDesafiosTentativas((tentativa) => {
+      if (!desafioAtivo || tentativa.id !== desafioAtivo.id) return;
+      desafioAtivo = tentativa;
+      atualizarPainelDesafio(tentativa);
+    });
+
+    // ─────────────────────────────────────────────────────────────
 
     carregarConfig();
   </script>

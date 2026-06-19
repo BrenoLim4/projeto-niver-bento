@@ -319,7 +319,7 @@
             <div class="tv-tesouro-foto-avatar" id="tv-tesouro-charada-avatar">🤠</div>
           </div>
           <div class="tv-tesouro-participante-texto">
-            <span class="tv-tesouro-desafio-label">🔑 Desafio Final do Tesouro!</span>
+            <span id="tv-tesouro-desafio-label" class="tv-tesouro-desafio-label">🔑 Desafio Final do Tesouro!</span>
             <strong id="tv-tesouro-charada-nome" class="tv-tesouro-participante-nome"></strong>
           </div>
         </div>
@@ -405,7 +405,7 @@
 
   <script type="module">
     import { supabase } from '../js/supabaseClient.js';
-    import { subscribeNovosEventos, subscribeConfig, buscarConfigAtual, subscribeBroadcastEvento, subscribeTesouroTentativas } from '../js/realtime.js';
+    import { subscribeNovosEventos, subscribeConfig, buscarConfigAtual, subscribeBroadcastEvento, subscribeTesouroTentativas, subscribeDesafiosTentativas } from '../js/realtime.js';
     import { configurarFila, carregarFilaInicial, adicionarEvento, ressincronizarFila } from '../js/fila-eventos.js';
     import { executarRevelacao } from '../js/animacoes.js';
     import { desbloquear } from '../js/sons.js';
@@ -786,6 +786,10 @@
     let tentativaAtivaId  = null;
     let timeoutVisualTV   = null; // guarda o setTimeout da fase visual
 
+    // ── Desafios Visuais avulsos ──────────────────────────────────
+    let desafioAtivoId      = null;
+    let timeoutVisualDesafio = null;
+
     async function onTesouroTentativa(tentativa) {
       if (tentativa.status === 'aguardando_tv') {
         try {
@@ -932,6 +936,132 @@
         ?.classList.add(`tv-tesouro-alt--${tipo}`);
     }
 
+    async function onDesafioTentativa(tentativa) {
+      if (tentativa.status === 'aguardando_tv') {
+        try {
+          const { data: charada } = await supabase
+            .from('tesouro_charadas')
+            .select('*')
+            .eq('id', tentativa.charada_id)
+            .single();
+          mostrarDesafioTV(tentativa.id, tentativa.participante_nome, charada);
+        } catch (_) { /* ignora falha pontual */ }
+
+      } else if (tentativa.id === desafioAtivoId) {
+        clearTimeout(timeoutVisualDesafio);
+        document.getElementById('tv-tesouro-visual').style.display = 'none';
+        document.getElementById('tv-tesouro-corpo').style.display  = '';
+
+        const estadoEl = document.getElementById('tv-tesouro-charada-estado');
+
+        if (tentativa.status === 'respondida') {
+          if (tentativa.correta) {
+            estadoEl.textContent = '🎉 CORRETO! Parabéns!';
+            estadoEl.classList.add('tv-tesouro-estado--correto');
+          } else {
+            estadoEl.textContent = '❌ Resposta errada! Tente novamente.';
+            estadoEl.classList.add('tv-tesouro-estado--incorreto');
+          }
+          destacarAlternativa(tentativa.resposta, tentativa.correta ? 'correta' : 'incorreta');
+          setTimeout(() => {
+            tvTesouroCharada.style.display = 'none';
+            desafioAtivoId = null;
+          }, 3500);
+        }
+      }
+    }
+
+    function mostrarDesafioTV(tentativaId, participanteNome, charada) {
+      desafioAtivoId = tentativaId;
+      clearTimeout(timeoutVisualDesafio);
+
+      // Atualiza o label do overlay para contexto avulso
+      const labelEl = document.getElementById('tv-tesouro-desafio-label');
+      if (labelEl) labelEl.textContent = '🎯 Desafio Visual!';
+
+      // Participante sem foto (desafio avulso não tem registro)
+      const fotoEl   = document.getElementById('tv-tesouro-charada-foto');
+      const avatarEl = document.getElementById('tv-tesouro-charada-avatar');
+      fotoEl.style.display   = 'none';
+      avatarEl.style.display = '';
+      document.getElementById('tv-tesouro-charada-nome').textContent = participanteNome;
+
+      // Pergunta + alternativas (pré-carrega)
+      document.getElementById('tv-tesouro-charada-pergunta').textContent = charada.pergunta;
+      document.getElementById('tv-tesouro-alt-a-texto').textContent = charada.alternativa_a;
+      document.getElementById('tv-tesouro-alt-b-texto').textContent = charada.alternativa_b;
+      document.getElementById('tv-tesouro-alt-c-texto').textContent = charada.alternativa_c;
+      document.getElementById('tv-tesouro-alt-d-texto').textContent = charada.alternativa_d;
+
+      const estadoEl = document.getElementById('tv-tesouro-charada-estado');
+      estadoEl.textContent = '⏳ Aguardando resposta...';
+      estadoEl.className   = 'tv-tesouro-estado';
+      ['a','b','c','d'].forEach((l) => {
+        document.getElementById(`tv-tesouro-alt-${l}`).className = 'tv-tesouro-alt';
+      });
+
+      const visualEl = document.getElementById('tv-tesouro-visual');
+      const corpoEl  = document.getElementById('tv-tesouro-corpo');
+      const ehVisual = charada.tipo && charada.tipo !== 'pergunta' && charada.payload_json;
+
+      if (ehVisual) {
+        const payload       = charada.payload_json;
+        const tempoExibicao = payload.tempo_exibicao ?? TEMPO_EXIBICAO_DEFAULT;
+
+        corpoEl.style.display  = 'none';
+        visualEl.style.display = '';
+
+        document.getElementById('tv-tesouro-visual-titulo').textContent =
+          TITULOS_VISUAL[charada.tipo] ?? '👀 Observe!';
+
+        const itemsEl  = document.getElementById('tv-tesouro-visual-items');
+        const usarSeta = charada.tipo === 'memoria_sequencia';
+        itemsEl.innerHTML = '';
+        (payload.itens ?? []).forEach((item, i) => {
+          const el = document.createElement('span');
+          el.className = 'tv-tesouro-visual-item';
+          el.textContent = item;
+          el.style.animationDelay = `${i * 100}ms`;
+          itemsEl.appendChild(el);
+          if (usarSeta && i < payload.itens.length - 1) {
+            const seta = document.createElement('span');
+            seta.className = 'tv-tesouro-visual-seta';
+            seta.textContent = '→';
+            itemsEl.appendChild(seta);
+          }
+        });
+
+        const barraEl = document.getElementById('tv-tesouro-visual-barra');
+        barraEl.style.transition = 'none';
+        barraEl.style.transform  = 'scaleX(1)';
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => {
+            barraEl.style.transition = `transform ${tempoExibicao}ms linear`;
+            barraEl.style.transform  = 'scaleX(0)';
+          });
+        });
+
+        timeoutVisualDesafio = setTimeout(() => {
+          visualEl.style.display = 'none';
+          corpoEl.style.display  = '';
+          supabase.from('desafios_tentativas')
+            .update({ status: 'aguardando_resposta' })
+            .eq('id', tentativaId)
+            .then();
+        }, tempoExibicao);
+
+      } else {
+        visualEl.style.display = 'none';
+        corpoEl.style.display  = '';
+        supabase.from('desafios_tentativas')
+          .update({ status: 'aguardando_resposta' })
+          .eq('id', tentativaId)
+          .then();
+      }
+
+      tvTesouroCharada.style.display = '';
+    }
+
     let modoAtual = 'hall_da_fama';
 
     // Indicador de conexão Realtime (FASE 8).
@@ -1073,6 +1203,7 @@
       }
 
       subscribeTesouroTentativas(onTesouroTentativa);
+      subscribeDesafiosTentativas(onDesafioTentativa);
 
       try {
         await inicializarCacaTesouro();

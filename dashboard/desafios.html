@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Desafios Visuais - Fazendinha do Bento</title>
+  <link rel="stylesheet" href="../assets/css/variables.css" />
+  <link rel="stylesheet" href="../assets/css/base.css" />
+  <link rel="stylesheet" href="../assets/css/components.css" />
+  <style>
+    /* ── Painel do desafio ativo ────────────────────────────── */
+    .desafio-ativo {
+      background: var(--cor-superficie);
+      border: 2px solid var(--cor-dourado);
+      border-radius: var(--raio-lg);
+      padding: var(--espaco-md);
+      box-shadow: var(--sombra-suave);
+      margin-bottom: var(--espaco-lg);
+    }
+
+    .desafio-ativo-titulo {
+      font-family: var(--fonte-titulo);
+      font-size: 1rem;
+      font-weight: 700;
+      margin-bottom: var(--espaco-sm);
+      display: flex;
+      align-items: center;
+      gap: var(--espaco-xs);
+    }
+
+    .desafio-ativo-nome {
+      font-size: 0.9rem;
+      color: var(--cor-texto-secundario);
+      margin-bottom: var(--espaco-sm);
+    }
+
+    .desafio-ativo-status {
+      font-size: 0.85rem;
+      font-weight: 600;
+      padding: var(--espaco-xs) var(--espaco-sm);
+      border-radius: var(--raio-sm);
+      display: inline-block;
+      margin-bottom: var(--espaco-md);
+    }
+
+    .desafio-status--aguardando-tv   { background: #FFF3CD; color: #856404; }
+    .desafio-status--aguardando-resp { background: #CCE5FF; color: #004085; }
+    .desafio-status--respondida      { background: #D4EDDA; color: #155724; }
+
+    /* ── Alternativas ───────────────────────────────────────── */
+    .grade-alternativas {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: var(--espaco-sm);
+    }
+
+    .btn-alternativa {
+      padding: var(--espaco-sm);
+      border: 2px solid var(--cor-bege);
+      border-radius: var(--raio-md);
+      background: var(--cor-superficie);
+      color: var(--cor-texto);
+      font-family: var(--fonte-texto);
+      font-size: 0.9rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: border-color 0.15s, background 0.15s;
+      text-align: left;
+    }
+
+    .btn-alternativa:hover:not(:disabled) {
+      border-color: var(--cor-dourado);
+      background: #FFFBF0;
+    }
+
+    .btn-alternativa:disabled { opacity: 0.5; cursor: default; }
+
+    .btn-alternativa-letra {
+      display: inline-block;
+      background: var(--cor-dourado);
+      color: #fff;
+      border-radius: 50%;
+      width: 24px;
+      height: 24px;
+      line-height: 24px;
+      text-align: center;
+      font-size: 0.8rem;
+      margin-right: var(--espaco-xs);
+      flex-shrink: 0;
+    }
+
+    .btn-alternativa--correta  { border-color: var(--cor-verde)!important;   background: #E8F5E9!important; }
+    .btn-alternativa--incorreta{ border-color: var(--cor-vermelho)!important; background: #FDECEA!important; }
+
+    /* ── Lista de histórico ─────────────────────────────────── */
+    .secao-titulo {
+      font-family: var(--fonte-titulo);
+      font-size: 1.1rem;
+      font-weight: 700;
+      margin: var(--espaco-xl) 0 var(--espaco-sm);
+      padding-bottom: var(--espaco-xs);
+      border-bottom: 2px solid var(--cor-bege);
+    }
+
+    .historico-lista {
+      display: flex;
+      flex-direction: column;
+      gap: var(--espaco-sm);
+    }
+
+    .historico-item {
+      background: var(--cor-superficie);
+      border: 1px solid var(--cor-bege);
+      border-radius: var(--raio-md);
+      padding: var(--espaco-sm) var(--espaco-md);
+      font-size: 0.85rem;
+    }
+
+    .historico-item-cabecalho {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 4px;
+    }
+
+    .historico-item-nome {
+      font-weight: 700;
+    }
+
+    .historico-item-data {
+      color: var(--cor-texto-secundario);
+      font-size: 0.78rem;
+    }
+
+    .historico-item-pergunta {
+      color: var(--cor-texto-secundario);
+      margin-bottom: 4px;
+    }
+
+    .badge-correto   { background: #D4EDDA; color: #155724; padding: 2px 8px; border-radius: 12px; font-size: 0.78rem; font-weight: 600; }
+    .badge-incorreto { background: #FDECEA; color: #721C24; padding: 2px 8px; border-radius: 12px; font-size: 0.78rem; font-weight: 600; }
+    .badge-pendente  { background: #FFF3CD; color: #856404; padding: 2px 8px; border-radius: 12px; font-size: 0.78rem; font-weight: 600; }
+
+    /* ── Seletor de desafio ─────────────────────────────────── */
+    .desafio-card {
+      background: var(--cor-superficie);
+      border: 2px solid var(--cor-bege);
+      border-radius: var(--raio-md);
+      padding: var(--espaco-sm) var(--espaco-md);
+      cursor: pointer;
+      transition: border-color 0.15s;
+      margin-bottom: var(--espaco-xs);
+    }
+
+    .desafio-card:hover { border-color: var(--cor-dourado); }
+
+    .desafio-card--selecionado {
+      border-color: var(--cor-dourado);
+      background: #FFFBF0;
+    }
+
+    .desafio-card-tipo {
+      font-size: 0.75rem;
+      color: var(--cor-texto-secundario);
+      margin-top: 2px;
+    }
+
+    .msg-erro {
+      color: var(--cor-vermelho);
+      font-weight: 600;
+      font-size: 0.9rem;
+      margin: var(--espaco-sm) 0 0;
+    }
+
+    .toast-sucesso {
+      position: fixed;
+      bottom: var(--espaco-xl);
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--cor-verde);
+      color: #fff;
+      font-weight: 700;
+      font-size: 1rem;
+      padding: var(--espaco-sm) var(--espaco-xl);
+      border-radius: var(--raio-lg);
+      box-shadow: var(--sombra-forte);
+      z-index: 100;
+      white-space: nowrap;
+      animation: toast-subir 0.3s ease-out;
+    }
+
+    @keyframes toast-subir {
+      from { opacity: 0; transform: translateX(-50%) translateY(12px); }
+      to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+    }
+
+    .vazio {
+      color: var(--cor-texto-secundario);
+      font-size: 0.9rem;
+      text-align: center;
+      padding: var(--espaco-lg);
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="texto-centro">
+      <h1>🎯 Desafios Visuais</h1>
+      <p><a href="/dashboard/">← Voltar ao Dashboard</a></p>
+    </div>
+
+    <!-- ── Desafio Ativo ──────────────────────────────────────── -->
+    <div id="painel-ativo" class="desafio-ativo" style="display: none;">
+      <div class="desafio-ativo-titulo">🎯 Desafio em andamento</div>
+      <div id="ativo-nome" class="desafio-ativo-nome"></div>
+      <span id="ativo-status-badge" class="desafio-ativo-status"></span>
+
+      <!-- A/B/C/D — visíveis apenas quando aguardando resposta -->
+      <div id="grade-alternativas" class="grade-alternativas" style="display: none;">
+        <button class="btn-alternativa" data-letra="A" id="btn-alt-a">
+          <span class="btn-alternativa-letra">A</span>
+          <span id="texto-alt-a"></span>
+        </button>
+        <button class="btn-alternativa" data-letra="B" id="btn-alt-b">
+          <span class="btn-alternativa-letra">B</span>
+          <span id="texto-alt-b"></span>
+        </button>
+        <button class="btn-alternativa" data-letra="C" id="btn-alt-c">
+          <span class="btn-alternativa-letra">C</span>
+          <span id="texto-alt-c"></span>
+        </button>
+        <button class="btn-alternativa" data-letra="D" id="btn-alt-d">
+          <span class="btn-alternativa-letra">D</span>
+          <span id="texto-alt-d"></span>
+        </button>
+      </div>
+    </div>
+
+    <!-- ── Lançar novo desafio ────────────────────────────────── -->
+    <p class="secao-titulo">🚀 Lançar Desafio</p>
+
+    <div class="campo">
+      <label for="input-participante">Nome do participante *</label>
+      <input id="input-participante" type="text" placeholder="Ex: Ana" autocomplete="off" />
+    </div>
+
+    <div class="campo">
+      <label>Desafio</label>
+      <div id="lista-charadas"></div>
+    </div>
+
+    <p id="msg-erro-lancamento" class="msg-erro" style="display: none;"></p>
+
+    <button id="btn-lancar" class="botao botao-primario botao-bloco" style="margin-top: var(--espaco-md);">
+      🎯 Lançar na TV
+    </button>
+
+    <!-- ── Histórico ──────────────────────────────────────────── -->
+    <p class="secao-titulo">📋 Histórico</p>
+    <div id="historico-lista" class="historico-lista">
+      <p class="vazio">Carregando...</p>
+    </div>
+  </div>
+
+  <script type="module">
+    import { supabase } from '../js/supabaseClient.js';
+    import { subscribeDesafiosTentativas } from '../js/realtime.js';
+
+    const TIPO_LABELS = {
+      memoria_posicao:   'Memória de Posição',
+      memoria_sequencia: 'Memória de Sequência',
+      identificacao:     'Identificação',
+      contagem:          'Contagem',
+      visual:            'Visual',
+      pergunta:          'Pergunta',
+    };
+
+    // Estado
+    let charadas         = [];
+    let charadaSelecionada = null; // null = aleatório
+    let tentativaAtiva   = null;
+    let charadaAtiva     = null;
+    let processando      = false;
+    let toastTimeout     = null;
+
+    // Elementos
+    const painelAtivo       = document.getElementById('painel-ativo');
+    const ativoNome         = document.getElementById('ativo-nome');
+    const ativoStatusBadge  = document.getElementById('ativo-status-badge');
+    const gradeAlternativas = document.getElementById('grade-alternativas');
+    const listaCheraadas    = document.getElementById('lista-charadas');
+    const inputParticipante = document.getElementById('input-participante');
+    const msgErroLancamento = document.getElementById('msg-erro-lancamento');
+    const btnLancar         = document.getElementById('btn-lancar');
+    const historicoLista    = document.getElementById('historico-lista');
+
+    // ── Carregamento inicial ──────────────────────────────────────
+
+    async function carregarCharadas() {
+      const { data } = await supabase
+        .from('tesouro_charadas')
+        .select('*')
+        .eq('ativo', true)
+        .neq('tipo', 'pergunta')
+        .order('created_at');
+      charadas = data ?? [];
+      renderizarListaCharadas();
+    }
+
+    async function carregarHistorico() {
+      const { data } = await supabase
+        .from('desafios_tentativas')
+        .select('*, tesouro_charadas(pergunta, tipo)')
+        .order('created_at', { ascending: false })
+        .limit(20);
+      renderizarHistorico(data ?? []);
+    }
+
+    // ── Renderização ──────────────────────────────────────────────
+
+    function renderizarListaCharadas() {
+      listaCheraadas.innerHTML = '';
+
+      // Card "Aleatório"
+      const cardAleatorio = document.createElement('div');
+      cardAleatorio.className = 'desafio-card' + (charadaSelecionada === null ? ' desafio-card--selecionado' : '');
+      cardAleatorio.innerHTML = `<strong>🎲 Aleatório</strong><div class="desafio-card-tipo">Seleciona um desafio ao acaso</div>`;
+      cardAleatorio.addEventListener('click', () => selecionarCharada(null));
+      listaCheraadas.appendChild(cardAleatorio);
+
+      charadas.forEach((ch) => {
+        const card = document.createElement('div');
+        card.className = 'desafio-card' + (charadaSelecionada?.id === ch.id ? ' desafio-card--selecionado' : '');
+        const tipo = TIPO_LABELS[ch.tipo] ?? ch.tipo;
+        card.innerHTML = `<strong>${ch.pergunta}</strong><div class="desafio-card-tipo">${tipo}</div>`;
+        card.addEventListener('click', () => selecionarCharada(ch));
+        listaCheraadas.appendChild(card);
+      });
+    }
+
+    function selecionarCharada(ch) {
+      charadaSelecionada = ch;
+      renderizarListaCharadas();
+    }
+
+    function renderizarHistorico(itens) {
+      if (itens.length === 0) {
+        historicoLista.innerHTML = '<p class="vazio">Nenhum desafio lançado ainda.</p>';
+        return;
+      }
+      historicoLista.innerHTML = '';
+      itens.forEach((item) => {
+        const div = document.createElement('div');
+        div.className = 'historico-item';
+        const data = new Date(item.created_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+        const tipo = TIPO_LABELS[item.tesouro_charadas?.tipo] ?? '';
+        let badgeHtml = '';
+        if (item.status === 'respondida') {
+          badgeHtml = item.correta
+            ? '<span class="badge-correto">✅ Correto</span>'
+            : '<span class="badge-incorreto">❌ Errado</span>';
+        } else {
+          badgeHtml = '<span class="badge-pendente">⏳ Em andamento</span>';
+        }
+        div.innerHTML = `
+          <div class="historico-item-cabecalho">
+            <span class="historico-item-nome">${item.participante_nome}</span>
+            <span class="historico-item-data">${data}</span>
+          </div>
+          <div class="historico-item-pergunta">${item.tesouro_charadas?.pergunta ?? ''}</div>
+          <div style="display:flex;align-items:center;gap:var(--espaco-xs);">
+            ${badgeHtml}
+            ${tipo ? `<span style="font-size:0.75rem;color:var(--cor-texto-secundario)">${tipo}</span>` : ''}
+            ${item.resposta ? `<span style="font-size:0.78rem;color:var(--cor-texto-secundario)">· Respondeu: <strong>${item.resposta}</strong></span>` : ''}
+          </div>
+        `;
+        historicoLista.appendChild(div);
+      });
+    }
+
+    // ── Painel de desafio ativo ───────────────────────────────────
+
+    function atualizarPainelAtivo(tentativa) {
+      if (!tentativa) { painelAtivo.style.display = 'none'; return; }
+
+      painelAtivo.style.display = '';
+      ativoNome.textContent = `Participante: ${tentativa.participante_nome}`;
+
+      if (tentativa.status === 'aguardando_tv') {
+        ativoStatusBadge.textContent    = '⏳ Aguardando a TV exibir o desafio...';
+        ativoStatusBadge.className      = 'desafio-ativo-status desafio-status--aguardando-tv';
+        gradeAlternativas.style.display = 'none';
+
+      } else if (tentativa.status === 'aguardando_resposta') {
+        ativoStatusBadge.textContent    = '👉 Selecione a resposta do participante:';
+        ativoStatusBadge.className      = 'desafio-ativo-status desafio-status--aguardando-resp';
+        gradeAlternativas.style.display = '';
+        habilitarBotoesAlternativas(true);
+        ['a','b','c','d'].forEach((l) => {
+          document.getElementById(`btn-alt-${l}`)?.classList.remove('btn-alternativa--correta','btn-alternativa--incorreta');
+        });
+
+      } else if (tentativa.status === 'respondida') {
+        ativoStatusBadge.textContent    = tentativa.correta ? '🎉 Correto!' : '❌ Resposta errada.';
+        ativoStatusBadge.className      = 'desafio-ativo-status desafio-status--respondida';
+        gradeAlternativas.style.display = '';
+        habilitarBotoesAlternativas(false);
+        if (tentativa.resposta) {
+          const btnRespondido = document.getElementById(`btn-alt-${tentativa.resposta.toLowerCase()}`);
+          btnRespondido?.classList.add(tentativa.correta ? 'btn-alternativa--correta' : 'btn-alternativa--incorreta');
+        }
+        setTimeout(() => {
+          tentativaAtiva  = null;
+          charadaAtiva    = null;
+          painelAtivo.style.display = 'none';
+          carregarHistorico();
+        }, 4000);
+      }
+    }
+
+    function preencherAlternativas(charada) {
+      document.getElementById('texto-alt-a').textContent = charada.alternativa_a;
+      document.getElementById('texto-alt-b').textContent = charada.alternativa_b;
+      document.getElementById('texto-alt-c').textContent = charada.alternativa_c;
+      document.getElementById('texto-alt-d').textContent = charada.alternativa_d;
+    }
+
+    function habilitarBotoesAlternativas(habilitar) {
+      ['a','b','c','d'].forEach((l) => {
+        const btn = document.getElementById(`btn-alt-${l}`);
+        if (btn) btn.disabled = !habilitar;
+      });
+    }
+
+    // ── Lançar desafio ────────────────────────────────────────────
+
+    btnLancar.addEventListener('click', async () => {
+      const nome = inputParticipante.value.trim();
+      if (!nome) { mostrarErro('Digite o nome do participante.'); return; }
+      if (processando) return;
+
+      processando = true;
+      btnLancar.disabled  = true;
+      btnLancar.textContent = '⏳ Enviando...';
+      msgErroLancamento.style.display = 'none';
+
+      try {
+        // Seleciona charada
+        let charada = charadaSelecionada;
+        if (!charada) {
+          if (charadas.length === 0) throw new Error('Nenhum desafio cadastrado.');
+          charada = charadas[Math.floor(Math.random() * charadas.length)];
+        }
+
+        const { data: tentativa, error } = await supabase
+          .from('desafios_tentativas')
+          .insert({ charada_id: charada.id, participante_nome: nome, status: 'aguardando_tv' })
+          .select()
+          .single();
+
+        if (error) throw error;
+
+        tentativaAtiva = tentativa;
+        charadaAtiva   = charada;
+        preencherAlternativas(charada);
+        atualizarPainelAtivo(tentativa);
+        mostrarToast('🎯 Desafio enviado para a TV!');
+        inputParticipante.value = '';
+        carregarHistorico();
+
+      } catch (err) {
+        mostrarErro(err.message);
+      } finally {
+        processando   = false;
+        btnLancar.disabled    = false;
+        btnLancar.textContent = '🎯 Lançar na TV';
+      }
+    });
+
+    // ── Selecionar resposta ───────────────────────────────────────
+
+    document.querySelectorAll('.btn-alternativa').forEach((btn) => {
+      btn.addEventListener('click', async () => {
+        if (!tentativaAtiva || tentativaAtiva.status !== 'aguardando_resposta') return;
+        const letra = btn.dataset.letra;
+        habilitarBotoesAlternativas(false);
+
+        const correta = letra === charadaAtiva?.resposta_correta;
+        const { error } = await supabase
+          .from('desafios_tentativas')
+          .update({ status: 'respondida', resposta: letra, correta })
+          .eq('id', tentativaAtiva.id);
+
+        if (error) {
+          habilitarBotoesAlternativas(true);
+          mostrarToast(`⚠️ Erro: ${error.message}`);
+        }
+      });
+    });
+
+    // ── Realtime: acompanha o desafio ativo ───────────────────────
+
+    subscribeDesafiosTentativas((tentativa) => {
+      if (!tentativaAtiva || tentativa.id !== tentativaAtiva.id) return;
+      tentativaAtiva = tentativa;
+      atualizarPainelAtivo(tentativa);
+    });
+
+    // ── Helpers ───────────────────────────────────────────────────
+
+    function mostrarErro(msg) {
+      msgErroLancamento.textContent    = msg;
+      msgErroLancamento.style.display  = '';
+    }
+
+    function mostrarToast(msg) {
+      clearTimeout(toastTimeout);
+      document.querySelector('.toast-sucesso')?.remove();
+      const toast = document.createElement('div');
+      toast.className   = 'toast-sucesso';
+      toast.textContent = msg;
+      document.body.appendChild(toast);
+      toastTimeout = setTimeout(() => toast.remove(), 3500);
+    }
+
+    // ── Init ──────────────────────────────────────────────────────
+
+    await carregarCharadas();
+    await carregarHistorico();
+  </script>
+</body>
+</html>

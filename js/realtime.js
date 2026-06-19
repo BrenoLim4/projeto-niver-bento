@@ -149,6 +149,20 @@ export function subscribeTesouroTentativas(callback) {
     .subscribe();
 }
 
+// Notifica `callback(tentativa)` sempre que uma tentativa de Desafio Visual
+// avulso for inserida ou atualizada. Usado pela TV e pelo Dashboard.
+export function subscribeDesafiosTentativas(callback) {
+  return supabase
+    .channel('tv-desafios-tentativas')
+    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'desafios_tentativas' }, (payload) => {
+      callback(payload.new);
+    })
+    .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'desafios_tentativas' }, (payload) => {
+      callback(payload.new);
+    })
+    .subscribe();
+}
+
 // Busca a configuração atual (linha única, id = 1).
 export async function buscarConfigAtual() {
   const { data, error } = await supabase.from('config').select('*').eq('id', 1).single();
