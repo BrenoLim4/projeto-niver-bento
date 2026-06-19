@@ -820,38 +820,65 @@
         }
       }
 
-      // Sorteia uma charada ativa
-      const { data: charadas } = await supabase
-        .from('tesouro_charadas')
-        .select('*')
-        .eq('ativo', true);
-
-      if (!charadas || charadas.length === 0) {
-        mostrarToast('Nenhuma charada disponível. Peça ajuda ao organizador.', 'erro');
-        reativarScanner();
-        return;
-      }
-
-      const charada = charadas[Math.floor(Math.random() * charadas.length)];
-
-      // Mostra contagem de 5s "Olhe para a TV!" antes de inserir no banco
-      await iniciarContagemTV();
-
-      // Cria a tentativa com status 'aguardando_tv' — a TV atualizará para 'aguardando_resposta'
-      const { data: tentativa, error: errTentativa } = await supabase
+      // Retoma tentativa pendente se já existir (celular saiu/voltou durante o fluxo)
+      const { data: tentativaPendente } = await supabase
         .from('tesouro_tentativas')
-        .insert({
-          participante_id: participanteId,
-          charada_id: charada.id,
-          status: 'aguardando_tv',
-        })
-        .select('id')
-        .single();
+        .select('id, charada_id, status')
+        .eq('participante_id', participanteId)
+        .in('status', ['aguardando_tv', 'aguardando_resposta'])
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
 
-      if (errTentativa) {
-        mostrarToast('Erro ao iniciar o desafio. Tente novamente.', 'erro');
-        reativarScanner();
-        return;
+      let tentativa, charada;
+
+      if (tentativaPendente) {
+        // Já tem uma tentativa em andamento — busca a charada correspondente
+        const { data: charadaExistente } = await supabase
+          .from('tesouro_charadas')
+          .select('*')
+          .eq('id', tentativaPendente.charada_id)
+          .single();
+
+        tentativa = { id: tentativaPendente.id };
+        charada   = charadaExistente;
+      } else {
+        // Sorteia uma charada ativa
+        const { data: charadas } = await supabase
+          .from('tesouro_charadas')
+          .select('*')
+          .eq('ativo', true);
+
+        if (!charadas || charadas.length === 0) {
+          mostrarToast('Nenhuma charada disponível. Peça ajuda ao organizador.', 'erro');
+          reativarScanner();
+          return;
+        }
+
+        charada = charadas[Math.floor(Math.random() * charadas.length)];
+
+        // Mostra contagem de 5s "Olhe para a TV!" antes de inserir no banco
+        await iniciarContagemTV();
+
+        // Cria a tentativa com status 'aguardando_tv' — a TV atualizará para 'aguardando_resposta'
+        const { data: novaTentativa, error: errTentativa } = await supabase
+          .from('tesouro_tentativas')
+          .insert({
+            participante_id: participanteId,
+            charada_id: charada.id,
+            status: 'aguardando_tv',
+          })
+          .select('id')
+          .single();
+
+        if (errTentativa) {
+          console.error('[tesouro] erro ao criar tentativa:', errTentativa);
+          mostrarToast(`Erro ao iniciar o desafio: ${errTentativa.message ?? errTentativa.code ?? 'tente novamente'}`, 'erro');
+          reativarScanner();
+          return;
+        }
+
+        tentativa = novaTentativa;
       }
 
       tentativaAtual = { id: tentativa.id, charada, respondida: false };
