@@ -2099,6 +2099,12 @@ html {
   flex-direction: column;
   align-items: center;
   gap: clamp(var(--espaco-md), 3vh, 40px);
+  transition: opacity 0.32s ease;
+}
+
+/* Fade out do conteúdo ao trocar de competidor */
+.tv-corrida-apres--transicao .tv-corrida-apres-conteudo {
+  opacity: 0;
 }
 
 /* ── Wrapper do trator ───────────────────────────────────────── */
@@ -2168,18 +2174,9 @@ html {
   50%       { transform: translateX(-50%) scaleX(1.15); opacity: 0.9;  }
 }
 
-/* ── Animações ativadas via .tv-corrida-apres--entrada ───────── */
-/* Adicionada/removida por JS a cada competidor — garante restart */
-
-.tv-corrida-apres--entrada .tv-corrida-apres-trator-img {
-  animation:
-    apres-trator-entrar 0.9s cubic-bezier(0.22, 1, 0.36, 1) forwards,
-    apres-trator-balanco 2.8s ease-in-out 0.9s infinite;
-}
-
-.tv-corrida-apres--entrada .tv-corrida-apres-info {
-  animation: apres-info-entrar 0.7s 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
-}
+/* As animações do trator e do info são aplicadas via inline style
+   pelo JS, garantindo restart correto a cada novo competidor.
+   Os @keyframes abaixo são usados por essas animações inline. */
 
 /* ── Informações do competidor ───────────────────────────────── */
 
@@ -2188,7 +2185,6 @@ html {
   flex-direction: column;
   align-items: center;
   gap: clamp(6px, 1.2vh, 16px);
-  opacity: 0;
 }
 
 @keyframes apres-info-entrar {

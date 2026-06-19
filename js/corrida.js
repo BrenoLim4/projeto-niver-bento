@@ -191,6 +191,13 @@ function gerarParticulasApres(container, corHex) {
   }
 }
 
+// Strings de animação aplicadas inline a cada competidor (garantem restart)
+const ANIM_TRATOR = [
+  'apres-trator-entrar 0.9s cubic-bezier(0.22, 1, 0.36, 1) forwards',
+  'apres-trator-balanco 2.8s ease-in-out 0.9s infinite',
+].join(', ');
+const ANIM_INFO = 'apres-info-entrar 0.7s 0.5s cubic-bezier(0.22, 1, 0.36, 1) both';
+
 async function apresentarCompetidores(apresEl, tratoresAtivos, nomes) {
   if (!apresEl || tratoresAtivos.length === 0) return;
 
@@ -199,8 +206,9 @@ async function apresentarCompetidores(apresEl, tratoresAtivos, nomes) {
   const participEl   = apresEl.querySelector('.tv-corrida-apres-participante');
   const particulasEl = apresEl.querySelector('.tv-corrida-apres-particulas');
   const bolhaEl      = apresEl.querySelector('.tv-corrida-apres-bolha');
+  const infoEl       = apresEl.querySelector('.tv-corrida-apres-info');
 
-  // Mostra o overlay (já oculto na abertura)
+  // Exibe overlay com fade-in
   apresEl.classList.remove('tv-corrida-apresentacao--saindo');
   apresEl.style.display = '';
   void apresEl.offsetWidth;
@@ -210,36 +218,41 @@ async function apresentarCompetidores(apresEl, tratoresAtivos, nomes) {
   for (let i = 0; i < tratoresAtivos.length; i++) {
     const trator = tratoresAtivos[i];
 
-    // Atualiza cor temática do spotlight/glow
+    // Entre competidores: fade out do conteúdo
+    if (i > 0) {
+      apresEl.classList.add('tv-corrida-apres--transicao');
+      await aguardar(340);
+    }
+
+    // Atualiza cor temática e conteúdo
     apresEl.style.setProperty('--cor-trator', trator.corHex);
-
-    // Preenche conteúdo
-    imgEl.src     = trator.imagem;
-    imgEl.alt     = trator.label;
-    nomeTraEl.textContent = `🚜 ${trator.label.toUpperCase()}`;
+    imgEl.src = trator.imagem;
+    imgEl.alt = trator.label;
+    nomeTraEl.textContent  = `🚜 ${trator.label.toUpperCase()}`;
     participEl.textContent = `👤 ${nomes[trator.cor]}`;
-
-    // Gera partículas temáticas
     gerarParticulasApres(particulasEl, trator.corHex);
 
-    // Entrada: reseta e re-aplica classe para reiniciar animação
-    apresEl.classList.remove('tv-corrida-apres--entrada');
-    void apresEl.offsetWidth;
-    apresEl.classList.add('tv-corrida-apres--entrada');
+    // Reinicia animações via inline style (garante restart independente do CSS)
+    imgEl.style.animation  = 'none';
+    if (infoEl) infoEl.style.animation = 'none';
+    void apresEl.offsetWidth; // força reflow
+    imgEl.style.animation  = ANIM_TRATOR;
+    if (infoEl) infoEl.style.animation = ANIM_INFO;
+
+    // Fade in do conteúdo
+    apresEl.classList.remove('tv-corrida-apres--transicao');
 
     // Som de motor (falha silenciosamente se mp3 ausente)
     tocarMotor();
 
-    // Bolha de narração com frase aleatória
+    // Bolha de narração
     if (bolhaEl) {
-      const fraseIdx = Math.floor(Math.random() * FRASES_APRESENTACAO.length);
-      bolhaEl.textContent = FRASES_APRESENTACAO[fraseIdx];
+      const frase = FRASES_APRESENTACAO[Math.floor(Math.random() * FRASES_APRESENTACAO.length)];
+      bolhaEl.textContent = frase;
       bolhaEl.classList.remove('tv-corrida-apres-bolha--visivel', 'tv-corrida-apres-bolha--saindo');
       bolhaEl.style.display = '';
       void bolhaEl.offsetWidth;
       bolhaEl.classList.add('tv-corrida-apres-bolha--visivel');
-
-      // Frase some depois de 2.2s
       setTimeout(() => {
         bolhaEl.classList.add('tv-corrida-apres-bolha--saindo');
         setTimeout(() => {
@@ -249,20 +262,16 @@ async function apresentarCompetidores(apresEl, tratoresAtivos, nomes) {
       }, 2200);
     }
 
-    // Fica visível por 3.5s depois da entrada
+    // Permanece visível por 3.5 segundos
     await aguardar(3500);
-
-    // Saída suave (exceto o último — que some junto com o overlay)
-    if (i < tratoresAtivos.length - 1) {
-      apresEl.classList.remove('tv-corrida-apres--entrada');
-      await aguardar(450);
-    }
   }
 
   // Encerra o overlay de apresentação
-  apresEl.classList.remove('tv-corrida-apres--entrada', 'tv-corrida-apresentacao--visivel');
+  imgEl.style.animation  = '';
+  if (infoEl) infoEl.style.animation = '';
+  apresEl.classList.remove('tv-corrida-apresentacao--visivel');
   apresEl.classList.add('tv-corrida-apresentacao--saindo');
-  await aguardar(500);
+  await aguardar(520);
   apresEl.style.display = 'none';
   apresEl.classList.remove('tv-corrida-apresentacao--saindo');
 }
