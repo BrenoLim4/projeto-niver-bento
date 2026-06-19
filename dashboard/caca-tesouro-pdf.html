@@ -1,0 +1,690 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Exportar PDF — Caça ao Tesouro · Fazendinha do Bento</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <link rel="stylesheet" href="../assets/css/variables.css" />
+  <link rel="stylesheet" href="../assets/css/base.css" />
+  <link rel="stylesheet" href="../assets/css/components.css" />
+  <style>
+    .pagina {
+      max-width: 560px;
+      margin: 0 auto;
+      padding: var(--espaco-md) var(--espaco-sm) var(--espaco-xl);
+    }
+
+    /* ── Seção ─────────────────────────────────────────────── */
+    .secao {
+      background: var(--cor-superficie);
+      border-radius: var(--raio-lg);
+      padding: var(--espaco-md);
+      box-shadow: var(--sombra-suave);
+      margin-bottom: var(--espaco-md);
+    }
+    .secao h2 {
+      font-size: 1rem;
+      color: var(--cor-marrom);
+      margin-bottom: var(--espaco-md);
+      display: flex;
+      align-items: center;
+      gap: var(--espaco-xs);
+    }
+
+    /* ── Opções ────────────────────────────────────────────── */
+    .opcoes-lista {
+      display: flex;
+      flex-direction: column;
+      gap: var(--espaco-xs);
+    }
+
+    .opcao-item {
+      display: flex;
+      align-items: center;
+      gap: var(--espaco-sm);
+      padding: 10px var(--espaco-sm);
+      border-radius: var(--raio-sm);
+      cursor: pointer;
+      background: var(--cor-bege);
+      border: 2px solid transparent;
+      transition: border-color 0.15s;
+      user-select: none;
+    }
+    .opcao-item:hover { border-color: var(--cor-dourado); }
+    .opcao-item:has(input:checked) { border-color: var(--cor-dourado); background: #fff8e7; }
+
+    .opcao-item input[type="checkbox"] {
+      width: 20px;
+      height: 20px;
+      accent-color: var(--cor-dourado);
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+    .opcao-texto { flex: 1; }
+    .opcao-titulo { font-weight: 700; color: var(--cor-marrom); font-size: 0.92rem; }
+    .opcao-desc   { font-size: 0.78rem; color: var(--cor-marrom); opacity: 0.65; margin-top: 2px; }
+
+    /* ── Preview ───────────────────────────────────────────── */
+    .animais-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 8px;
+    }
+
+    .animal-card-mini {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      padding: 8px 4px 6px;
+      border-radius: var(--raio-sm);
+      background: var(--cor-bege);
+      border: 1.5px solid rgba(139,90,43,.15);
+      text-align: center;
+      position: relative;
+    }
+    .animal-card-mini img {
+      width: 48px;
+      height: 48px;
+      object-fit: contain;
+      border-radius: 4px;
+    }
+    .animal-card-nome {
+      font-size: 0.6rem;
+      font-weight: 700;
+      color: var(--cor-marrom);
+      line-height: 1.2;
+    }
+    .animal-card-pagina {
+      font-size: 0.58rem;
+      color: var(--cor-marrom);
+      opacity: 0.45;
+      font-family: monospace;
+    }
+
+    /* ── Info box ──────────────────────────────────────────── */
+    .info-box {
+      background: #e8f4fd;
+      border: 1px solid #90caf9;
+      border-radius: var(--raio-sm);
+      padding: var(--espaco-sm) var(--espaco-md);
+      font-size: 0.82rem;
+      color: #1565c0;
+      line-height: 1.6;
+      margin-bottom: var(--espaco-md);
+    }
+
+    /* ── Botão gerar ───────────────────────────────────────── */
+    .btn-gerar {
+      width: 100%;
+      padding: 16px var(--espaco-md);
+      font-size: 1.05rem;
+      font-weight: 800;
+      border-radius: var(--raio-md);
+      background: var(--cor-dourado);
+      color: #fff;
+      border: none;
+      cursor: pointer;
+      transition: opacity 0.15s, transform 0.1s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: var(--espaco-sm);
+      margin-bottom: var(--espaco-md);
+      box-shadow: 0 4px 14px rgba(242,166,74,.45);
+    }
+    .btn-gerar:hover:not(:disabled) { opacity: 0.9; transform: translateY(-1px); }
+    .btn-gerar:active:not(:disabled) { transform: translateY(0); }
+    .btn-gerar:disabled { opacity: 0.5; cursor: not-allowed; box-shadow: none; }
+
+    /* ── Progresso ─────────────────────────────────────────── */
+    .progresso {
+      display: none;
+      align-items: center;
+      gap: var(--espaco-sm);
+      padding: var(--espaco-sm) var(--espaco-md);
+      background: #fff8e1;
+      border-radius: var(--raio-sm);
+      border: 1px solid #ffe082;
+      font-size: 0.9rem;
+      color: var(--cor-marrom);
+      font-weight: 600;
+      margin-bottom: var(--espaco-sm);
+    }
+    .progresso.ativo { display: flex; }
+
+    .spinner {
+      width: 22px;
+      height: 22px;
+      border: 3px solid rgba(242,166,74,0.3);
+      border-top-color: var(--cor-dourado);
+      border-radius: 50%;
+      animation: girar 0.8s linear infinite;
+      flex-shrink: 0;
+    }
+    @keyframes girar { to { transform: rotate(360deg); } }
+
+    /* ── Resultado ─────────────────────────────────────────── */
+    .resultado {
+      display: none;
+      align-items: center;
+      gap: var(--espaco-sm);
+      padding: var(--espaco-sm) var(--espaco-md);
+      background: #e8f5e9;
+      border-radius: var(--raio-sm);
+      border: 1px solid #a5d6a7;
+      font-size: 0.9rem;
+      color: #2e7d32;
+      font-weight: 600;
+      margin-bottom: var(--espaco-sm);
+    }
+    .resultado.ativo { display: flex; }
+
+    .erro {
+      display: none;
+      padding: var(--espaco-sm) var(--espaco-md);
+      background: #fde8e8;
+      border-radius: var(--raio-sm);
+      border: 1px solid #f5c6c6;
+      font-size: 0.9rem;
+      color: #c0392b;
+      font-weight: 600;
+      margin-bottom: var(--espaco-sm);
+    }
+    .erro.ativo { display: block; }
+
+    /* ── Esquema visual ────────────────────────────────────── */
+    .esquema {
+      display: flex;
+      gap: var(--espaco-md);
+      align-items: center;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin-top: var(--espaco-md);
+    }
+    .esquema-lado {
+      text-align: center;
+    }
+    .esquema-titulo {
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: var(--cor-marrom);
+      margin-bottom: 6px;
+      opacity: 0.7;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .esquema-grade {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 3px;
+      border: 2px solid var(--cor-dourado);
+      border-radius: 6px;
+      padding: 4px;
+      background: var(--cor-bege);
+      width: 120px;
+      height: 80px;
+    }
+    .esquema-celula {
+      border-radius: 3px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.65rem;
+      font-weight: 700;
+      color: var(--cor-marrom);
+    }
+    .esquema-celula--animal {
+      background: #fff8e7;
+      border: 1px solid rgba(242,166,74,.4);
+    }
+    .esquema-celula--qr {
+      background: #fff;
+      border: 1px dashed rgba(139,90,43,.3);
+    }
+    .esquema-seta {
+      font-size: 1.5rem;
+      color: var(--cor-dourado);
+      flex-shrink: 0;
+    }
+  </style>
+</head>
+<body>
+  <div class="pagina">
+    <div class="texto-centro" style="padding: var(--espaco-md) 0 var(--espaco-sm);">
+      <h1>🗺️ Exportar Caça ao Tesouro</h1>
+      <p style="opacity:.7; margin:0; font-size:.9rem;">PDF A4 · grade 2×2 · frente e verso</p>
+    </div>
+
+    <!-- Opções -->
+    <div class="secao">
+      <h2>⚙️ Opções de Exportação</h2>
+      <div class="opcoes-lista">
+        <label class="opcao-item">
+          <input type="checkbox" id="opt-verso" checked />
+          <div class="opcao-texto">
+            <div class="opcao-titulo">Frente e verso</div>
+            <div class="opcao-desc">Gera páginas de QR Codes espelhadas para impressão duplex automática</div>
+          </div>
+        </label>
+        <label class="opcao-item">
+          <input type="checkbox" id="opt-corte" checked />
+          <div class="opcao-texto">
+            <div class="opcao-titulo">Marcas de corte</div>
+            <div class="opcao-desc">Linhas de guia nos cantos de cada quadrante para facilitar o recorte</div>
+          </div>
+        </label>
+        <label class="opcao-item">
+          <input type="checkbox" id="opt-nome" checked />
+          <div class="opcao-texto">
+            <div class="opcao-titulo">Mostrar nome do animal</div>
+            <div class="opcao-desc">Exibe o nome abaixo de cada animal e QR Code</div>
+          </div>
+        </label>
+        <label class="opcao-item">
+          <input type="checkbox" id="opt-compactar" />
+          <div class="opcao-texto">
+            <div class="opcao-titulo">Compactar PDF</div>
+            <div class="opcao-desc">Reduz o tamanho do arquivo (pode diminuir levemente a qualidade das imagens)</div>
+          </div>
+        </label>
+      </div>
+    </div>
+
+    <!-- Preview dos animais -->
+    <div class="secao">
+      <h2>🐾 Animais (<span id="total-animais">10</span> no total · <span id="total-paginas">3</span> folhas)</h2>
+      <div class="animais-grid" id="animais-grid"></div>
+    </div>
+
+    <!-- Esquema visual de como fica -->
+    <div class="secao" id="secao-esquema">
+      <h2>📐 Como as páginas serão geradas</h2>
+      <div class="esquema">
+        <div class="esquema-lado">
+          <div class="esquema-titulo">Frente</div>
+          <div class="esquema-grade">
+            <div class="esquema-celula esquema-celula--animal">🐄</div>
+            <div class="esquema-celula esquema-celula--animal">🐴</div>
+            <div class="esquema-celula esquema-celula--animal">🐷</div>
+            <div class="esquema-celula esquema-celula--animal">🐔</div>
+          </div>
+        </div>
+        <div class="esquema-seta">⟶</div>
+        <div class="esquema-lado">
+          <div class="esquema-titulo">Verso (QR espelhado)</div>
+          <div class="esquema-grade">
+            <div class="esquema-celula esquema-celula--qr">QR 🐴</div>
+            <div class="esquema-celula esquema-celula--qr">QR 🐄</div>
+            <div class="esquema-celula esquema-celula--qr">QR 🐔</div>
+            <div class="esquema-celula esquema-celula--qr">QR 🐷</div>
+          </div>
+        </div>
+      </div>
+      <p style="text-align:center; font-size:0.75rem; color:var(--cor-marrom); opacity:.55; margin-top: var(--espaco-sm);">
+        O QR Code do verso fica alinhado com o animal quando impresso frente e verso
+      </p>
+    </div>
+
+    <!-- Instruções de impressão -->
+    <div class="info-box">
+      🖨️ <strong>Como imprimir:</strong> Selecione <strong>"Frente e verso"</strong> (duplex) e
+      escolha <strong>"Virar no lado longo"</strong>. Os QR Codes ficam automaticamente alinhados
+      com os animais da frente — prontos para colar em papelão ou MDF.
+    </div>
+
+    <!-- Feedback de progresso / resultado / erro -->
+    <div class="progresso" id="progresso">
+      <div class="spinner"></div>
+      <span id="progresso-texto">Carregando imagens…</span>
+    </div>
+    <div class="resultado" id="resultado">
+      ✅ PDF gerado com sucesso! Verifique os downloads.
+    </div>
+    <div class="erro" id="div-erro"></div>
+
+    <!-- Botão principal -->
+    <button class="btn-gerar" id="btn-gerar" onclick="gerarPDF()">
+      🖨️ Gerar PDF para Impressão
+    </button>
+
+    <p class="texto-centro">
+      <a href="/dashboard/tesouro.html">← Voltar ao Painel da Caça ao Tesouro</a>
+    </p>
+  </div>
+
+  <script>
+    // ── Dados dos animais ──────────────────────────────────────────
+    const BASE = '../assets/img/animais/';
+
+    const ANIMAIS = [
+      { codigo: 'ANIMAL-VACA',     nome: 'Vaca Mimosa',          emoji: '🐄', img: BASE + 'bento_vaca.png'      },
+      { codigo: 'ANIMAL-CAVALO',   nome: 'Cavalo Trovão',         emoji: '🐴', img: BASE + 'bento_cavalo.png'    },
+      { codigo: 'ANIMAL-PORCO',    nome: 'Porquinho Baconzinho',  emoji: '🐷', img: BASE + 'bento_porquinho.png' },
+      { codigo: 'ANIMAL-GALINHA',  nome: 'Galinha Cocó',          emoji: '🐔', img: BASE + 'bento_galinha.png'   },
+      { codigo: 'ANIMAL-OVELHA',   nome: 'Ovelha Floquinha',      emoji: '🐑', img: BASE + 'bento_ovelha.png'    },
+      { codigo: 'ANIMAL-CABRA',    nome: 'Cabrita Estrelinha',    emoji: '🐐', img: BASE + 'bento_cabra.png'     },
+      { codigo: 'ANIMAL-PATO',     nome: 'Patinho Pingo',         emoji: '🦆', img: BASE + 'bento_pato.png'      },
+      { codigo: 'ANIMAL-PINTINHO', nome: 'Pintinho Amarelinho',   emoji: '🐣', img: BASE + 'bento_pintinho.png'  },
+      { codigo: 'ANIMAL-CACHORRO', nome: 'Cachorrinho Rex',       emoji: '🐕', img: BASE + 'bento_cachorro.png'  },
+      { codigo: 'ANIMAL-GATO',     nome: 'Gatinho Mingau',        emoji: '🐱', img: BASE + 'bento_gato.png'      },
+    ];
+
+    // ── Constantes do PDF (mm) ─────────────────────────────────────
+    const PAGE_W = 210;
+    const PAGE_H = 297;
+    const MARGIN = 5;
+    const GAP    = 3;   // gap between cells
+    const COLS   = 2;
+    const ROWS   = 2;
+
+    const CELL_W = (PAGE_W - 2 * MARGIN - GAP) / COLS;   // 98.5 mm
+    const CELL_H = (PAGE_H - 2 * MARGIN - GAP) / ROWS;   // 142 mm
+
+    // ── Preview ────────────────────────────────────────────────────
+    function renderizarPreview() {
+      const grid  = document.getElementById('animais-grid');
+      const folhas = Math.ceil(ANIMAIS.length / 4);
+      document.getElementById('total-animais').textContent = ANIMAIS.length;
+      document.getElementById('total-paginas').textContent = folhas;
+
+      ANIMAIS.forEach((a, i) => {
+        const folha = Math.floor(i / 4) + 1;
+        const pos   = ['↖', '↗', '↙', '↘'][i % 4];
+        const card  = document.createElement('div');
+        card.className = 'animal-card-mini';
+        card.innerHTML = `
+          <img src="${a.img}" alt="${a.nome}" onerror="this.textContent='${a.emoji}';this.style.fontSize='2rem';" />
+          <div class="animal-card-nome">${a.nome.split(' ')[0]}</div>
+          <div class="animal-card-pagina">F${folha} ${pos}</div>
+        `;
+        grid.appendChild(card);
+      });
+    }
+
+    // ── Utilitários de imagem ──────────────────────────────────────
+
+    function carregarImgLocal(src) {
+      return new Promise((resolve) => {
+        const img = new Image();
+        img.onload = () => {
+          const c = document.createElement('canvas');
+          c.width  = img.naturalWidth  || 800;
+          c.height = img.naturalHeight || 800;
+          c.getContext('2d').drawImage(img, 0, 0);
+          resolve({ dataUrl: c.toDataURL('image/png'), w: c.width, h: c.height });
+        };
+        img.onerror = () => resolve(null);
+        img.src = src;
+      });
+    }
+
+    function carregarImgCORS(url) {
+      return new Promise((resolve) => {
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
+        img.onload = () => {
+          const c = document.createElement('canvas');
+          c.width  = img.naturalWidth  || 400;
+          c.height = img.naturalHeight || 400;
+          c.getContext('2d').drawImage(img, 0, 0);
+          resolve({ dataUrl: c.toDataURL('image/png'), w: c.width, h: c.height });
+        };
+        img.onerror = () => resolve(null);
+        img.src = url;
+      });
+    }
+
+    function qrUrl(codigo) {
+      return (
+        'https://api.qrserver.com/v1/create-qr-code/' +
+        '?size=500x500' +
+        '&data=' + encodeURIComponent(codigo) +
+        '&color=8B5A2B' +
+        '&bgcolor=ffffff' +
+        '&margin=6' +
+        '&ecc=H'
+      );
+    }
+
+    // ── Geração do PDF ─────────────────────────────────────────────
+
+    async function gerarPDF() {
+      const btn       = document.getElementById('btn-gerar');
+      const prog      = document.getElementById('progresso');
+      const progTxt   = document.getElementById('progresso-texto');
+      const resEl     = document.getElementById('resultado');
+      const errEl     = document.getElementById('div-erro');
+
+      const optVerso    = document.getElementById('opt-verso').checked;
+      const optCorte    = document.getElementById('opt-corte').checked;
+      const optNome     = document.getElementById('opt-nome').checked;
+      const optCompact  = document.getElementById('opt-compactar').checked;
+
+      btn.disabled   = true;
+      resEl.classList.remove('ativo');
+      errEl.classList.remove('ativo');
+      prog.classList.add('ativo');
+
+      try {
+        // 1. Carregar imagens dos animais
+        progTxt.textContent = 'Carregando imagens dos animais…';
+        const imgCache = {};
+        await Promise.all(
+          ANIMAIS.map(async (a) => {
+            const r = await carregarImgLocal(a.img);
+            if (r) imgCache[a.codigo] = r;
+          })
+        );
+
+        // 2. Carregar QR Codes (opcional)
+        let qrCache = null;
+        if (optVerso) {
+          progTxt.textContent = 'Baixando QR Codes… (pode levar alguns segundos)';
+          qrCache = {};
+          await Promise.all(
+            ANIMAIS.map(async (a) => {
+              const r = await carregarImgCORS(qrUrl(a.codigo));
+              if (r) qrCache[a.codigo] = r;
+            })
+          );
+        }
+
+        // 3. Montar PDF
+        progTxt.textContent = 'Montando PDF…';
+        const compressao = optCompact ? 'FAST' : 'NONE';
+        await montarPDF(imgCache, qrCache, optCorte, optNome, compressao);
+
+        resEl.classList.add('ativo');
+      } catch (err) {
+        console.error(err);
+        errEl.textContent = '❌ Erro ao gerar PDF: ' + err.message;
+        errEl.classList.add('ativo');
+      } finally {
+        prog.classList.remove('ativo');
+        btn.disabled = false;
+      }
+    }
+
+    function getCelula(col, row) {
+      return {
+        x: MARGIN + col * (CELL_W + GAP),
+        y: MARGIN + row * (CELL_H + GAP),
+        w: CELL_W,
+        h: CELL_H,
+      };
+    }
+
+    function desenharImagem(doc, dados, cell, reservarNomeH) {
+      if (!dados) return;
+      const PAD  = 4;
+      const nomH = reservarNomeH ? 14 : 0;
+      const avW  = cell.w - 2 * PAD;
+      const avH  = cell.h - 2 * PAD - nomH;
+
+      const ratio = dados.w / dados.h;
+      let dW, dH;
+      if (ratio > avW / avH) {
+        dW = avW;
+        dH = avW / ratio;
+      } else {
+        dH = avH;
+        dW = avH * ratio;
+      }
+
+      const ix = cell.x + PAD + (avW - dW) / 2;
+      const iy = cell.y + PAD + (avH - dH) / 2;
+      doc.addImage(dados.dataUrl, 'PNG', ix, iy, dW, dH, undefined, doc._comprImgs);
+    }
+
+    function desenharQR(doc, dados, cell, reservarNomeH) {
+      if (!dados) return;
+      const PAD  = 2;
+      const nomH = reservarNomeH ? 12 : 0;
+      const maxSz = Math.min(cell.w - 2 * PAD, cell.h - 2 * PAD - nomH);
+
+      // Quadrado máximo centralizado — alvo ~90mm
+      const sz = Math.min(90, maxSz * 0.97);
+      const qx = cell.x + (cell.w - sz) / 2;
+      const qy = cell.y + PAD + ((cell.h - 2 * PAD - nomH - sz) / 2);
+
+      // Fundo branco de segurança ao redor do QR
+      doc.setFillColor(255, 255, 255);
+      doc.roundedRect(qx - 1.5, qy - 1.5, sz + 3, sz + 3, 1.5, 1.5, 'F');
+
+      doc.addImage(dados.dataUrl, 'PNG', qx, qy, sz, sz, undefined, doc._comprImgs);
+    }
+
+    function desenharNome(doc, nome, cell, isBack) {
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(isBack ? 9 : 11);
+      doc.setTextColor(139, 90, 43);
+      const ty = cell.y + cell.h - 4;
+      doc.text(nome, cell.x + cell.w / 2, ty, { align: 'center', maxWidth: cell.w - 6 });
+    }
+
+    function desenharCodigo(doc, codigo, cell, optNome) {
+      doc.setFont('courier', 'normal');
+      doc.setFontSize(5.5);
+      doc.setTextColor(160, 120, 80);
+      const ty = cell.y + cell.h - (optNome ? 8.5 : 3.5);
+      doc.text(codigo, cell.x + cell.w / 2, ty, { align: 'center' });
+    }
+
+    function desenharBordaCelula(doc, cell, tesouro = false) {
+      doc.setDrawColor(242, 166, 74);
+      doc.setLineWidth(tesouro ? 0.8 : 0.35);
+      doc.roundedRect(cell.x, cell.y, cell.w, cell.h, 2.5, 2.5, 'S');
+    }
+
+    function desenharMarcasCorte(doc, cell) {
+      const LEN = 3.5;
+      const G   = 1.0;
+      doc.setDrawColor(170, 150, 130);
+      doc.setLineWidth(0.15);
+
+      const x0 = cell.x, x1 = cell.x + cell.w;
+      const y0 = cell.y, y1 = cell.y + cell.h;
+
+      // Canto superior-esquerdo
+      doc.line(x0 - G - LEN, y0, x0 - G, y0);
+      doc.line(x0, y0 - G - LEN, x0, y0 - G);
+      // Canto superior-direito
+      doc.line(x1 + G, y0, x1 + G + LEN, y0);
+      doc.line(x1, y0 - G - LEN, x1, y0 - G);
+      // Canto inferior-esquerdo
+      doc.line(x0 - G - LEN, y1, x0 - G, y1);
+      doc.line(x0, y1 + G, x0, y1 + G + LEN);
+      // Canto inferior-direito
+      doc.line(x1 + G, y1, x1 + G + LEN, y1);
+      doc.line(x1, y1 + G, x1, y1 + G + LEN);
+    }
+
+    function fundoPagina(doc) {
+      // Fundo bege suave
+      doc.setFillColor(253, 248, 240);
+      doc.rect(0, 0, PAGE_W, PAGE_H, 'F');
+    }
+
+    function rodape(doc, texto) {
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(6.5);
+      doc.setTextColor(180, 150, 110);
+      doc.text('Fazendinha do Bento · ' + texto, PAGE_W / 2, PAGE_H - 1.8, { align: 'center' });
+    }
+
+    async function montarPDF(imgCache, qrCache, optCorte, optNome, compressao) {
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+      doc._comprImgs = compressao;
+
+      const grupos = [];
+      for (let i = 0; i < ANIMAIS.length; i += 4) {
+        grupos.push(ANIMAIS.slice(i, i + 4));
+      }
+
+      for (let g = 0; g < grupos.length; g++) {
+        const grupo = grupos[g];
+        const totalFolhas = grupos.length;
+
+        // ═══════════════════════════════════════════
+        // FRENTE — Imagens dos animais
+        // ═══════════════════════════════════════════
+        if (g > 0) doc.addPage();
+
+        fundoPagina(doc);
+
+        for (let i = 0; i < grupo.length; i++) {
+          const animal = grupo[i];
+          const col    = i % COLS;
+          const row    = Math.floor(i / COLS);
+          const cell   = getCelula(col, row);
+
+          desenharBordaCelula(doc, cell);
+          desenharImagem(doc, imgCache[animal.codigo], cell, optNome);
+          if (optNome) desenharNome(doc, animal.nome, cell, false);
+          if (optCorte) desenharMarcasCorte(doc, cell);
+        }
+
+        rodape(doc, `Caça ao Tesouro · Animais · Folha ${g + 1} de ${totalFolhas}`);
+
+        // ═══════════════════════════════════════════
+        // VERSO — QR Codes espelhados
+        // ═══════════════════════════════════════════
+        if (qrCache) {
+          doc.addPage();
+          fundoPagina(doc);
+
+          for (let i = 0; i < grupo.length; i++) {
+            const animal   = grupo[i];
+            const frontCol = i % COLS;
+            const frontRow = Math.floor(i / COLS);
+            // Espelhar horizontalmente para alinhar com o verso
+            const backCol  = (COLS - 1) - frontCol;
+            const cell     = getCelula(backCol, frontRow);
+
+            desenharBordaCelula(doc, cell);
+            desenharQR(doc, qrCache[animal.codigo], cell, optNome);
+            if (optNome) desenharNome(doc, animal.nome, cell, true);
+            desenharCodigo(doc, animal.codigo, cell, optNome);
+            if (optCorte) desenharMarcasCorte(doc, cell);
+          }
+
+          rodape(doc, `Caça ao Tesouro · QR Codes (verso) · Folha ${g + 1} de ${totalFolhas}`);
+        }
+      }
+
+      doc.save('caca-tesouro-fazendinha-bento.pdf');
+    }
+
+    // ── Init ───────────────────────────────────────────────────────
+    renderizarPreview();
+
+    // Ocultar esquema quando frente/verso está desmarcado
+    document.getElementById('opt-verso').addEventListener('change', (e) => {
+      document.getElementById('secao-esquema').style.display = e.target.checked ? '' : 'none';
+    });
+  </script>
+</body>
+</html>

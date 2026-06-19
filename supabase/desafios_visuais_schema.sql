@@ -24,9 +24,18 @@ CREATE TABLE IF NOT EXISTS desafios_tentativas (
   created_at        timestamptz NOT NULL DEFAULT now()
 );
 
+-- Coluna opcional para associar um prêmio ao desafio (com premiação)
+ALTER TABLE desafios_tentativas
+  ADD COLUMN IF NOT EXISTS premio_id uuid REFERENCES premios(id);
+
 -- Index para listar do mais recente
 CREATE INDEX IF NOT EXISTS idx_desafios_tentativas_created
   ON desafios_tentativas(created_at DESC);
+
+-- Realtime — sem isso o Supabase não envia eventos para a TV
+DO $$ BEGIN
+  ALTER PUBLICATION supabase_realtime ADD TABLE desafios_tentativas;
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- RLS: permissivo para evento presencial privado
 ALTER TABLE desafios_tentativas ENABLE ROW LEVEL SECURITY;

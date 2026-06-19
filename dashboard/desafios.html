@@ -200,6 +200,29 @@
       text-align: center;
       padding: var(--espaco-lg);
     }
+
+    /* ── Seletor de prêmio ──────────────────────────────────── */
+    .select-campo {
+      width: 100%;
+      padding: var(--espaco-sm) var(--espaco-md);
+      border: 2px solid var(--cor-bege);
+      border-radius: var(--raio-md);
+      font-family: var(--fonte-texto);
+      font-size: 0.9rem;
+      background: var(--cor-superficie);
+      color: var(--cor-texto);
+      cursor: pointer;
+    }
+
+    .badge-premiado {
+      background: var(--cor-dourado);
+      color: #fff;
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      margin-left: var(--espaco-xs);
+    }
   </style>
 </head>
 <body>
@@ -245,6 +268,13 @@
     </div>
 
     <div class="campo">
+      <label for="select-premio">Prêmio (opcional)</label>
+      <select id="select-premio" class="select-campo">
+        <option value="">🎯 Sem premiação</option>
+      </select>
+    </div>
+
+    <div class="campo">
       <label>Desafio</label>
       <div id="lista-charadas"></div>
     </div>
@@ -264,7 +294,9 @@
 
   <script type="module">
     import { supabase } from '../js/supabaseClient.js';
-    import { subscribeDesafiosTentativas } from '../js/realtime.js';
+    import { subscribeDesafiosTentativas, criarCanalBroadcast } from '../js/realtime.js';
+
+    const canalBroadcast = criarCanalBroadcast();
 
     const TIPO_LABELS = {
       memoria_posicao:   'Memória de Posição',
@@ -276,12 +308,14 @@
     };
 
     // Estado
-    let charadas         = [];
+    let charadas           = [];
     let charadaSelecionada = null; // null = aleatório
-    let tentativaAtiva   = null;
-    let charadaAtiva     = null;
-    let processando      = false;
-    let toastTimeout     = null;
+    let tentativaAtiva     = null;
+    let charadaAtiva       = null;
+    let processando        = false;
+    let toastTimeout       = null;
+    let premios            = [];
+    let premioSelecionado  = null;
 
     // Elementos
     const painelAtivo       = document.getElementById('painel-ativo');
@@ -290,6 +324,7 @@
     const gradeAlternativas = document.getElementById('grade-alternativas');
     const listaCheraadas    = document.getElementById('lista-charadas');
     const inputParticipante = document.getElementById('input-participante');
+    const selectPremio      = document.getElementById('select-premio');
     const msgErroLancamento = document.getElementById('msg-erro-lancamento');
     const btnLancar         = document.getElementById('btn-lancar');
     const historicoLista    = document.getElementById('historico-lista');
@@ -305,6 +340,58 @@
         .order('created_at');
       charadas = data ?? [];
       renderizarListaCharadas();
+    }
+
+    async function carregarPremios() {
+      const { data } = await supabase
+        .from('premios')
+        .select('id, nome, codigo, categoria, imagem_url, status')
+        .eq('status', 'disponivel')
+        .order('categoria');
+      premios = data ?? [];
+      selectPremio.innerHTML = '<option value="">🎯 Sem premiação</option>';
+      premios.forEach((p) => {
+        const opt = document.createElement('option');
+        opt.value = p.id;
+        opt.textContent = `${p.nome} (${p.categoria})`;
+        selectPremio.appendChild(opt);
+      });
+    }
+
+    async function acionarPremio(participanteNome, premio) {
+      try {
+        const { data: evento, error: evErr } = await supabase
+          .from('eventos')
+          .insert({
+            tipo: 'livre',
+            premio_id: premio.id,
+            premio_codigo: premio.codigo,
+            premio_nome: premio.nome,
+            premio_imagem_url: premio.imagem_url,
+            premio_categoria: premio.categoria,
+            vencedor: participanteNome,
+            status: 'pending',
+            metadata: { origem: 'desafio_visual' },
+          })
+          .select()
+          .single();
+
+        if (evErr) throw evErr;
+
+        await supabase.from('premios').update({ status: 'reservado' }).eq('id', premio.id);
+
+        await canalBroadcast.aguardarPronto();
+        await canalBroadcast.send({
+          type: 'broadcast',
+          event: 'novo_evento',
+          payload: evento,
+        });
+
+        mostrarToast('🏆 Prêmio enviado para a TV!');
+        carregarPremios();
+      } catch (err) {
+        mostrarToast(`⚠️ Erro ao acionar prêmio: ${err.message}`);
+      }
     }
 
     async function carregarHistorico() {
@@ -342,6 +429,10 @@
       charadaSelecionada = ch;
       renderizarListaCharadas();
     }
+
+    selectPremio.addEventListener('change', () => {
+      premioSelecionado = premios.find((p) => p.id === selectPremio.value) ?? null;
+    });
 
     function renderizarHistorico(itens) {
       if (itens.length === 0) {
@@ -468,6 +559,19 @@
         inputParticipante.value = '';
         carregarHistorico();
 
+        // Fallback: se o Realtime não entregar o UPDATE de aguardando_resposta,
+        // o timer garante que os botões aparecem após a fase visual terminar.
+        const tempoVisual = charada.tipo !== 'pergunta' && charada.payload_json?.tempo_exibicao
+          ? charada.payload_json.tempo_exibicao
+          : 500;
+        const tentativaIdLancada = tentativa.id;
+        setTimeout(() => {
+          if (tentativaAtiva?.id === tentativaIdLancada && tentativaAtiva.status === 'aguardando_tv') {
+            tentativaAtiva = { ...tentativaAtiva, status: 'aguardando_resposta' };
+            atualizarPainelAtivo(tentativaAtiva);
+          }
+        }, tempoVisual + 2000);
+
       } catch (err) {
         mostrarErro(err.message);
       } finally {
@@ -494,6 +598,12 @@
         if (error) {
           habilitarBotoesAlternativas(true);
           mostrarToast(`⚠️ Erro: ${error.message}`);
+        } else if (correta && premioSelecionado) {
+          const premioParaAcionar   = premioSelecionado;
+          const nomeParticipante    = tentativaAtiva.participante_nome;
+          premioSelecionado         = null;
+          selectPremio.value        = '';
+          setTimeout(() => acionarPremio(nomeParticipante, premioParaAcionar), 4500);
         }
       });
     });
@@ -527,6 +637,7 @@
 
     await carregarCharadas();
     await carregarHistorico();
+    await carregarPremios();
   </script>
 </body>
 </html>

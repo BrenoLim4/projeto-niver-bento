@@ -67,6 +67,10 @@
               <span>Entregues</span>
             </div>
             <div class="hall-contador">
+              <strong id="hall-comuns">0</strong>
+              <span>Comuns</span>
+            </div>
+            <div class="hall-contador">
               <strong id="hall-raros">0</strong>
               <span>Raros</span>
             </div>
@@ -488,6 +492,7 @@
       grade: document.getElementById('hall-grade'),
       trilha: document.getElementById('hall-trilha'),
       totalDistribuidos: document.getElementById('hall-total'),
+      totalComuns: document.getElementById('hall-comuns'),
       totalRaros: document.getElementById('hall-raros'),
       totalLendarios: document.getElementById('hall-lendarios'),
       tesouroContainer: document.getElementById('hall-tesouro'),
@@ -833,6 +838,10 @@
     function mostrarCharadaTV(tentativaId, participante, charada) {
       tentativaAtivaId = tentativaId;
       clearTimeout(timeoutVisualTV);
+
+      // Garante o label correto para o contexto do tesouro
+      const labelEl = document.getElementById('tv-tesouro-desafio-label');
+      if (labelEl) labelEl.textContent = '🔑 Desafio Final do Tesouro!';
 
       // ── Participante ──────────────────────────────────────────────
       const fotoEl   = document.getElementById('tv-tesouro-charada-foto');

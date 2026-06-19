@@ -213,6 +213,7 @@ async function carregarEstatisticas() {
   if (error) { console.error('Erro ao carregar estatísticas do Hall da Fama:', error); return; }
 
   elementos.totalDistribuidos.textContent = data.total_entregues;
+  if (elementos.totalComuns) elementos.totalComuns.textContent = data.total_comuns;
   elementos.totalRaros.textContent = data.total_raros;
   elementos.totalLendarios.textContent = data.total_lendarios;
 }

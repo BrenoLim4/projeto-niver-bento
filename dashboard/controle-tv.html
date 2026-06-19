@@ -211,6 +211,11 @@
       <button id="btn-lancar-desafio" class="botao botao-primario">🎯 Lançar</button>
     </div>
 
+    <select id="select-premio-tv"
+            style="width:100%; padding: var(--espaco-sm) var(--espaco-md); border: 2px solid var(--cor-bege); border-radius: var(--raio-md); font-family: var(--fonte-texto); font-size: 0.88rem; background: var(--cor-superficie); color: var(--cor-texto); margin-bottom: var(--espaco-sm);">
+      <option value="">🏅 Sem prêmio</option>
+    </select>
+
     <div id="desafio-painel" style="display: none; margin-bottom: var(--espaco-md);">
       <div id="desafio-status-bloco" class="desafio-status-bloco"></div>
       <div id="grade-respostas" class="grade-respostas" style="display: none;">
@@ -288,15 +293,18 @@
     const canalBroadcast = criarCanalBroadcast();
 
     // ── Desafios Visuais ─────────────────────────────────────────
-    let desafioAtivo    = null;
-    let charadaAtiva    = null;
+    let desafioAtivo       = null;
+    let charadaAtiva       = null;
     let desafioProcessando = false;
+    let premiosTv          = [];
+    let premioSelecionadoTv = null;
 
     const inputDesafioParticipante = document.getElementById('input-desafio-participante');
     const btnLancarDesafio         = document.getElementById('btn-lancar-desafio');
     const desafioPainel            = document.getElementById('desafio-painel');
     const desafioStatusBloco       = document.getElementById('desafio-status-bloco');
     const gradeRespostas           = document.getElementById('grade-respostas');
+    const selectPremioTv           = document.getElementById('select-premio-tv');
 
     // ── Config: modo + tesouro ───────────────────────────────────
 
@@ -456,6 +464,64 @@
       toastTimeout = setTimeout(() => toast.remove(), 3500);
     }
 
+    // ── Prêmios para desafios ────────────────────────────────────
+
+    async function carregarPremiosTv() {
+      const { data } = await supabase
+        .from('premios')
+        .select('id, nome, codigo, categoria, imagem_url')
+        .eq('status', 'disponivel')
+        .order('categoria');
+      premiosTv = data ?? [];
+      selectPremioTv.innerHTML = '<option value="">🏅 Sem prêmio</option>';
+      premiosTv.forEach((p) => {
+        const opt = document.createElement('option');
+        opt.value = p.id;
+        opt.textContent = `${p.nome} (${p.categoria})`;
+        selectPremioTv.appendChild(opt);
+      });
+    }
+
+    selectPremioTv.addEventListener('change', () => {
+      premioSelecionadoTv = premiosTv.find((p) => p.id === selectPremioTv.value) ?? null;
+    });
+
+    async function acionarPremioTv(participanteNome, premio) {
+      try {
+        const { data: evento, error: evErr } = await supabase
+          .from('eventos')
+          .insert({
+            tipo: 'livre',
+            premio_id: premio.id,
+            premio_codigo: premio.codigo,
+            premio_nome: premio.nome,
+            premio_imagem_url: premio.imagem_url,
+            premio_categoria: premio.categoria,
+            vencedor: participanteNome,
+            status: 'pending',
+            metadata: { origem: 'desafio_visual' },
+          })
+          .select()
+          .single();
+
+        if (evErr) throw evErr;
+
+        await supabase.from('premios').update({ status: 'reservado' }).eq('id', premio.id);
+
+        await canalBroadcast.aguardarPronto();
+        await canalBroadcast.send({
+          type: 'broadcast',
+          event: 'novo_evento',
+          payload: evento,
+        });
+
+        mostrarToast('🏆 Prêmio enviado para a TV!');
+        carregarPremiosTv();
+      } catch (err) {
+        mostrarToast(`⚠️ Erro ao acionar prêmio: ${err.message}`);
+      }
+    }
+
     // ── Lançar desafio rápido ─────────────────────────────────────
 
     btnLancarDesafio.addEventListener('click', async () => {
@@ -497,6 +563,18 @@
         atualizarPainelDesafio(tentativa);
         inputDesafioParticipante.value = '';
         mostrarToast('🎯 Desafio enviado para a TV!');
+
+        // Fallback: garante que os botões apareçam após a fase visual
+        const tempoVisual = charada.tipo !== 'pergunta' && charada.payload_json?.tempo_exibicao
+          ? charada.payload_json.tempo_exibicao
+          : 500;
+        const tentativaIdLancada = tentativa.id;
+        setTimeout(() => {
+          if (desafioAtivo?.id === tentativaIdLancada && desafioAtivo.status === 'aguardando_tv') {
+            desafioAtivo = { ...desafioAtivo, status: 'aguardando_resposta' };
+            atualizarPainelDesafio(desafioAtivo);
+          }
+        }, tempoVisual + 2000);
 
       } catch (err) {
         mostrarToast(`⚠️ ${err.message}`);
@@ -562,6 +640,12 @@
         if (error) {
           habilitarRespostas(true);
           mostrarToast(`⚠️ ${error.message}`);
+        } else if (correta && premioSelecionadoTv) {
+          const premioParaAcionar   = premioSelecionadoTv;
+          const nomeParticipante    = desafioAtivo.participante_nome;
+          premioSelecionadoTv       = null;
+          selectPremioTv.value      = '';
+          setTimeout(() => acionarPremioTv(nomeParticipante, premioParaAcionar), 4500);
         }
       });
     });
@@ -575,6 +659,7 @@
     // ─────────────────────────────────────────────────────────────
 
     carregarConfig();
+    carregarPremiosTv();
   </script>
 </body>
 </html>

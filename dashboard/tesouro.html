@@ -283,7 +283,10 @@
     <div class="secao" id="secao-qrcodes">
       <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:var(--espaco-sm); margin-bottom:var(--espaco-md);">
         <h2 style="margin:0;">🖨️ Códigos QR da Brincadeira</h2>
-        <button class="botao botao-primario btn-imprimir" onclick="window.print()">🖨️ Imprimir</button>
+        <div style="display:flex; gap: var(--espaco-sm); flex-wrap:wrap;">
+          <a class="botao botao-primario" href="/dashboard/caca-tesouro-pdf.html" style="text-decoration:none;">📄 Exportar PDF A4</a>
+          <button class="botao botao-secundario btn-imprimir" onclick="window.print()">🖨️ Imprimir</button>
+        </div>
       </div>
       <div class="qr-grade" id="lista-qr-codes"></div>
     </div>
