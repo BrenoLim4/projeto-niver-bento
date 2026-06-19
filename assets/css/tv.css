@@ -62,9 +62,16 @@
   height: 96px;
 }
 
-/* Estado Evento: placeholder de revelação (substituído na FASE 5) */
+/* Estado Evento: texto preto para contraste sobre o fundo da fazenda */
 .tv-evento h1 {
-  color: var(--cor-dourado);
+  color: #1a1a1a;
+  text-shadow: 0 1px 6px rgba(255,255,255,0.55);
+}
+
+.tv-evento p,
+.tv-evento strong {
+  color: #1a1a1a;
+  text-shadow: 0 1px 4px rgba(255,255,255,0.45);
 }
 
 /* Hall da Fama (FASE 6) */
