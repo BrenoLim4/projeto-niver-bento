@@ -72,6 +72,118 @@
     }
     .mensagem--erro { background: #fde8e8; color: var(--cor-vermelho); }
     .mensagem--ok   { background: #e8f5e9; color: var(--cor-verde); }
+
+    /* ── Celebração de boas-vindas ── */
+    .bv-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 300;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: radial-gradient(ellipse at 30% 20%, #3d2000 0%, #1a0d00 100%);
+      overflow: hidden;
+      text-align: center;
+      padding: var(--espaco-lg) var(--espaco-md);
+      gap: var(--espaco-md);
+      animation: bv-entrar 0.4s ease-out;
+    }
+    @keyframes bv-entrar {
+      from { opacity: 0; transform: scale(0.96); }
+      to   { opacity: 1; transform: scale(1); }
+    }
+    .bv-particulas {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      overflow: hidden;
+    }
+    .bv-particulas span {
+      position: absolute;
+      top: -10%;
+      animation: bv-cair var(--dur, 3s) var(--delay, 0s) ease-in forwards;
+      opacity: 0;
+    }
+    @keyframes bv-cair {
+      0%   { transform: translateY(0) rotate(0deg);            opacity: 1; }
+      80%  { opacity: 1; }
+      100% { transform: translateY(110vh) rotate(var(--rot, 360deg)); opacity: 0; }
+    }
+    .bv-deco-topo { font-size: 2.8rem; line-height: 1; }
+    .bv-foto-wrap {
+      position: relative;
+      width: 110px;
+      height: 110px;
+      margin: 0 auto;
+    }
+    .bv-foto,
+    .bv-avatar {
+      width: 110px;
+      height: 110px;
+      border-radius: 50%;
+      border: 4px solid #F2A64A;
+      animation: bv-pulso 1.8s ease-in-out infinite;
+    }
+    .bv-foto { object-fit: cover; }
+    .bv-avatar {
+      background: radial-gradient(circle at 40% 35%, #8B5A2B, #5a3218);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 3rem;
+    }
+    @keyframes bv-pulso {
+      0%, 100% { box-shadow: 0 0 0 4px rgba(242,166,74,.3),  0 0 24px rgba(242,166,74,.4); }
+      50%       { box-shadow: 0 0 0 10px rgba(242,166,74,.45), 0 0 50px rgba(242,166,74,.8); }
+    }
+    .bv-titulo {
+      font-family: var(--fonte-titulo);
+      font-size: 2rem;
+      color: #F2A64A;
+      font-weight: 900;
+      text-shadow: 0 2px 12px rgba(0,0,0,.6);
+      animation: bv-bounce 0.55s ease-out;
+      line-height: 1.1;
+    }
+    @keyframes bv-bounce {
+      0%   { transform: scale(0.5); opacity: 0; }
+      60%  { transform: scale(1.12); }
+      100% { transform: scale(1);   opacity: 1; }
+    }
+    .bv-nome {
+      font-family: var(--fonte-titulo);
+      font-size: 1.6rem;
+      color: #fff;
+      font-weight: 700;
+      line-height: 1.2;
+    }
+    .bv-subtitulo {
+      color: #F5E6C8;
+      font-size: 0.95rem;
+      font-weight: 600;
+      line-height: 1.7;
+      opacity: 0.88;
+      max-width: 300px;
+    }
+    .bv-btn {
+      background: linear-gradient(135deg, #F2A64A, #e8912a);
+      color: #3d2000;
+      font-weight: 900;
+      font-size: 1.1rem;
+      border: none;
+      border-radius: 999px;
+      padding: 15px 40px;
+      cursor: pointer;
+      box-shadow: 0 4px 20px rgba(242,166,74,.6);
+      font-family: var(--fonte-titulo);
+      animation: bv-pulso-btn 1.6s ease-in-out infinite;
+      margin-top: var(--espaco-sm);
+    }
+    @keyframes bv-pulso-btn {
+      0%, 100% { transform: scale(1);    box-shadow: 0 4px 20px rgba(242,166,74,.5); }
+      50%       { transform: scale(1.04); box-shadow: 0 6px 30px rgba(242,166,74,.85); }
+    }
   </style>
 </head>
 <body>
@@ -108,6 +220,20 @@
     <p style="text-align:center; margin-top: var(--espaco-lg); font-size:0.85rem; color: var(--cor-marrom); opacity:0.6;">
       Fazendinha do Bento 🐄
     </p>
+  </div>
+
+  <!-- Celebração de boas-vindas -->
+  <div id="bv-overlay" class="bv-overlay" style="display:none;" aria-live="assertive">
+    <div class="bv-particulas" id="bv-particulas"></div>
+    <span class="bv-deco-topo">🗺️</span>
+    <div class="bv-foto-wrap">
+      <img id="bv-foto" class="bv-foto" src="" alt="" style="display:none;" />
+      <div id="bv-avatar" class="bv-avatar">🤠</div>
+    </div>
+    <div id="bv-titulo" class="bv-titulo"></div>
+    <strong id="bv-nome" class="bv-nome"></strong>
+    <p id="bv-subtitulo" class="bv-subtitulo"></p>
+    <button class="bv-btn" id="bv-btn-comecar"></button>
   </div>
 
   <script type="module">
@@ -235,13 +361,9 @@
           }
         }
 
-        // 3. Salva no localStorage e redireciona
+        // 3. Salva no localStorage e exibe celebração de boas-vindas
         localStorage.setItem('tesouro_participante_id', participanteId);
-        mostrarOk(jaExistia ? `Bem-vindo de volta, ${nome}! 🤠` : 'Pronto! Entrando na brincadeira...');
-
-        setTimeout(() => {
-          window.location.replace('/jogos/tesouro/index.html');
-        }, 800);
+        exibirBoasVindas(nome, arquivoFoto ? fotoPreview.src : null, jaExistia);
 
       } catch (err) {
         mostrarErro('Erro ao cadastrar: ' + (err.message ?? 'Tente novamente.'));
@@ -252,6 +374,57 @@
 
     inputNome.addEventListener('keydown', (e) => {
       if (e.key === 'Enter') btnCadastrar.click();
+    });
+
+    // ── Celebração de boas-vindas ──────────────────────────────────
+    function exibirBoasVindas(nome, fotoDataUrl, voltando) {
+      const el       = document.getElementById('bv-overlay');
+      const tituloEl = document.getElementById('bv-titulo');
+      const nomeEl   = document.getElementById('bv-nome');
+      const subtEl   = document.getElementById('bv-subtitulo');
+      const fotoEl   = document.getElementById('bv-foto');
+      const avatarEl = document.getElementById('bv-avatar');
+      const btnEl    = document.getElementById('bv-btn-comecar');
+      if (!el) return;
+
+      tituloEl.textContent = voltando ? '🤠 Bem-vindo de volta!' : '🎉 Você entrou!';
+      nomeEl.textContent   = nome;
+      subtEl.innerHTML = voltando
+        ? 'Que bom ter você de volta!<br>Continue procurando os animais da fazenda! 🐾'
+        : 'Você está na <strong>Caça ao Tesouro</strong><br>da Fazendinha do Bento! 🌾';
+      btnEl.textContent = voltando ? '🏁 Continuar a Aventura!' : '🏁 Começar a Aventura!';
+
+      if (fotoDataUrl) {
+        fotoEl.src = fotoDataUrl;
+        fotoEl.style.display = '';
+        avatarEl.style.display = 'none';
+      } else {
+        fotoEl.style.display = 'none';
+        avatarEl.style.display = '';
+      }
+
+      const cont = document.getElementById('bv-particulas');
+      cont.innerHTML = '';
+      const EMOJIS = ['🌾','🐄','🐖','🐔','🗺️','⭐','🌟','🎉','💛','🏆','🤠','🌈'];
+      for (let i = 0; i < 30; i++) {
+        const p = document.createElement('span');
+        p.textContent = EMOJIS[Math.floor(Math.random() * EMOJIS.length)];
+        const dur   = (2.5 + Math.random() * 2.5).toFixed(2);
+        const delay = (Math.random() * 2).toFixed(2);
+        const rot   = ((Math.random() - 0.5) * 540).toFixed(0);
+        p.style.cssText = [
+          `left:${(Math.random() * 100).toFixed(1)}%`,
+          `font-size:${(0.9 + Math.random() * 1.6).toFixed(2)}rem`,
+          `--dur:${dur}s`, `--delay:${delay}s`, `--rot:${rot}deg`,
+        ].join(';');
+        cont.appendChild(p);
+      }
+
+      el.style.display = '';
+    }
+
+    document.getElementById('bv-btn-comecar').addEventListener('click', () => {
+      window.location.replace('/jogos/tesouro/index.html');
     });
   </script>
 </body>

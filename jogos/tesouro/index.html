@@ -391,6 +391,120 @@
     .charada-btn-fechar {
       margin-top: var(--espaco-sm);
     }
+
+    /* ── Celebração fullscreen no celular ── */
+    .celular-celebracao {
+      position: fixed;
+      inset: 0;
+      z-index: 500;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: radial-gradient(ellipse at center, #2d1a00 0%, #1a0d00 100%);
+      overflow: hidden;
+      text-align: center;
+      padding: var(--espaco-lg) var(--espaco-md);
+      gap: var(--espaco-md);
+    }
+    .celular-celeb-particulas {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      overflow: hidden;
+    }
+    .celular-celeb-particulas span {
+      position: absolute;
+      top: -10%;
+      animation: celeb-cair var(--dur, 3s) var(--delay, 0s) ease-in forwards;
+      opacity: 0;
+    }
+    @keyframes celeb-cair {
+      0%   { transform: translateY(0) rotate(0deg);            opacity: 1; }
+      80%  { opacity: 1; }
+      100% { transform: translateY(110vh) rotate(var(--rot, 360deg)); opacity: 0; }
+    }
+    .celular-celeb-foto-wrap {
+      position: relative;
+      width: 130px;
+      height: 130px;
+      margin: 0 auto;
+    }
+    .celular-celeb-foto,
+    .celular-celeb-avatar {
+      width: 130px;
+      height: 130px;
+      border-radius: 50%;
+      border: 4px solid #F2A64A;
+      animation: celeb-pulso 1.5s ease-in-out infinite;
+    }
+    .celular-celeb-foto { object-fit: cover; }
+    .celular-celeb-avatar {
+      background: radial-gradient(circle at 40% 35%, #8B5A2B, #5a3218);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 3.5rem;
+    }
+    @keyframes celeb-pulso {
+      0%, 100% { box-shadow: 0 0 0 6px rgba(242,166,74,.35), 0 0 30px rgba(242,166,74,.5); }
+      50%       { box-shadow: 0 0 0 12px rgba(242,166,74,.5), 0 0 60px rgba(242,166,74,.9); }
+    }
+    .celular-celeb-trofeu {
+      font-size: 3.2rem;
+      animation: celeb-giro 2s ease-in-out infinite alternate;
+    }
+    @keyframes celeb-giro {
+      0%   { transform: rotate(-10deg) scale(1); }
+      100% { transform: rotate(10deg)  scale(1.18); }
+    }
+    .celular-celeb-titulo {
+      font-family: var(--fonte-titulo);
+      font-size: 2.4rem;
+      color: #F2A64A;
+      font-weight: 900;
+      text-shadow: 0 2px 12px rgba(0,0,0,.6);
+      animation: celeb-bounce 0.6s ease-out;
+      line-height: 1.1;
+    }
+    @keyframes celeb-bounce {
+      0%   { transform: scale(0.4); opacity: 0; }
+      60%  { transform: scale(1.15); }
+      100% { transform: scale(1);   opacity: 1; }
+    }
+    .celular-celeb-nome {
+      font-family: var(--fonte-titulo);
+      font-size: 1.5rem;
+      color: #fff;
+      font-weight: 700;
+      line-height: 1.2;
+    }
+    .celular-celeb-subtitulo {
+      color: #F5E6C8;
+      font-size: 1rem;
+      font-weight: 600;
+      line-height: 1.6;
+      opacity: 0.9;
+    }
+    .celular-celeb-instrucao {
+      color: #F5E6C8;
+      font-size: 0.85rem;
+      opacity: 0.65;
+      margin-top: calc(var(--espaco-sm) * -1);
+    }
+    .celular-celeb-btn {
+      background: #F2A64A;
+      color: #5a3218;
+      font-weight: 900;
+      font-size: 1.05rem;
+      border: none;
+      border-radius: 999px;
+      padding: 14px 36px;
+      cursor: pointer;
+      box-shadow: 0 4px 20px rgba(242,166,74,.6);
+      font-family: var(--fonte-titulo);
+      margin-top: var(--espaco-sm);
+    }
   </style>
 </head>
 <body>
@@ -456,6 +570,21 @@
     <p style="text-align:center; margin-top: var(--espaco-md);">
       <a href="/jogos/tesouro/cadastro.html" onclick="sair(event)">← Sair / Trocar de participante</a>
     </p>
+  </div>
+
+  <!-- Celebração fullscreen — aparece quando o participante ganha o Tesouro -->
+  <div id="celular-celebracao" class="celular-celebracao" style="display:none;" aria-live="assertive">
+    <div class="celular-celeb-particulas" id="celular-celeb-particulas"></div>
+    <span class="celular-celeb-trofeu">🏆</span>
+    <div class="celular-celeb-foto-wrap">
+      <img id="celular-celeb-foto" class="celular-celeb-foto" src="" alt="" style="display:none;" />
+      <div id="celular-celeb-avatar" class="celular-celeb-avatar">🤠</div>
+    </div>
+    <div class="celular-celeb-titulo">🎉 PARABÉNS!</div>
+    <strong id="celular-celeb-nome" class="celular-celeb-nome"></strong>
+    <p class="celular-celeb-subtitulo">Você encontrou o<br><strong>Tesouro da Fazenda!</strong></p>
+    <p class="celular-celeb-instrucao">Procure o organizador para receber seu prêmio especial! 🎁</p>
+    <button class="celular-celeb-btn" id="celular-celeb-fechar">OK, estou indo buscar! 🎁</button>
   </div>
 
   <!-- Toast de feedback -->
@@ -1028,6 +1157,51 @@
       reativarScanner(500);
     });
 
+    // ── Celebração fullscreen no celular ──────────────────────────
+    function exibirCelebracaoParticipante() {
+      const el       = document.getElementById('celular-celebracao');
+      const fotoEl   = document.getElementById('celular-celeb-foto');
+      const avatarEl = document.getElementById('celular-celeb-avatar');
+      const nomeEl   = document.getElementById('celular-celeb-nome');
+      if (!el) return;
+
+      nomeEl.textContent = participante?.nome ?? '';
+      if (participante?.foto_url) {
+        fotoEl.src = participante.foto_url;
+        fotoEl.style.display = '';
+        avatarEl.style.display = 'none';
+      } else {
+        fotoEl.style.display = 'none';
+        avatarEl.style.display = '';
+      }
+
+      const cont = document.getElementById('celular-celeb-particulas');
+      cont.innerHTML = '';
+      const EMOJIS = ['🌟','⭐','✨','🏆','🎉','🎊','💛','🌾','👑','💎','🥇','🎈'];
+      for (let i = 0; i < 36; i++) {
+        const p = document.createElement('span');
+        p.textContent = EMOJIS[Math.floor(Math.random() * EMOJIS.length)];
+        const dur   = (2.5 + Math.random() * 2.5).toFixed(2);
+        const delay = (Math.random() * 2.5).toFixed(2);
+        const rot   = ((Math.random() - 0.5) * 540).toFixed(0);
+        p.style.cssText = [
+          `left:${(Math.random() * 100).toFixed(1)}%`,
+          `font-size:${(1 + Math.random() * 1.8).toFixed(2)}rem`,
+          `--dur:${dur}s`, `--delay:${delay}s`, `--rot:${rot}deg`,
+        ].join(';');
+        cont.appendChild(p);
+      }
+
+      el.style.display = '';
+    }
+
+    document.getElementById('celular-celeb-fechar').addEventListener('click', () => {
+      document.getElementById('celular-celebracao').style.display = 'none';
+      document.getElementById('charada-overlay').style.display = 'none';
+      tentativaAtual = null;
+      reativarScanner(500);
+    });
+
     async function ganhouTesouro() {
       // Verifica se o tesouro ainda está disponível (corrida)
       const { data: config } = await supabase
@@ -1080,6 +1254,7 @@
 
       tesouroStatus = 'encontrado';
       atualizarProgresso();
+      exibirCelebracaoParticipante();
 
       document.querySelector(`.charada-alt[data-letra="${tentativaAtual.charada.resposta_correta}"]`)
         ?.classList.add('charada-alt--correta');

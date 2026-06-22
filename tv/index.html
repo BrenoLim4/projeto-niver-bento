@@ -148,6 +148,117 @@
       font-weight: 600;
       backdrop-filter: blur(4px);
     }
+
+    /* ── Celebração: acerto na charada do tesouro ── */
+    .tv-tesouro-celebracao {
+      position: fixed; inset: 0; z-index: 300;
+      background: linear-gradient(135deg, rgba(111,63,14,.97) 0%, rgba(180,110,20,.95) 50%, rgba(111,63,14,.97) 100%);
+      display: flex; align-items: center; justify-content: center;
+      animation: tc-entrada 0.45s cubic-bezier(0.22,1,0.36,1);
+    }
+    @keyframes tc-entrada {
+      from { opacity: 0; transform: scale(0.88); }
+      to   { opacity: 1; transform: scale(1); }
+    }
+    .tv-tesouro-celebracao.tv-tc-saindo {
+      animation: tc-saindo 0.5s ease-in forwards;
+    }
+    @keyframes tc-saindo {
+      to { opacity: 0; transform: scale(1.06); }
+    }
+
+    .tv-tc-particulas {
+      position: absolute; inset: 0; pointer-events: none; overflow: hidden;
+    }
+    .tv-tc-particulas span {
+      position: absolute; top: -8%;
+      animation: tc-confete var(--dur, 3s) var(--delay, 0s) ease-in forwards;
+    }
+    @keyframes tc-confete {
+      0%   { transform: translateY(0) rotate(0deg); opacity: 1; }
+      80%  { opacity: 1; }
+      100% { transform: translateY(115vh) rotate(var(--rot, 360deg)); opacity: 0; }
+    }
+
+    .tv-tc-conteudo {
+      position: relative; z-index: 1;
+      display: flex; flex-direction: column;
+      align-items: center; gap: clamp(14px, 2.8vh, 36px);
+      text-align: center; padding: 0 var(--espaco-xl, 32px);
+    }
+
+    .tv-tc-foto-wrap { position: relative; }
+
+    .tv-tc-foto,
+    .tv-tc-avatar {
+      width: clamp(160px, 20vw, 280px);
+      height: clamp(160px, 20vw, 280px);
+      border-radius: 50%;
+      border: 6px solid #fff;
+      animation: tc-pulsar 1.6s ease-in-out infinite;
+    }
+    .tv-tc-foto { object-fit: cover; }
+    .tv-tc-avatar {
+      display: flex; align-items: center; justify-content: center;
+      background: rgba(255,255,255,.12);
+      font-size: clamp(3.5rem, 9vw, 7rem);
+    }
+    @keyframes tc-pulsar {
+      0%, 100% { box-shadow: 0 0 0 8px #F2A64A, 0 0 50px rgba(242,166,74,.8),  0 0 100px rgba(242,166,74,.35); }
+      50%       { box-shadow: 0 0 0 14px #F2A64A, 0 0 80px rgba(242,166,74,1), 0 0 160px rgba(242,166,74,.55); }
+    }
+
+    .tv-tc-estrelas {
+      position: absolute; inset: -20px;
+      animation: tc-estrelas-girar 4s linear infinite;
+      pointer-events: none;
+    }
+    @keyframes tc-estrelas-girar { to { transform: rotate(360deg); } }
+    .tv-tc-estrela {
+      position: absolute; font-size: 1.8rem;
+      top: 50%; left: 50%;
+      transform-origin: 0 0;
+    }
+
+    .tv-tc-acertou {
+      font-family: var(--fonte-titulo, sans-serif);
+      font-size: clamp(3rem, 8vw, 6.5rem);
+      color: #fff;
+      text-shadow: 0 4px 0 rgba(0,0,0,.25), 0 0 40px rgba(255,255,255,.35);
+      margin: 0; line-height: 1;
+      animation: tc-bounce 0.7s cubic-bezier(0.36,.07,.19,.97) both;
+    }
+    @keyframes tc-bounce {
+      0%   { transform: scale(0.5); opacity: 0; }
+      60%  { transform: scale(1.15); opacity: 1; }
+      80%  { transform: scale(0.95); }
+      100% { transform: scale(1); }
+    }
+
+    .tv-tc-nome {
+      font-family: var(--fonte-titulo, sans-serif);
+      font-size: clamp(1.8rem, 4.5vw, 3.5rem);
+      color: #FFF8EF;
+      display: block;
+      text-shadow: 0 2px 12px rgba(0,0,0,.3);
+    }
+
+    .tv-tc-subtitulo {
+      font-size: clamp(1rem, 2.2vw, 1.8rem);
+      color: rgba(255,255,255,.85);
+      margin: 0;
+      font-weight: 600;
+    }
+
+    .tv-tc-trofeu {
+      font-size: clamp(3rem, 7vw, 5.5rem);
+      animation: tc-trofeu 1s ease-out both;
+      display: block;
+    }
+    @keyframes tc-trofeu {
+      0%   { transform: translateY(30px) scale(0.5); opacity: 0; }
+      100% { transform: translateY(0) scale(1); opacity: 1; }
+    }
   </style>
 </head>
 <body>
@@ -505,6 +616,22 @@
           </div>
         </div>
 
+      </div>
+    </div>
+
+    <!-- Celebração: participante acertou a charada do tesouro -->
+    <div id="tv-tesouro-celebracao" class="tv-tesouro-celebracao" style="display:none;" aria-live="assertive">
+      <div class="tv-tc-particulas" id="tv-tc-particulas"></div>
+      <div class="tv-tc-conteudo">
+        <div class="tv-tc-foto-wrap">
+          <div class="tv-tc-estrelas" id="tv-tc-estrelas"></div>
+          <img id="tv-tc-foto" class="tv-tc-foto" src="" alt="" style="display:none;" />
+          <div id="tv-tc-avatar" class="tv-tc-avatar">🤠</div>
+        </div>
+        <p class="tv-tc-acertou">🎉 ACERTOU!</p>
+        <strong id="tv-tc-nome" class="tv-tc-nome"></strong>
+        <p class="tv-tc-subtitulo">encontrou o Tesouro da Fazenda!</p>
+        <span class="tv-tc-trofeu">🏆</span>
       </div>
     </div>
 
@@ -931,7 +1058,8 @@
     };
 
     let tentativaAtivaId  = null;
-    let timeoutVisualTV   = null; // guarda o setTimeout da fase visual
+    let timeoutVisualTV   = null;
+    let participanteAtivo = null; // armazena dados do participante para a celebração
 
     // ── Desafios Visuais avulsos ──────────────────────────────────
     let desafioAtivoId      = null;
@@ -960,10 +1088,11 @@
           estadoEl.textContent = '🎉 CORRETO! Tesouro da Fazenda encontrado!';
           estadoEl.classList.add('tv-tesouro-estado--correto');
           destacarAlternativa(tentativa.resposta, 'correta');
+          exibirCelebracaoTesouro(participanteAtivo);
           setTimeout(() => {
             tvTesouroCharada.style.display = 'none';
             tentativaAtivaId = null;
-          }, 3500);
+          }, 5000);
 
         } else if (tentativa.status === 'incorreta') {
           estadoEl.textContent = '❌ Resposta errada! Tente novamente em breve.';
@@ -977,8 +1106,79 @@
       }
     }
 
+    function gerarParticulasCelebracao() {
+      const cont = document.getElementById('tv-tc-particulas');
+      if (!cont) return;
+      cont.innerHTML = '';
+      const EMOJIS = ['🌟', '⭐', '✨', '🏆', '🎉', '🎊', '💛', '🌾', '👑', '💎', '🥇', '🎈'];
+      for (let i = 0; i < 48; i++) {
+        const p = document.createElement('span');
+        p.textContent = EMOJIS[Math.floor(Math.random() * EMOJIS.length)];
+        const dur   = (2.2 + Math.random() * 2.8).toFixed(2);
+        const delay = (Math.random() * 2).toFixed(2);
+        const rot   = ((Math.random() - 0.5) * 720).toFixed(0);
+        p.style.cssText = [
+          `left:${(Math.random() * 100).toFixed(1)}%`,
+          `font-size:${(0.9 + Math.random() * 2.2).toFixed(2)}rem`,
+          `--dur:${dur}s`,
+          `--delay:${delay}s`,
+          `--rot:${rot}deg`,
+        ].join(';');
+        cont.appendChild(p);
+      }
+    }
+
+    function gerarEstrelasCelebracao() {
+      const cont = document.getElementById('tv-tc-estrelas');
+      if (!cont) return;
+      cont.innerHTML = '';
+      const TOTAL = 8;
+      for (let i = 0; i < TOTAL; i++) {
+        const s = document.createElement('span');
+        s.className = 'tv-tc-estrela';
+        s.textContent = i % 2 === 0 ? '⭐' : '✨';
+        const ang = (i / TOTAL) * 360;
+        const r   = 54; // % do raio relativo ao centro
+        s.style.cssText = `transform: rotate(${ang}deg) translateX(${r}%) translateY(-50%); animation-delay: ${(i * 0.12).toFixed(2)}s;`;
+        cont.appendChild(s);
+      }
+    }
+
+    function exibirCelebracaoTesouro(participante) {
+      const el      = document.getElementById('tv-tesouro-celebracao');
+      const fotoEl  = document.getElementById('tv-tc-foto');
+      const avatarEl = document.getElementById('tv-tc-avatar');
+      const nomeEl  = document.getElementById('tv-tc-nome');
+      if (!el) return;
+
+      if (participante?.foto_url) {
+        fotoEl.src = participante.foto_url;
+        fotoEl.style.display = '';
+        avatarEl.style.display = 'none';
+      } else {
+        fotoEl.style.display = 'none';
+        avatarEl.style.display = '';
+      }
+      nomeEl.textContent = participante?.nome ?? '';
+
+      gerarParticulasCelebracao();
+      gerarEstrelasCelebracao();
+
+      el.classList.remove('tv-tc-saindo');
+      el.style.display = '';
+
+      setTimeout(() => {
+        el.classList.add('tv-tc-saindo');
+        setTimeout(() => {
+          el.style.display = 'none';
+          el.classList.remove('tv-tc-saindo');
+        }, 500);
+      }, 4500);
+    }
+
     function mostrarCharadaTV(tentativaId, participante, charada) {
       tentativaAtivaId = tentativaId;
+      participanteAtivo = participante;
       clearTimeout(timeoutVisualTV);
 
       // Garante o label correto para o contexto do tesouro
