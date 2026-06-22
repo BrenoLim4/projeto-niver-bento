@@ -199,6 +199,7 @@
       <button class="btn-modo" data-modo="roleta_fazenda">🎡 Roleta</button>
       <button class="btn-modo" data-modo="estatisticas">📊 Estatísticas</button>
       <button class="btn-modo" data-modo="caca_tesouro">🗺️ Caça ao Tesouro</button>
+      <button class="btn-modo" data-modo="caca_tesouro_qr" style="grid-column: 1 / -1;">📲 QR Cadastro — Caça ao Tesouro</button>
     </div>
 
     <!-- ── Desafios Visuais ──────────────────────────────────── -->
@@ -268,12 +269,13 @@
     import { buscarConfigAtual, subscribeConfig, criarCanalBroadcast, subscribeDesafiosTentativas } from '../js/realtime.js';
 
     const LABELS_MODO = {
-      hall_da_fama:    'Painel dos Campeões',
-      corrida_animais: 'Corrida dos Tratores',
-      pescaria:        'Pescaria',
-      roleta_fazenda:  'Roleta da Fazenda',
-      estatisticas:    'Estatísticas',
-      caca_tesouro:    'Caça ao Tesouro',
+      hall_da_fama:     'Painel dos Campeões',
+      corrida_animais:  'Corrida dos Tratores',
+      pescaria:         'Pescaria',
+      roleta_fazenda:   'Roleta da Fazenda',
+      estatisticas:     'Estatísticas',
+      caca_tesouro:     'Caça ao Tesouro',
+      caca_tesouro_qr:  'Caça ao Tesouro — QR Cadastro',
     };
 
     const labelModoAtual       = document.getElementById('label-modo-atual');

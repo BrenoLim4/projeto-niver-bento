@@ -32,6 +32,122 @@
       box-shadow: 0 2px 10px rgba(0,0,0,.3);
       flex-shrink: 0;
     }
+
+    /* ── Caça ao Tesouro: tela de convite com QR Code ── */
+    .tv-ctqr {
+      width: 100%; height: 100%;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      gap: 0;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .tv-ctqr-decos {
+      position: absolute; inset: 0; pointer-events: none; z-index: 0;
+    }
+    .tv-ctqr-deco {
+      position: absolute;
+      font-size: 3.5rem;
+      opacity: 0.13;
+      animation: ctqr-flutuar 5s ease-in-out infinite alternate;
+    }
+    .tv-ctqr-deco:nth-child(1) { top: 6%;  left: 4%;  animation-delay: 0s; }
+    .tv-ctqr-deco:nth-child(2) { top: 8%;  right: 5%; animation-delay: 1s; }
+    .tv-ctqr-deco:nth-child(3) { bottom: 10%; left: 6%; animation-delay: 2s; }
+    .tv-ctqr-deco:nth-child(4) { bottom: 8%;  right: 4%; animation-delay: 0.5s; }
+    .tv-ctqr-deco:nth-child(5) { top: 45%; left: 2%;  animation-delay: 1.5s; font-size: 2.8rem; }
+    .tv-ctqr-deco:nth-child(6) { top: 42%; right: 2%; animation-delay: 2.5s; font-size: 2.8rem; }
+
+    @keyframes ctqr-flutuar {
+      from { transform: translateY(0) rotate(-6deg); }
+      to   { transform: translateY(-14px) rotate(6deg); }
+    }
+
+    .tv-ctqr-inner {
+      position: relative; z-index: 1;
+      display: flex; flex-direction: column;
+      align-items: center; gap: clamp(12px, 2.2vh, 28px);
+    }
+
+    .tv-ctqr-cabecalho {
+      display: flex; flex-direction: column;
+      align-items: center; gap: 6px;
+    }
+
+    .tv-ctqr-badge {
+      background: linear-gradient(135deg, #F2A64A, #e08c28);
+      color: #fff;
+      font-family: var(--fonte-titulo, sans-serif);
+      font-size: clamp(0.7rem, 1.5vw, 1rem);
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      padding: 6px 20px;
+      border-radius: 999px;
+      box-shadow: 0 3px 12px rgba(242,166,74,.5);
+    }
+
+    .tv-ctqr-titulo {
+      font-family: var(--fonte-titulo, sans-serif);
+      font-size: clamp(2.2rem, 5.5vw, 4.2rem);
+      color: #6F3F0E;
+      text-shadow: 0 3px 0 rgba(0,0,0,.12), 0 6px 24px rgba(242,166,74,.35);
+      margin: 0; line-height: 1.1;
+      text-align: center;
+    }
+
+    .tv-ctqr-subtitulo {
+      font-size: clamp(1rem, 2.2vw, 1.6rem);
+      color: #8B5A2B;
+      opacity: 0.85;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+    }
+
+    .tv-ctqr-convite {
+      font-size: clamp(1.1rem, 2.5vw, 1.9rem);
+      color: #5a3a10;
+      font-weight: 700;
+      text-align: center;
+      max-width: 700px;
+      line-height: 1.35;
+    }
+
+    .tv-ctqr-qr-moldura {
+      background: #fff;
+      border-radius: 24px;
+      padding: clamp(14px, 2.5vw, 28px);
+      box-shadow:
+        0 0 0 6px #F2A64A,
+        0 0 0 10px #8B5A2B,
+        0 12px 48px rgba(0,0,0,.28),
+        0 0 60px rgba(242,166,74,.22);
+      animation: ctqr-pulsar 3s ease-in-out infinite;
+    }
+
+    @keyframes ctqr-pulsar {
+      0%, 100% { box-shadow: 0 0 0 6px #F2A64A, 0 0 0 10px #8B5A2B, 0 12px 48px rgba(0,0,0,.28), 0 0 60px rgba(242,166,74,.22); }
+      50%       { box-shadow: 0 0 0 6px #e08c28, 0 0 0 10px #6F3F0E, 0 12px 48px rgba(0,0,0,.35), 0 0 90px rgba(242,166,74,.42); }
+    }
+
+    .tv-ctqr-qr-img {
+      display: block;
+      width: clamp(200px, 28vw, 380px);
+      height: clamp(200px, 28vw, 380px);
+    }
+
+    .tv-ctqr-instrucao {
+      display: flex; align-items: center; gap: 10px;
+      background: rgba(139,90,43,.12);
+      border: 2px solid rgba(139,90,43,.25);
+      border-radius: 999px;
+      padding: 10px 28px;
+      font-size: clamp(0.9rem, 1.8vw, 1.3rem);
+      color: #5a3a10;
+      font-weight: 600;
+      backdrop-filter: blur(4px);
+    }
   </style>
 </head>
 <body>
@@ -157,6 +273,32 @@
         </div>
 
         <p class="tv-ct-cta">🌾 Procure os animais perdidos pela fazenda!</p>
+      </div>
+
+      <!-- Caça ao Tesouro: tela de convite com QR Code -->
+      <div class="tv-modo tv-ctqr" data-modo="caca_tesouro_qr" style="display: none;">
+        <div class="tv-ctqr-decos" aria-hidden="true">
+          <span class="tv-ctqr-deco">🌾</span>
+          <span class="tv-ctqr-deco">🏆</span>
+          <span class="tv-ctqr-deco">🐄</span>
+          <span class="tv-ctqr-deco">🐖</span>
+          <span class="tv-ctqr-deco">🗺️</span>
+          <span class="tv-ctqr-deco">⭐</span>
+        </div>
+        <div class="tv-ctqr-inner">
+          <div class="tv-ctqr-cabecalho">
+            <span class="tv-ctqr-badge">🌾 Fazendinha do Bento</span>
+            <h1 class="tv-ctqr-titulo">Caça ao Tesouro</h1>
+            <span class="tv-ctqr-subtitulo">Encontre o Tesouro da Fazenda!</span>
+          </div>
+          <p class="tv-ctqr-convite">📱 Escaneie o QR Code e cadastre-se para participar!</p>
+          <div class="tv-ctqr-qr-moldura">
+            <img class="tv-ctqr-qr-img"
+                 src="../assets/img/QRCode%20brincadeira%20tesouro.svg"
+                 alt="QR Code - Caça ao Tesouro" />
+          </div>
+          <p class="tv-ctqr-instrucao">📷 Aponte a câmera do celular para o QR Code acima</p>
+        </div>
       </div>
 
       <div class="tv-modo tv-stats" data-modo="estatisticas" style="display: none;">
@@ -418,7 +560,7 @@
     import { inicializarEstatisticas } from '../js/estatisticas.js';
     import { executarRoleta, desenharRoleta, ROTACAO_INICIAL, carregarImagens } from '../js/roleta.js';
 
-    const MODOS = ['hall_da_fama', 'pescaria', 'corrida_animais', 'roleta_fazenda', 'estatisticas', 'caca_tesouro'];
+    const MODOS = ['hall_da_fama', 'pescaria', 'corrida_animais', 'roleta_fazenda', 'estatisticas', 'caca_tesouro', 'caca_tesouro_qr'];
 
     const ANIMAL_IMG = {
       'ANIMAL-VACA':     '../assets/img/animais/bento_vaca.png',
