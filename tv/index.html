@@ -567,9 +567,6 @@
         <div class="tv-galeria-palco">
           <div class="tv-galeria-midia-wrap" id="tv-galeria-camada-a"></div>
           <div class="tv-galeria-midia-wrap" id="tv-galeria-camada-b"></div>
-          <div class="tv-galeria-legenda">
-            <span class="tv-galeria-legenda-badge" id="tv-galeria-legenda-texto"></span>
-          </div>
           <div class="tv-galeria-vazio" id="tv-galeria-vazio">
             <div class="tv-mascote"></div>
             <h2>Aguardando as primeiras fotos da festa...</h2>
@@ -1181,7 +1178,6 @@
     const DURACAO_IMAGEM_MS  = 6000;
 
     const galeriaVazioEl     = document.getElementById('tv-galeria-vazio');
-    const galeriaLegendaEl   = document.getElementById('tv-galeria-legenda-texto');
     const galeriaContadorEl  = document.getElementById('tv-galeria-contador-num');
     const galeriaCamadaA     = document.getElementById('tv-galeria-camada-a');
     const galeriaCamadaB     = document.getElementById('tv-galeria-camada-b');
@@ -1312,7 +1308,6 @@
         el.className = 'tv-galeria-midia';
       }
       camadaNova.appendChild(el);
-      galeriaLegendaEl.textContent = nomeExibicaoGaleria(item.nome);
 
       requestAnimationFrame(() => requestAnimationFrame(() => {
         camadaNova.classList.add('tv-galeria-midia-wrap--ativa');
