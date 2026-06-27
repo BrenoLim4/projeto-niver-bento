@@ -370,7 +370,7 @@
           premio_categoria: premio.categoria,
           vencedor: nomeGanhador,
           status: 'pending',
-          metadata: { is_tesouro: premio.is_tesouro },
+          metadata: { is_tesouro: premio.is_tesouro, peixe_codigo: codigoQR },
         })
         .select()
         .single();

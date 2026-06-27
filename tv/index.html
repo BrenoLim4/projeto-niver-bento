@@ -444,7 +444,7 @@
         </div>
       </div>
       <div class="tv-modo tv-roleta-ambiente" data-modo="roleta_fazenda" style="display: none;">
-        <h2 class="tv-roleta-ambiente-titulo">🎡 Roleta da Fazenda</h2>
+        <h2 class="tv-roleta-ambiente-titulo">🎡 Jogo do bicho</h2>
         <div class="tv-roleta-ambiente-wrapper">
           <canvas id="tv-roleta-canvas-ambiente" width="900" height="900"></canvas>
           <div class="tv-roleta-ponteiro"></div>
@@ -785,6 +785,7 @@
       </div>
 
       <div id="etapa-revelacao" class="etapa-evento" style="display: none;">
+        <div id="revelacao-confete" class="revelacao-confete" aria-hidden="true"></div>
         <img id="revelacao-imagem" class="revelacao-imagem" src="" alt="" />
         <h1 id="revelacao-nome"></h1>
         <p>
@@ -880,6 +881,7 @@
       revelacaoNome: document.getElementById('revelacao-nome'),
       revelacaoCodigo: document.getElementById('revelacao-codigo'),
       revelacaoCategoria: document.getElementById('revelacao-categoria'),
+      revelacaoConfete: document.getElementById('revelacao-confete'),
     };
 
     const elementosHall = {
@@ -913,8 +915,6 @@
     const tvGradePeixes = document.getElementById('tv-grade-peixes');
     const tvPescadosEl  = document.getElementById('tv-pescados');
     const statusPeixesTV = {};
-    let promessaFoco = null;        // resolve quando a animação do peixe terminar
-    let revelacaoEmAndamento = false; // bloqueia overlay do peixe durante revelação
 
     function renderizarGradePescaria() {
       tvGradePeixes.innerHTML = '';
@@ -933,11 +933,14 @@
       atualizarContadorPescaria();
     }
 
+    // Exibe o overlay "Pescado!" do peixe e resolve quando a animação termina.
+    // Chamado deterministicamente a partir do próprio evento de premiação
+    // (evento.metadata.peixe_codigo) — não depende de nenhum canal/realtime
+    // separado, evitando a corrida em que o UPDATE de `qr_codes` chega depois
+    // do evento e a etapa do baú começa antes do peixe aparecer.
     function animarPeixePescado(codigo) {
-      if (modoAtual !== 'pescaria') return;
-      if (revelacaoEmAndamento) return;
       const peixe = TV_PEIXES.find((p) => p.codigo === codigo);
-      if (!peixe) return;
+      if (!peixe) return Promise.resolve();
 
       const overlay = document.createElement('div');
       overlay.className = 'tv-peixe-foco-overlay';
@@ -950,12 +953,11 @@
       `;
       document.querySelector('.tela-tv').appendChild(overlay);
 
-      promessaFoco = new Promise((resolve) => {
+      return new Promise((resolve) => {
         setTimeout(() => {
           overlay.classList.add('tv-peixe-foco-saindo');
           setTimeout(() => {
             overlay.remove();
-            promessaFoco = null;
             resolve();
           }, 500);
         }, 2000);
@@ -963,7 +965,6 @@
     }
 
     function atualizarCardPeixeTV(codigo) {
-      animarPeixePescado(codigo);
       statusPeixesTV[codigo] = true;
       document.getElementById(`tv-peixe-${codigo}`)?.classList.add('tv-peixe-card--pescado');
       atualizarContadorPescaria();
@@ -1743,22 +1744,13 @@
     }
 
     async function mostrarEvento(evento) {
-      // Em modo pescaria o UPDATE de qr_codes (que cria promessaFoco) pode
-      // chegar ligeiramente DEPOIS do INSERT em eventos. Aguardamos até 600ms
-      // para que promessaFoco seja definido antes de verificar.
-      if (modoAtual === 'pescaria' && !promessaFoco) {
-        const prazo = Date.now() + 600;
-        while (!promessaFoco && Date.now() < prazo) {
-          await new Promise((r) => setTimeout(r, 50));
-        }
-      }
-      if (promessaFoco) await promessaFoco;
-      // A partir daqui a revelação está comprometida — nenhum overlay de peixe
-      // pode mais ser criado (animarPeixePescado checa revelacaoEmAndamento).
-      revelacaoEmAndamento = true;
-      document.querySelectorAll('.tv-peixe-foco-overlay').forEach((el) => el.remove());
       if (modoAtual === 'galeria_fotos') pausarGaleria();
       tvNormal.style.display = 'none';
+
+      // Pescaria: mostra o peixe pescado antes de seguir para o baú/revelação.
+      if (evento.tipo === 'pescaria' && evento.metadata?.peixe_codigo) {
+        await animarPeixePescado(evento.metadata.peixe_codigo);
+      }
 
       // Corrida dos Tratores: anima a corrida antes da revelação do prêmio.
       if (evento.tipo === 'corrida') {
@@ -1778,7 +1770,6 @@
       tvEvento.style.display = '';
       await executarRevelacao(evento, elementosEvento);
 
-      revelacaoEmAndamento = false;
       tvNormal.style.display = '';
       if (modoAtual === 'galeria_fotos') retomarGaleria();
     }

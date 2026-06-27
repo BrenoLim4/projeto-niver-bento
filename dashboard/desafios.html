@@ -295,6 +295,7 @@
   <script type="module">
     import { supabase } from '../js/supabaseClient.js';
     import { subscribeDesafiosTentativas, criarCanalBroadcast } from '../js/realtime.js';
+    import { buscarPoolElegivel } from '../js/sorteio.js';
 
     const canalBroadcast = criarCanalBroadcast();
 
@@ -343,12 +344,7 @@
     }
 
     async function carregarPremios() {
-      const { data } = await supabase
-        .from('premios')
-        .select('id, nome, codigo, categoria, imagem_url, status')
-        .eq('status', 'disponivel')
-        .order('categoria');
-      premios = data ?? [];
+      premios = await buscarPoolElegivel('livre');
       selectPremio.innerHTML = '<option value="">🎯 Sem premiação</option>';
       premios.forEach((p) => {
         const opt = document.createElement('option');

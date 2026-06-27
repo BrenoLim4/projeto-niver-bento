@@ -141,3 +141,53 @@
 .tv-evento--tesouro .revelacao-imagem {
   box-shadow: var(--sombra-forte), 0 0 60px var(--cor-dourado);
 }
+
+/* Prêmio Lendário: destaque e celebração extra na revelação (confete +
+   brilho no baú + pulso na imagem e no badge), distinto dos Comum/Raro. */
+.tv-evento--lendario.tv-evento--animando .bau-icone {
+  animation: bau-tremer 0.4s ease-in-out infinite, bau-brilhar-tesouro 0.8s ease-in-out infinite;
+}
+
+.tv-evento--lendario.tv-evento--animando .particula {
+  animation-duration: 0.9s;
+}
+
+.tv-evento--lendario .revelacao-imagem {
+  box-shadow: var(--sombra-forte), 0 0 60px var(--cor-vermelho);
+  animation: revelacao-entrar 0.5s ease-out, revelacao-lendario-pulsar 1.4s ease-in-out 0.5s infinite;
+}
+
+@keyframes revelacao-lendario-pulsar {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.08); }
+}
+
+.tv-evento--lendario .badge-lendario {
+  animation: revelacao-lendario-badge 1s ease-in-out infinite;
+  box-shadow: 0 0 24px var(--cor-vermelho);
+}
+
+@keyframes revelacao-lendario-badge {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.15); }
+}
+
+.revelacao-confete {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+  z-index: 0;
+}
+
+.revelacao-confete-item {
+  position: absolute;
+  top: -8%;
+  animation: revelacao-confete-cair var(--dur, 3s) var(--delay, 0s) ease-in forwards;
+}
+
+@keyframes revelacao-confete-cair {
+  0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+  80% { opacity: 1; }
+  100% { transform: translateY(115vh) rotate(var(--rot, 360deg)); opacity: 0; }
+}
