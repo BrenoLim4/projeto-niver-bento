@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mural de Fotos - Fazendinha do Bento</title>
+  <link rel="stylesheet" href="../assets/css/variables.css" />
+  <link rel="stylesheet" href="../assets/css/base.css" />
+  <link rel="stylesheet" href="../assets/css/components.css" />
+  <style>
+    .secao-titulo { margin-top: var(--espaco-lg); }
+    .regras-envio { font-size: 0.85rem; opacity: 0.75; margin-top: -8px; }
+
+    .lista-envios { display: flex; flex-direction: column; gap: var(--espaco-sm); margin: var(--espaco-md) 0; }
+    .lista-vazia { opacity: 0.7; text-align: center; }
+
+    .envio-item { display: flex; gap: var(--espaco-md); align-items: center; }
+    .envio-miniatura { width: 56px; height: 56px; object-fit: cover; border-radius: var(--raio-md); background: var(--cor-bege); flex-shrink: 0; }
+    .envio-miniatura--video { display: flex; align-items: center; justify-content: center; font-size: 1.5rem; }
+    .envio-info { flex: 1; min-width: 0; }
+    .envio-info strong { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .envio-status { font-size: 0.85rem; margin: 2px 0 0; }
+    .envio-status--pendente { color: var(--cor-marrom); }
+    .envio-status--enviando { color: var(--cor-dourado); }
+    .envio-status--sucesso { color: var(--cor-verde); font-weight: 700; }
+    .envio-status--erro { color: var(--cor-vermelho); font-weight: 700; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="texto-centro">
+      <h1>📷 Mural de Fotos</h1>
+      <p><a href="/dashboard/">← Voltar ao Dashboard</a></p>
+    </div>
+
+    <p>Envie fotos e vídeos da festa. Eles aparecem automaticamente no Mural de Fotos e Vídeos da TV.</p>
+    <p class="regras-envio">Imagens até 2 MB · Vídeos até 10 MB.</p>
+
+    <div class="flex gap-sm">
+      <button type="button" class="botao botao-secundario botao-bloco" id="btn-camera">📷 Tirar Foto</button>
+      <button type="button" class="botao botao-primario botao-bloco" id="btn-galeria">🖼️ Escolher da Galeria</button>
+    </div>
+    <input type="file" id="input-camera" accept="image/*" capture="environment" class="oculto-visual" />
+    <input type="file" id="input-galeria" accept="image/*,video/*" multiple class="oculto-visual" />
+
+    <h2 class="secao-titulo">Envios</h2>
+    <div id="lista-envios" class="lista-envios">
+      <p class="lista-vazia">Nenhum envio ainda.</p>
+    </div>
+  </div>
+
+  <script type="module" src="../js/mural-fotos.js"></script>
+</body>
+</html>
