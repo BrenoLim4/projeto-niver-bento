@@ -1303,9 +1303,14 @@
         el.addEventListener('error', avancarGaleria, { once: true });
       } else {
         el = document.createElement('img');
-        el.src = item.url;
         el.alt = nomeExibicaoGaleria(item.nome);
         el.className = 'tv-galeria-midia';
+        const iniciarContagemImagem = () => {
+          galeriaAvancoId = setTimeout(avancarGaleria, DURACAO_IMAGEM_MS);
+        };
+        el.addEventListener('load', iniciarContagemImagem, { once: true });
+        el.addEventListener('error', avancarGaleria, { once: true });
+        el.src = item.url;
       }
       camadaNova.appendChild(el);
 
@@ -1317,9 +1322,6 @@
       setTimeout(() => { camadaAntiga.innerHTML = ''; }, 700);
 
       clearTimeout(galeriaAvancoId);
-      if (item.tipo === 'imagem') {
-        galeriaAvancoId = setTimeout(avancarGaleria, DURACAO_IMAGEM_MS);
-      }
 
       galeriaCamadaAtiva = camadaNova;
     }
