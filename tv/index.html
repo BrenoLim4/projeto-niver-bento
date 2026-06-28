@@ -360,6 +360,21 @@
     }
     .tv-galeria-vazio h2 { margin: 0; font-size: 1.6rem; }
     .tv-galeria-vazio p { margin: 0; opacity: .85; }
+
+    /* ── Vídeo de Homenagem: tela cheia (absolute para fugir do padding
+       de .tv-normal, igual ao palco do Mural de Fotos) ── */
+    .tv-video-homenagem {
+      position: absolute; inset: 0;
+      background: #000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .tv-video-homenagem-video {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
   </style>
 </head>
 <body>
@@ -573,6 +588,11 @@
             <p>🌾 As fotos e vídeos enviados aparecerão aqui automaticamente</p>
           </div>
         </div>
+      </div>
+
+      <!-- Vídeo de Homenagem: tela cheia, disparado pelo Controle da TV -->
+      <div class="tv-modo tv-video-homenagem" data-modo="video_homenagem" style="display: none;">
+        <video id="tv-video-homenagem-el" class="tv-video-homenagem-video" playsinline></video>
       </div>
     </div>
 
@@ -813,7 +833,10 @@
     import { inicializarEstatisticas } from '../js/estatisticas.js';
     import { executarRoleta, desenharRoleta, ROTACAO_INICIAL, carregarImagens } from '../js/roleta.js';
 
-    const MODOS = ['hall_da_fama', 'pescaria', 'corrida_animais', 'roleta_fazenda', 'estatisticas', 'caca_tesouro', 'caca_tesouro_qr', 'galeria_fotos'];
+    const MODOS = ['hall_da_fama', 'pescaria', 'corrida_animais', 'roleta_fazenda', 'estatisticas', 'caca_tesouro', 'caca_tesouro_qr', 'galeria_fotos', 'video_homenagem'];
+
+    // Vídeo de Homenagem (1 ano do Bento) — hospedado no Vercel Blob.
+    const URL_VIDEO_HOMENAGEM = 'https://csga2jr21uwxfmu3.public.blob.vercel-storage.com/video_homenagem_bento_1ano.mp4';
 
     const ANIMAL_IMG = {
       'ANIMAL-VACA':     '../assets/img/animais/bento_vaca.png',
@@ -849,6 +872,13 @@
     const btnIniciar = document.getElementById('btn-iniciar-tv');
     const tvConexao = document.getElementById('tv-conexao');
     const tvConexaoTexto = document.getElementById('tv-conexao-texto');
+    const videoHomenagemEl = document.getElementById('tv-video-homenagem-el');
+    videoHomenagemEl.src = URL_VIDEO_HOMENAGEM;
+    videoHomenagemEl.addEventListener('ended', async () => {
+      try {
+        await supabase.from('config').update({ modo_apresentacao: 'hall_da_fama' }).eq('id', 1);
+      } catch (_) { /* ignora falha pontual */ }
+    });
 
     const elementosCorrida = {
       overlay: tvCorrida,
@@ -1732,6 +1762,7 @@
 
     function mostrarModo(modo) {
       const normalizado = ALIASES_MODO[modo] ?? modo;
+      const modoAnterior = modoAtual;
       modoAtual = MODOS.includes(normalizado) ? normalizado : MODOS[0];
       document.querySelectorAll('.tv-modo').forEach((el) => {
         el.style.display = el.dataset.modo === modoAtual ? '' : 'none';
@@ -1740,6 +1771,13 @@
         iniciarGaleriaSlideshow();
       } else {
         pararGaleriaSlideshow();
+      }
+      if (modoAtual === 'video_homenagem') {
+        videoHomenagemEl.currentTime = 0;
+        videoHomenagemEl.play().catch(() => {});
+      } else if (modoAnterior === 'video_homenagem') {
+        videoHomenagemEl.pause();
+        videoHomenagemEl.currentTime = 0;
       }
     }
 

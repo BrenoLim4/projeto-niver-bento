@@ -3,6 +3,7 @@
 -- ============================================================
 -- Executa na ordem correta para respeitar as foreign keys:
 --   1. Limpa eventos
+--   1b. Limpa tentativas de desafios visuais
 --   2. Reseta QR codes (usado=false, evento_id=null)
 --   3. Reseta prêmios para 'disponivel'
 --   4. Reseta config para os valores padrão
@@ -14,6 +15,9 @@
 
 -- 1. Remove todos os eventos
 delete from eventos;
+
+-- 1b. Remove todas as tentativas de desafios visuais
+delete from desafios_tentativas;
 
 -- 2. Reseta todos os QR codes para o estado inicial
 update qr_codes
