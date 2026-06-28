@@ -7,7 +7,7 @@ import { supabase } from './supabaseClient.js';
 const BUCKET = 'fotos-bento';
 const EXT_IMAGEM = ['jpg', 'jpeg', 'png', 'webp', 'gif', 'heic'];
 const EXT_VIDEO = ['mp4', 'webm', 'mov', 'm4v'];
-const MAX_IMAGEM_BYTES = 2 * 1024 * 1024;
+const MAX_IMAGEM_BYTES = 5 * 1024 * 1024;
 const MAX_VIDEO_BYTES = 10 * 1024 * 1024;
 
 const btnCamera = document.getElementById('btn-camera');
@@ -39,7 +39,7 @@ function formatarTamanho(bytes) {
 function validar(file, tipo) {
   if (!tipo) return 'Formato não suportado.';
   if (tipo === 'imagem' && file.size > MAX_IMAGEM_BYTES) {
-    return `Imagem acima de 2 MB (${formatarTamanho(file.size)}).`;
+    return `Imagem acima de 5 MB (${formatarTamanho(file.size)}).`;
   }
   if (tipo === 'video' && file.size > MAX_VIDEO_BYTES) {
     return `Vídeo acima de 10 MB (${formatarTamanho(file.size)}).`;
